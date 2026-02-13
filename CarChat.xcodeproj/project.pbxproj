@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02A32F5AF76B4AAAE1DE671C /* ButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2289699FF4A82FB1444D3D05 /* ButtonStyles.swift */; };
 		03DC0D7EAE188FCFB75FD879 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE59325CFED058ACAA132E6 /* CarPlaySceneDelegate.swift */; };
 		0C9F1086ABF215A994A2BE28 /* GrokProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83725F15F057A9F770150664 /* GrokProvider.swift */; };
 		0E5F314B5B25A62AD094626C /* SFSpeechSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 396369CF8865713366A6BFFF /* SFSpeechSTT.swift */; };
 		144EF9292F56C2D0F8C1F38C /* GeminiProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC4D8688A3BB634BB06C997 /* GeminiProvider.swift */; };
+		15C76AE7C57355BC6F223D78 /* AmbientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A84BFBD62F91ECB0F6F0FEA1 /* AmbientBackground.swift */; };
 		17A30B9F55D45A0A66F3ECCD /* VoiceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5405E229A26696711BD3E4 /* VoiceSettingsView.swift */; };
 		1B1FFD0D092DDCBAC8C25985 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300B205487E939976B54F2E5 /* MainTabView.swift */; };
 		281AF5E40B088B3C3E3B41F4 /* AIProviderFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C333B1733CB85E84B8481A7C /* AIProviderFactory.swift */; };
@@ -23,6 +25,7 @@
 		48D0FFF5A2F5200A54F76316 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E2100FA2159425B5F576A1 /* ConversationView.swift */; };
 		4BC89398225F077A0B0ECC76 /* ConversationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E238B17188B86A81A0AD8EB /* ConversationViewModel.swift */; };
 		4DA9DC04E190065089F89B4D /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BBCCC0C002B0D1C136F9F0 /* Provider.swift */; };
+		5A68F414D87A1B92BF13919F /* CustomIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 295BC3BFF8A75A33EC462775 /* CustomIcons.swift */; };
 		66C7CAEF8C941577DBD03546 /* PermissionsStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8642F60C5D25290FF1D42983 /* PermissionsStepView.swift */; };
 		693C353A8A2E700E9B8F5C54 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12A10D81E1A5C6689C1A9545 /* ContentView.swift */; };
 		736C1061F9A97FBB55DD14E7 /* SystemTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D0C702B5B9F693CD6AF7B6 /* SystemTTS.swift */; };
@@ -41,6 +44,7 @@
 		9EDC5EA500924644F1154C97 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF592615FC8A6CBCBC261184 /* SettingsView.swift */; };
 		A24C7F27AE85A85B39D0D6EF /* VoiceWaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1A30D2D21CFD5782DB5C09 /* VoiceWaveformView.swift */; };
 		AD85B7BC0DE5B92977CB452E /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B2B13711DFFC4351388CA8 /* Conversation.swift */; };
+		B154B07DB931B7AC7875E41B /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 541C52FD8103A54605DE5929 /* DesignTokens.swift */; };
 		B8125DC5A69AAD7A854202F0 /* WelcomeStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE1BF7A0362BEAD5598E08 /* WelcomeStepView.swift */; };
 		C1D636BDF108DF90035BAAA2 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE3159EECD5E804E5482CD3 /* OnboardingContainerView.swift */; };
 		C3243E104E4BDD5354D68BF2 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF52E64026E19179D086D8F /* SettingsViewModel.swift */; };
@@ -57,6 +61,7 @@
 		F2A01266909579CC559B5147 /* MicButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D51E79CEC6A3A5DA77359C2 /* MicButton.swift */; };
 		F43D7022937A784386091DBB /* OllamaProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E84090874CC4E3EA33ED46 /* OllamaProvider.swift */; };
 		F8C9EC27C0DA2466F68BE93D /* APIKeySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F948F6D59C547BDC323B5289 /* APIKeySettingsView.swift */; };
+		FBBFAF0733ACC4D63645A699 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8D54E5116FF8F289FFCD6F5 /* GlassCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,12 +80,15 @@
 		0D51E79CEC6A3A5DA77359C2 /* MicButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicButton.swift; sourceTree = "<group>"; };
 		12A10D81E1A5C6689C1A9545 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		204A76A74092B4583E5F7724 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
+		2289699FF4A82FB1444D3D05 /* ButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonStyles.swift; sourceTree = "<group>"; };
+		295BC3BFF8A75A33EC462775 /* CustomIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomIcons.swift; sourceTree = "<group>"; };
 		2CAB4A0A31D7A3729F9B5958 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		300B205487E939976B54F2E5 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		396369CF8865713366A6BFFF /* SFSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSpeechSTT.swift; sourceTree = "<group>"; };
 		44C953FE0B65B863AC7FD38F /* RealtimeVoiceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeVoiceSession.swift; sourceTree = "<group>"; };
 		48E2100FA2159425B5F576A1 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		538AAEDF32D37855D7B0FCAA /* SigmonPersona.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SigmonPersona.json; sourceTree = "<group>"; };
+		541C52FD8103A54605DE5929 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		55348EDA515FC01CFF75D7FB /* TTSEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSEngine.swift; sourceTree = "<group>"; };
 		55C0FE40158A28B4471CB831 /* CarPlayVoiceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayVoiceController.swift; sourceTree = "<group>"; };
 		5CC4D8688A3BB634BB06C997 /* GeminiProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiProvider.swift; sourceTree = "<group>"; };
@@ -96,12 +104,14 @@
 		A4A34D773EEF32852B379512 /* CarChatApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarChatApp.swift; sourceTree = "<group>"; };
 		A4E84090874CC4E3EA33ED46 /* OllamaProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaProvider.swift; sourceTree = "<group>"; };
 		A7D0C702B5B9F693CD6AF7B6 /* SystemTTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemTTS.swift; sourceTree = "<group>"; };
+		A84BFBD62F91ECB0F6F0FEA1 /* AmbientBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientBackground.swift; sourceTree = "<group>"; };
 		A97DA4CB8174A652C3574702 /* PipelineVoiceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineVoiceSession.swift; sourceTree = "<group>"; };
 		ADE59325CFED058ACAA132E6 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 		B163FA8E707BE9A82441F47E /* PersonaSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaSettingsView.swift; sourceTree = "<group>"; };
 		BDF52E64026E19179D086D8F /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		BEF89FD6E5CB32AB01CA5D16 /* AnthropicProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicProvider.swift; sourceTree = "<group>"; };
 		C333B1733CB85E84B8481A7C /* AIProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderFactory.swift; sourceTree = "<group>"; };
+		C8D54E5116FF8F289FFCD6F5 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
 		CA6734E12FCDF31403C2952E /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
 		CC92EB21FAF891C8CB7C2784 /* OpenAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIProvider.swift; sourceTree = "<group>"; };
 		D705CC232E6988F388068901 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
@@ -234,6 +244,7 @@
 			children = (
 				C2F97B4B16626F6F82B18B72 /* App */,
 				8CD635BCD28C5D0AF5ADC71E /* CarPlay */,
+				CB4CDF540DB47B248E13BEF2 /* DesignSystem */,
 				6F5C33EC184BDB89A1FAC485 /* Models */,
 				8F779D50271BCBC4337930C0 /* Resources */,
 				E8CE706420E4C33B54497658 /* Services */,
@@ -319,6 +330,18 @@
 				A4A34D773EEF32852B379512 /* CarChatApp.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		CB4CDF540DB47B248E13BEF2 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				A84BFBD62F91ECB0F6F0FEA1 /* AmbientBackground.swift */,
+				2289699FF4A82FB1444D3D05 /* ButtonStyles.swift */,
+				295BC3BFF8A75A33EC462775 /* CustomIcons.swift */,
+				541C52FD8103A54605DE5929 /* DesignTokens.swift */,
+				C8D54E5116FF8F289FFCD6F5 /* GlassCard.swift */,
+			);
+			path = DesignSystem;
 			sourceTree = "<group>";
 		};
 		E8CE706420E4C33B54497658 /* Services */ = {
@@ -453,9 +476,11 @@
 				281AF5E40B088B3C3E3B41F4 /* AIProviderFactory.swift in Sources */,
 				F8C9EC27C0DA2466F68BE93D /* APIKeySettingsView.swift in Sources */,
 				41EFD06F8A35310A7ED82221 /* APIKeyStepView.swift in Sources */,
+				15C76AE7C57355BC6F223D78 /* AmbientBackground.swift in Sources */,
 				89CE46A08E2B8B4E6465823A /* AnthropicProvider.swift in Sources */,
 				41DE4334D2007AE2B7D7E27F /* AppServices.swift in Sources */,
 				DC04CBBA156D2A1541B9A4AE /* AudioSessionManager.swift in Sources */,
+				02A32F5AF76B4AAAE1DE671C /* ButtonStyles.swift in Sources */,
 				92B381FE3345FC8DA3C0FF57 /* CarChatApp.swift in Sources */,
 				03DC0D7EAE188FCFB75FD879 /* CarPlaySceneDelegate.swift in Sources */,
 				35E3940DD79B82349A0B5612 /* CarPlayTemplateManager.swift in Sources */,
@@ -466,8 +491,11 @@
 				2E94FE207A2587A9001E29D7 /* ConversationStore.swift in Sources */,
 				48D0FFF5A2F5200A54F76316 /* ConversationView.swift in Sources */,
 				4BC89398225F077A0B0ECC76 /* ConversationViewModel.swift in Sources */,
+				5A68F414D87A1B92BF13919F /* CustomIcons.swift in Sources */,
+				B154B07DB931B7AC7875E41B /* DesignTokens.swift in Sources */,
 				CFAC008AD29903DCC3B7AAB6 /* ElevenLabsTTS.swift in Sources */,
 				144EF9292F56C2D0F8C1F38C /* GeminiProvider.swift in Sources */,
+				FBBFAF0733ACC4D63645A699 /* GlassCard.swift in Sources */,
 				0C9F1086ABF215A994A2BE28 /* GrokProvider.swift in Sources */,
 				920778165BB0FDFE5AABD5BC /* KeychainManager.swift in Sources */,
 				1B1FFD0D092DDCBAC8C25985 /* MainTabView.swift in Sources */,

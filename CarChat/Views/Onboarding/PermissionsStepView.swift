@@ -3,113 +3,141 @@ import SwiftUI
 struct PermissionsStepView: View {
     let viewModel: OnboardingViewModel
 
+    @State private var showContent = false
+
     private var allGranted: Bool {
         viewModel.hasMicPermission && viewModel.hasSpeechPermission
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ZStack {
+            CarChatTheme.Colors.background.ignoresSafeArea()
 
-            Image(systemName: allGranted ? "checkmark.shield.fill" : "shield.checkered")
-                .font(.system(size: 60))
-                .foregroundStyle(allGranted ? Color.green : Color.accentColor)
-                .contentTransition(.symbolEffect(.replace))
+            VStack(spacing: CarChatTheme.Spacing.xxl) {
+                Spacer()
 
-            Text(allGranted ? "All Set!" : "Permissions")
-                .font(.title.bold())
-                .contentTransition(.numericText())
-
-            Text(
-                allGranted
-                    ? "Microphone and speech recognition are ready."
-                    : "CarChat needs microphone and speech recognition to have voice conversations."
-            )
-            .font(.body)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 24)
-
-            VStack(spacing: 16) {
-                PermissionRow(
-                    icon: "mic.fill",
-                    title: "Microphone",
-                    description: "Capture your voice",
-                    isGranted: viewModel.hasMicPermission
+                // Hero icon
+                GradientIcon(
+                    systemName: allGranted ? "checkmark.shield.fill" : "shield.checkered",
+                    gradient: allGranted ? CarChatTheme.Gradients.listening : CarChatTheme.Gradients.accent,
+                    size: 72,
+                    iconSize: 32,
+                    glowColor: allGranted ? CarChatTheme.Colors.glowGreen : CarChatTheme.Colors.glowCyan,
+                    isAnimated: allGranted
                 )
-                PermissionRow(
-                    icon: "waveform",
-                    title: "Speech Recognition",
-                    description: "Transcribe your speech",
-                    isGranted: viewModel.hasSpeechPermission
-                )
-            }
-            .padding(.horizontal, 24)
+                .opacity(showContent ? 1 : 0)
 
-            Spacer()
+                VStack(spacing: CarChatTheme.Spacing.sm) {
+                    Text(allGranted ? "All Set!" : "Permissions")
+                        .font(CarChatTheme.Typography.title)
+                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                        .contentTransition(.numericText())
 
-            if allGranted {
-                Button("Continue") {
-                    viewModel.advance()
+                    Text(
+                        allGranted
+                            ? "Microphone and speech recognition are ready."
+                            : "CarChat needs microphone and speech recognition to have voice conversations."
+                    )
+                    .font(CarChatTheme.Typography.body)
+                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, CarChatTheme.Spacing.xl)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .padding(.bottom, 48)
-            } else {
-                VStack(spacing: 12) {
-                    Button("Grant Permissions") {
-                        viewModel.requestPermissions()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                .opacity(showContent ? 1 : 0)
 
-                    Button("Skip for Now") {
-                        viewModel.advance()
-                    }
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                // Permission cards
+                VStack(spacing: CarChatTheme.Spacing.sm) {
+                    PermissionCard(
+                        icon: "mic.fill",
+                        title: "Microphone",
+                        description: "Capture your voice",
+                        isGranted: viewModel.hasMicPermission
+                    )
+
+                    PermissionCard(
+                        icon: "waveform",
+                        title: "Speech Recognition",
+                        description: "Transcribe your speech",
+                        isGranted: viewModel.hasSpeechPermission
+                    )
                 }
-                .padding(.bottom, 48)
+                .padding(.horizontal, CarChatTheme.Spacing.xl)
+                .opacity(showContent ? 1 : 0)
+
+                Spacer()
+
+                // Action buttons
+                VStack(spacing: CarChatTheme.Spacing.sm) {
+                    if allGranted {
+                        Button("Continue") {
+                            viewModel.advance()
+                        }
+                        .buttonStyle(.carChatPrimary)
+                    } else {
+                        Button("Grant Permissions") {
+                            viewModel.requestPermissions()
+                        }
+                        .buttonStyle(.carChatPrimary)
+
+                        Button("Skip for Now") {
+                            viewModel.advance()
+                        }
+                        .buttonStyle(.carChatGhost)
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xl)
+                .padding(.bottom, CarChatTheme.Spacing.xxxl)
             }
         }
+        .preferredColorScheme(.dark)
         .animation(.default, value: allGranted)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.5)) {
+                showContent = true
+            }
+        }
     }
 }
 
-private struct PermissionRow: View {
+// MARK: - Permission Card
+
+private struct PermissionCard: View {
     let icon: String
     let title: String
     let description: String
     let isGranted: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(isGranted ? Color.green : Color.accentColor)
-                .frame(width: 40)
+        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+            HStack(spacing: CarChatTheme.Spacing.md) {
+                LayeredFeatureIcon(
+                    systemName: icon,
+                    color: isGranted ? CarChatTheme.Colors.success : CarChatTheme.Colors.accentGradientStart,
+                    accentShape: isGranted ? .none : .ring
+                )
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.headline)
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(CarChatTheme.Typography.headline)
+                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                    Text(description)
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                }
+
+                Spacer()
+
+                // Status icon
+                Image(systemName: isGranted ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(
+                        isGranted
+                            ? CarChatTheme.Colors.success
+                            : CarChatTheme.Colors.textTertiary
+                    )
+                    .contentTransition(.symbolEffect(.replace))
             }
-
-            Spacer()
-
-            Image(systemName: isGranted ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundStyle(isGranted ? Color.green : Color.gray.opacity(0.3))
-                .contentTransition(.symbolEffect(.replace))
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isGranted ? Color.green.opacity(0.08) : Color(.secondarySystemBackground))
-        )
         .animation(.default, value: isGranted)
     }
 }

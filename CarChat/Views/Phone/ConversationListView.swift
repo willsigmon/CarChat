@@ -8,23 +8,56 @@ struct ConversationListView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if conversations.isEmpty {
-                    ContentUnavailableView(
-                        "No Conversations",
-                        systemImage: "bubble.left.and.bubble.right",
-                        description: Text("Start talking to create your first conversation.")
-                    )
-                } else {
-                    List {
-                        ForEach(conversations) { conversation in
-                            ConversationRow(conversation: conversation)
-                        }
-                        .onDelete(perform: deleteConversations)
+            ZStack {
+                CarChatTheme.Colors.background.ignoresSafeArea()
+
+                Group {
+                    if conversations.isEmpty {
+                        emptyState
+                    } else {
+                        conversationList
                     }
                 }
             }
             .navigationTitle("History")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private var emptyState: some View {
+        VStack(spacing: CarChatTheme.Spacing.md) {
+            GradientIcon(
+                systemName: "bubble.left.and.bubble.right",
+                gradient: CarChatTheme.Gradients.accent,
+                size: 64,
+                iconSize: 28,
+                glowColor: CarChatTheme.Colors.glowCyan
+            )
+
+            Text("No Conversations")
+                .font(CarChatTheme.Typography.title)
+                .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+            Text("Start talking to create your first conversation.")
+                .font(CarChatTheme.Typography.body)
+                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, CarChatTheme.Spacing.xxxl)
+        }
+    }
+
+    @ViewBuilder
+    private var conversationList: some View {
+        ScrollView {
+            LazyVStack(spacing: CarChatTheme.Spacing.sm) {
+                ForEach(conversations) { conversation in
+                    ConversationRow(conversation: conversation)
+                }
+            }
+            .padding(.horizontal, CarChatTheme.Spacing.md)
+            .padding(.top, CarChatTheme.Spacing.sm)
         }
     }
 
@@ -35,35 +68,44 @@ struct ConversationListView: View {
     }
 }
 
+// MARK: - Conversation Row
+
 private struct ConversationRow: View {
     let conversation: Conversation
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(conversation.displayTitle)
-                    .font(.headline)
-                    .lineLimit(1)
+        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+            HStack(spacing: CarChatTheme.Spacing.sm) {
+                // Provider icon
+                ProviderIcon(provider: conversation.provider, size: 36)
+
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxs) {
+                    Text(conversation.displayTitle)
+                        .font(CarChatTheme.Typography.headline)
+                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                        .lineLimit(1)
+
+                    HStack(spacing: CarChatTheme.Spacing.xs) {
+                        Text(conversation.personaName)
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+
+                        Circle()
+                            .fill(CarChatTheme.Colors.textTertiary)
+                            .frame(width: 3, height: 3)
+
+                        Text(conversation.updatedAt, style: .relative)
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    }
+                }
 
                 Spacer()
 
-                Text(conversation.provider.displayName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack {
-                Text(conversation.personaName)
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-
-                Spacer()
-
-                Text(conversation.updatedAt, style: .relative)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
             }
         }
-        .padding(.vertical, 2)
     }
 }
