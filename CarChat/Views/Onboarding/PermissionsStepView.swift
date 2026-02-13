@@ -3,22 +3,32 @@ import SwiftUI
 struct PermissionsStepView: View {
     let viewModel: OnboardingViewModel
 
+    private var allGranted: Bool {
+        viewModel.hasMicPermission && viewModel.hasSpeechPermission
+    }
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
 
-            Image(systemName: "shield.checkered")
+            Image(systemName: allGranted ? "checkmark.shield.fill" : "shield.checkered")
                 .font(.system(size: 60))
-                .foregroundStyle(.tint)
+                .foregroundStyle(allGranted ? Color.green : Color.accentColor)
+                .contentTransition(.symbolEffect(.replace))
 
-            Text("Permissions")
+            Text(allGranted ? "All Set!" : "Permissions")
                 .font(.title.bold())
+                .contentTransition(.numericText())
 
-            Text("CarChat needs microphone and speech recognition to have voice conversations.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+            Text(
+                allGranted
+                    ? "Microphone and speech recognition are ready."
+                    : "CarChat needs microphone and speech recognition to have voice conversations."
+            )
+            .font(.body)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 24)
 
             VStack(spacing: 16) {
                 PermissionRow(
@@ -38,20 +48,31 @@ struct PermissionsStepView: View {
 
             Spacer()
 
-            VStack(spacing: 12) {
-                Button("Grant Permissions") {
-                    viewModel.requestPermissions()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
+            if allGranted {
                 Button("Continue") {
                     viewModel.advance()
                 }
-                .foregroundStyle(.secondary)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.bottom, 48)
+            } else {
+                VStack(spacing: 12) {
+                    Button("Grant Permissions") {
+                        viewModel.requestPermissions()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    Button("Skip for Now") {
+                        viewModel.advance()
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.bottom, 48)
             }
-            .padding(.bottom, 48)
         }
+        .animation(.default, value: allGranted)
     }
 }
 
@@ -65,7 +86,7 @@ private struct PermissionRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(.tint)
+                .foregroundStyle(isGranted ? Color.green : Color.accentColor)
                 .frame(width: 40)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -78,12 +99,17 @@ private struct PermissionRow: View {
 
             Spacer()
 
-            Image(
-                systemName: isGranted
-                    ? "checkmark.circle.fill"
-                    : "circle"
-            )
-            .foregroundStyle(isGranted ? .green : .secondary)
+            Image(systemName: isGranted ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(isGranted ? Color.green : Color.gray.opacity(0.3))
+                .contentTransition(.symbolEffect(.replace))
         }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isGranted ? Color.green.opacity(0.08) : Color(.secondarySystemBackground))
+        )
+        .animation(.default, value: isGranted)
     }
 }
