@@ -4,7 +4,7 @@ import AVFoundation
 
 @MainActor
 final class SFSpeechSTT: STTEngine {
-    private let speechRecognizer: SFSpeechRecognizer
+    private let speechRecognizer: SFSpeechRecognizer?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
@@ -18,7 +18,8 @@ final class SFSpeechSTT: STTEngine {
     let audioLevelStream: AsyncStream<Float>
 
     init(locale: Locale = .current) {
-        self.speechRecognizer = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer()!
+        self.speechRecognizer = SFSpeechRecognizer(locale: locale)
+            ?? SFSpeechRecognizer()
 
         var transcriptCont: AsyncStream<VoiceTranscript>.Continuation!
         self.transcriptStream = AsyncStream { transcriptCont = $0 }
@@ -31,8 +32,13 @@ final class SFSpeechSTT: STTEngine {
 
     func startListening() async throws {
         guard !isListening else { return }
-        guard speechRecognizer.isAvailable else {
+
+        guard let speechRecognizer, speechRecognizer.isAvailable else {
             throw STTError.speechRecognizerUnavailable
+        }
+
+        guard AVAudioApplication.shared.recordPermission == .granted else {
+            throw STTError.notAuthorized
         }
 
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
@@ -53,7 +59,14 @@ final class SFSpeechSTT: STTEngine {
         }
 
         audioEngine.prepare()
-        try audioEngine.start()
+
+        do {
+            try audioEngine.start()
+        } catch {
+            cleanupRecognition()
+            throw error
+        }
+
         isListening = true
 
         recognitionTask = speechRecognizer.recognitionTask(
@@ -70,7 +83,14 @@ final class SFSpeechSTT: STTEngine {
                 self.transcriptContinuation?.yield(transcript)
             }
 
-            if error != nil || result?.isFinal == true {
+            if error != nil {
+                self.transcriptContinuation?.yield(
+                    VoiceTranscript(text: "", isFinal: true, role: .user)
+                )
+                Task { @MainActor in
+                    self.cleanupRecognition()
+                }
+            } else if result?.isFinal == true {
                 Task { @MainActor in
                     self.cleanupRecognition()
                 }
@@ -83,12 +103,16 @@ final class SFSpeechSTT: STTEngine {
     }
 
     private func cleanupRecognition() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
         recognitionRequest = nil
         recognitionTask?.cancel()
         recognitionTask = nil
+
+        if audioEngine.isRunning {
+            audioEngine.stop()
+            audioEngine.inputNode.removeTap(onBus: 0)
+        }
+
         isListening = false
     }
 

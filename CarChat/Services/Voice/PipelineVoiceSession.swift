@@ -44,11 +44,19 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
         self.audioLevelContinuation = audioLevelCont
     }
 
+    deinit {
+        stateContinuation?.finish()
+        transcriptContinuation?.finish()
+        audioLevelContinuation?.finish()
+        listeningTask?.cancel()
+    }
+
     func start(systemPrompt: String) async throws {
         try AudioSessionManager.shared.configureForVoiceChat()
 
-        if !systemPrompt.isEmpty {
-            conversationHistory.append((.system, systemPrompt))
+        let prompt = systemPrompt.isEmpty ? self.systemPrompt : systemPrompt
+        if !prompt.isEmpty {
+            conversationHistory.append((.system, prompt))
         }
 
         startListeningLoop()
@@ -86,6 +94,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                 let levelTask = Task { [weak self] in
                     guard let self else { return }
                     for await level in sttEngine.audioLevelStream {
+                        if Task.isCancelled { break }
                         audioLevelContinuation?.yield(level)
                     }
                 }
@@ -122,12 +131,13 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                     // Collect response and speak in sentence chunks
                     var sentenceBuffer = ""
                     for try await chunk in stream {
+                        if Task.isCancelled { break }
                         fullResponse += chunk
                         sentenceBuffer += chunk
 
                         // Speak when we hit sentence boundaries
                         if let range = sentenceBuffer.range(
-                            of: "[.!?]\\ ",
+                            of: "[.!?] ",
                             options: .regularExpression
                         ) {
                             let sentence = String(

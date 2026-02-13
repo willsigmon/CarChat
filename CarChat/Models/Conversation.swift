@@ -33,7 +33,7 @@ final class Conversation {
     }
 
     var lastMessage: Message? {
-        messages.sorted { $0.createdAt < $1.createdAt }.last
+        messages.max { $0.createdAt < $1.createdAt }
     }
 
     var displayTitle: String {

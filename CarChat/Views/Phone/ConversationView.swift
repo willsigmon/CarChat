@@ -6,29 +6,36 @@ struct ConversationView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Spacer()
+            Group {
+                if let viewModel {
+                    VStack(spacing: 0) {
+                        Spacer()
 
-                VoiceWaveformView(level: viewModel?.audioLevel ?? 0)
-                    .frame(height: 200)
+                        VoiceWaveformView(level: viewModel.audioLevel)
+                            .frame(height: 200)
 
-                if let transcript = viewModel?.currentTranscript, !transcript.isEmpty {
-                    Text(transcript)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 24)
-                        .multilineTextAlignment(.center)
-                        .transition(.opacity)
+                        if !viewModel.currentTranscript.isEmpty {
+                            Text(viewModel.currentTranscript)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 24)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(4)
+                                .transition(.opacity)
+                        }
+
+                        Spacer()
+
+                        MicButton(
+                            isListening: viewModel.isListening
+                        ) {
+                            viewModel.toggleListening()
+                        }
+                        .padding(.bottom, 48)
+                    }
+                } else {
+                    ProgressView()
                 }
-
-                Spacer()
-
-                MicButton(
-                    isListening: viewModel?.isListening ?? false
-                ) {
-                    viewModel?.toggleListening()
-                }
-                .padding(.bottom, 48)
             }
             .navigationTitle("CarChat")
             .navigationBarTitleDisplayMode(.inline)

@@ -34,7 +34,9 @@ actor KeychainManager {
     }
 
     func hasAPIKey(for provider: AIProviderType) throws -> Bool {
-        let key = try get(key: provider.keychainKey)
-        return key != nil && !key!.isEmpty
+        guard let key = try get(key: provider.keychainKey) else {
+            return false
+        }
+        return !key.isEmpty
     }
 }

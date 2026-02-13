@@ -16,24 +16,34 @@ final class AppServices {
             Message.self,
             Persona.self
         ])
-        let config = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            allowsSave: true
-        )
 
+        let container: ModelContainer
         do {
-            self.modelContainer = try ModelContainer(
+            let config = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                allowsSave: true
+            )
+            container = try ModelContainer(
                 for: schema,
                 configurations: [config]
             )
         } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
+            // Fallback to in-memory if persistent store fails (corrupted DB, etc.)
+            let fallbackConfig = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: true
+            )
+            container = try! ModelContainer(
+                for: schema,
+                configurations: [fallbackConfig]
+            )
         }
 
+        self.modelContainer = container
         self.keychainManager = KeychainManager()
         self.conversationStore = ConversationStore(
-            modelContainer: modelContainer
+            modelContainer: container
         )
         self.isOnboardingComplete = UserDefaults.standard.bool(
             forKey: "onboardingComplete"

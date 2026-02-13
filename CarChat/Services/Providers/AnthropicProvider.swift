@@ -46,9 +46,10 @@ final class AnthropicProvider: AIProvider, @unchecked Sendable {
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
 
-        Task {
+        let task = Task {
             do {
                 for try await result in stream {
+                    if Task.isCancelled { break }
                     if let text = result.delta?.text {
                         continuation.yield(text)
                     }
@@ -57,6 +58,10 @@ final class AnthropicProvider: AIProvider, @unchecked Sendable {
             } catch {
                 continuation.finish(throwing: error)
             }
+        }
+
+        continuation.onTermination = { _ in
+            task.cancel()
         }
 
         return outputStream

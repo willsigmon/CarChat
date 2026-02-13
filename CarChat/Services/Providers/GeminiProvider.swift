@@ -13,9 +13,14 @@ final class GeminiProvider: AIProvider, @unchecked Sendable {
     func streamChat(
         messages: [ChatMessage]
     ) async throws -> AsyncThrowingStream<String, Error> {
-        let url = URL(
-            string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):streamGenerateContent?alt=sse&key=\(apiKey)"
-        )!
+        var components = URLComponents(
+            string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):streamGenerateContent"
+        )
+        components?.queryItems = [URLQueryItem(name: "alt", value: "sse")]
+
+        guard let url = components?.url else {
+            throw AIProviderError.networkError("Invalid Gemini API URL")
+        }
 
         var contents: [[String: Any]] = []
         var systemInstruction: [String: Any]?
@@ -46,21 +51,30 @@ final class GeminiProvider: AIProvider, @unchecked Sendable {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.timeoutInterval = 30
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (bytes, response) = try await URLSession.shared.bytes(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw AIProviderError.networkError("Gemini API error")
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AIProviderError.networkError("Invalid response from Gemini")
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+                throw AIProviderError.invalidAPIKey
+            }
+            throw AIProviderError.networkError("Gemini API error (HTTP \(httpResponse.statusCode))")
         }
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
 
-        Task {
+        let task = Task {
             do {
                 for try await line in bytes.lines {
+                    if Task.isCancelled { break }
                     guard line.hasPrefix("data: ") else { continue }
                     let jsonString = String(line.dropFirst(6))
                     guard let data = jsonString.data(using: .utf8),
@@ -81,15 +95,26 @@ final class GeminiProvider: AIProvider, @unchecked Sendable {
             }
         }
 
+        continuation.onTermination = { _ in
+            task.cancel()
+        }
+
         return outputStream
     }
 
     func validateKey() async throws -> Bool {
-        let url = URL(
-            string: "https://generativelanguage.googleapis.com/v1beta/models?key=\(apiKey)"
-        )!
+        var components = URLComponents(
+            string: "https://generativelanguage.googleapis.com/v1beta/models"
+        )
+        components?.queryItems = []
 
-        let (_, response) = try await URLSession.shared.data(from: url)
+        guard let url = components?.url else { return false }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+
+        let (_, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             return false
         }

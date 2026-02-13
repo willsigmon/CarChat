@@ -2,16 +2,18 @@ import Foundation
 import AVFoundation
 
 @MainActor
-final class ElevenLabsTTS: TTSEngineProtocol {
+final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
     private let apiKey: String
     private let voiceID: String
     private var audioPlayer: AVAudioPlayer?
+    private var playbackContinuation: CheckedContinuation<Void, Never>?
 
     private(set) var isSpeaking = false
 
     init(apiKey: String, voiceID: String = "21m00Tcm4TlvDq8ikWAM") {
         self.apiKey = apiKey
         self.voiceID = voiceID
+        super.init()
     }
 
     func speak(_ text: String) async {
@@ -24,23 +26,31 @@ final class ElevenLabsTTS: TTSEngineProtocol {
             let audioData = try await synthesize(text: text)
             try await playAudio(data: audioData)
         } catch {
-            isSpeaking = false
+            // Synthesis or playback failed
         }
+        isSpeaking = false
     }
 
     func stop() {
         audioPlayer?.stop()
+        audioPlayer?.delegate = nil
         audioPlayer = nil
+        // Resume any waiting continuation so the caller isn't stuck
+        playbackContinuation?.resume()
+        playbackContinuation = nil
         isSpeaking = false
     }
 
     private func synthesize(text: String) async throws -> Data {
-        let url = URL(
+        guard let url = URL(
             string: "https://api.elevenlabs.io/v1/text-to-speech/\(voiceID)"
-        )!
+        ) else {
+            throw ElevenLabsError.synthesizeFailed
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
         request.setValue("audio/mpeg", forHTTPHeaderField: "Accept")
@@ -71,40 +81,27 @@ final class ElevenLabsTTS: TTSEngineProtocol {
     }
 
     private func playAudio(data: Data) async throws {
-        audioPlayer = try AVAudioPlayer(data: data)
-        audioPlayer?.prepareToPlay()
+        let player = try AVAudioPlayer(data: data)
+        audioPlayer = player
+        player.delegate = self
+        player.prepareToPlay()
 
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let delegate = AudioPlayerDelegate {
-                continuation.resume()
-            }
-            self.audioPlayer?.delegate = delegate
-            // Hold reference
-            objc_setAssociatedObject(
-                self.audioPlayer as Any,
-                "delegate",
-                delegate,
-                .OBJC_ASSOCIATION_RETAIN
-            )
-            self.audioPlayer?.play()
+            self.playbackContinuation = continuation
+            player.play()
         }
-
-        isSpeaking = false
     }
 }
 
-private final class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate, @unchecked Sendable {
-    let completion: () -> Void
-
-    init(completion: @escaping () -> Void) {
-        self.completion = completion
-    }
-
-    func audioPlayerDidFinishPlaying(
+extension ElevenLabsTTS: AVAudioPlayerDelegate {
+    nonisolated func audioPlayerDidFinishPlaying(
         _ player: AVAudioPlayer,
         successfully flag: Bool
     ) {
-        completion()
+        Task { @MainActor in
+            self.playbackContinuation?.resume()
+            self.playbackContinuation = nil
+        }
     }
 }
 

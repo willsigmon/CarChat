@@ -16,24 +16,27 @@ final class OllamaProvider: AIProvider, @unchecked Sendable {
     func streamChat(
         messages: [ChatMessage]
     ) async throws -> AsyncThrowingStream<String, Error> {
-        let url = URL(string: "\(baseURL)/v1/chat/completions")!
+        guard let url = URL(string: "\(baseURL)/api/chat") else {
+            throw AIProviderError.networkError("Invalid Ollama URL: \(baseURL)")
+        }
 
-        let openAIMessages = messages.map { msg -> [String: String] in
+        let ollamaMessages = messages.map { msg -> [String: String] in
             ["role": msg.role.rawValue, "content": msg.content]
         }
 
         let body: [String: Any] = [
             "model": model,
-            "messages": openAIMessages,
+            "messages": ollamaMessages,
             "stream": true
         ]
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.timeoutInterval = 30
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        nonisolated(unsafe) let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -42,24 +45,27 @@ final class OllamaProvider: AIProvider, @unchecked Sendable {
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
 
-        Task {
+        let task = Task {
             do {
                 for try await line in bytes.lines {
-                    guard line.hasPrefix("data: ") else { continue }
-                    let jsonString = String(line.dropFirst(6))
-                    if jsonString.trimmingCharacters(in: .whitespaces) == "[DONE]" {
-                        break
-                    }
-                    guard let data = jsonString.data(using: .utf8),
+                    if Task.isCancelled { break }
+                    guard !line.isEmpty,
+                          let data = line.data(using: .utf8),
                           let json = try? JSONSerialization.jsonObject(
                               with: data
-                          ) as? [String: Any],
-                          let choices = json["choices"] as? [[String: Any]],
-                          let delta = choices.first?["delta"] as? [String: Any],
-                          let content = delta["content"] as? String else {
+                          ) as? [String: Any] else {
                         continue
                     }
-                    continuation.yield(content)
+
+                    // Ollama native format: {"message": {"content": "..."}, "done": false}
+                    if let message = json["message"] as? [String: Any],
+                       let content = message["content"] as? String {
+                        continuation.yield(content)
+                    }
+
+                    if json["done"] as? Bool == true {
+                        break
+                    }
                 }
                 continuation.finish()
             } catch {
@@ -67,13 +73,22 @@ final class OllamaProvider: AIProvider, @unchecked Sendable {
             }
         }
 
+        continuation.onTermination = { _ in
+            task.cancel()
+        }
+
         return outputStream
     }
 
     func validateKey() async throws -> Bool {
-        let url = URL(string: "\(baseURL)/api/tags")!
+        guard let url = URL(string: "\(baseURL)/api/tags") else {
+            return false
+        }
+
         do {
-            let (_, response) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 5
+            let (_, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 return false
             }

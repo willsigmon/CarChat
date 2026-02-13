@@ -31,9 +31,10 @@ final class OpenAIProvider: AIProvider, @unchecked Sendable {
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
 
-        Task {
+        let task = Task {
             do {
                 for try await result in stream {
+                    if Task.isCancelled { break }
                     if let content = result.choices?.first?.delta?.content {
                         continuation.yield(content)
                     }
@@ -42,6 +43,10 @@ final class OpenAIProvider: AIProvider, @unchecked Sendable {
             } catch {
                 continuation.finish(throwing: error)
             }
+        }
+
+        continuation.onTermination = { _ in
+            task.cancel()
         }
 
         return outputStream

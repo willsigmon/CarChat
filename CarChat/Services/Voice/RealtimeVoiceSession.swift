@@ -35,16 +35,17 @@ final class RealtimeVoiceSession: VoiceSessionProtocol {
         self.audioLevelContinuation = audioLevelCont
     }
 
+    deinit {
+        stateContinuation?.finish()
+        transcriptContinuation?.finish()
+        audioLevelContinuation?.finish()
+    }
+
     func start(systemPrompt: String) async throws {
         try AudioSessionManager.shared.configureForVoiceChat()
         updateState(.listening)
 
-        // OpenAI Realtime API connection via SwiftOpenAI
-        // The actual WebSocket connection will use SwiftOpenAI's realtime capabilities.
-        // For now, this establishes the session structure.
-        // Full implementation depends on SwiftOpenAI's Realtime API surface.
-
-        // TODO: Connect to OpenAI Realtime WebSocket
+        // TODO: OpenAI Realtime API WebSocket implementation
         // 1. Create realtime session with model and voice
         // 2. Send session.update with system prompt
         // 3. Start audio input stream
@@ -53,12 +54,14 @@ final class RealtimeVoiceSession: VoiceSessionProtocol {
 
     func stop() async {
         updateState(.idle)
+        stateContinuation?.finish()
+        transcriptContinuation?.finish()
+        audioLevelContinuation?.finish()
         try? AudioSessionManager.shared.deactivate()
     }
 
     func interrupt() async {
         updateState(.listening)
-        // Send conversation.item.truncate to OpenAI
     }
 
     private func updateState(_ newState: VoiceSessionState) {
