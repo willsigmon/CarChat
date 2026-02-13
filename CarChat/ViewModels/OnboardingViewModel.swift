@@ -21,13 +21,19 @@ final class OnboardingViewModel {
     func requestPermissions() {
         Task {
             hasMicPermission = await AVAudioApplication.requestRecordPermission()
-
-            let status = await withCheckedContinuation { continuation in
-                SFSpeechRecognizer.requestAuthorization { status in
-                    continuation.resume(returning: status)
-                }
-            }
+            let status = await Self.requestSpeechAuthorization()
             hasSpeechPermission = status == .authorized
+        }
+    }
+
+    /// Must be nonisolated so the callback closure doesn't inherit MainActor isolation.
+    /// SFSpeechRecognizer.requestAuthorization calls back on a background queue;
+    /// Swift 6 runtime crashes if the closure is MainActor-isolated.
+    private nonisolated static func requestSpeechAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
+        await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
         }
     }
 
