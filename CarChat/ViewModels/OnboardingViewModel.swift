@@ -19,16 +19,15 @@ final class OnboardingViewModel {
     }
 
     func requestPermissions() {
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            Task { @MainActor in
-                self.hasMicPermission = granted
-            }
-        }
+        Task {
+            hasMicPermission = await AVAudioApplication.requestRecordPermission()
 
-        SFSpeechRecognizer.requestAuthorization { status in
-            Task { @MainActor in
-                self.hasSpeechPermission = status == .authorized
+            let status = await withCheckedContinuation { continuation in
+                SFSpeechRecognizer.requestAuthorization { status in
+                    continuation.resume(returning: status)
+                }
             }
+            hasSpeechPermission = status == .authorized
         }
     }
 

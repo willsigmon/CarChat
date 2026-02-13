@@ -12,7 +12,7 @@ final class AudioSessionManager {
             .playAndRecord,
             mode: .voiceChat,
             options: [
-                .allowBluetooth,
+                .allowBluetoothHFP,
                 .allowBluetoothA2DP,
                 .duckOthers,
                 .defaultToSpeaker

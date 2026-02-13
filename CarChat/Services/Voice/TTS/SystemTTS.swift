@@ -58,7 +58,7 @@ final class SystemTTS: NSObject, TTSEngineProtocol {
     }
 }
 
-extension SystemTTS: @preconcurrency AVSpeechSynthesizerDelegate {
+extension SystemTTS: AVSpeechSynthesizerDelegate {
     nonisolated func speechSynthesizer(
         _ synthesizer: AVSpeechSynthesizer,
         didFinish utterance: AVSpeechUtterance
