@@ -5,24 +5,29 @@ struct OnboardingContainerView: View {
     @State private var viewModel: OnboardingViewModel?
 
     var body: some View {
-        Group {
-            if let viewModel {
-                switch viewModel.currentStep {
-                case .welcome:
-                    WelcomeStepView(viewModel: viewModel)
-                case .permissions:
-                    PermissionsStepView(viewModel: viewModel)
-                case .apiKey:
-                    APIKeyStepView(viewModel: viewModel)
-                case .ready:
-                    ReadyStepView(viewModel: viewModel)
+        contentView
+            .task {
+                if viewModel == nil {
+                    viewModel = OnboardingViewModel(appServices: appServices)
                 }
             }
-        }
-        .onAppear {
-            if viewModel == nil {
-                viewModel = OnboardingViewModel(appServices: appServices)
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        if let viewModel {
+            switch viewModel.currentStep {
+            case .welcome:
+                WelcomeStepView(viewModel: viewModel)
+            case .permissions:
+                PermissionsStepView(viewModel: viewModel)
+            case .apiKey:
+                APIKeyStepView(viewModel: viewModel)
+            case .ready:
+                ReadyStepView(viewModel: viewModel)
             }
+        } else {
+            ProgressView()
         }
     }
 }

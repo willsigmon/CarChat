@@ -32,11 +32,9 @@ struct ConversationView: View {
             }
             .navigationTitle("CarChat")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
+            .task {
                 if viewModel == nil {
-                    viewModel = ConversationViewModel(
-                        appServices: appServices
-                    )
+                    viewModel = ConversationViewModel(appServices: appServices)
                 }
             }
         }
