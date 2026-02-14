@@ -15,6 +15,9 @@
 		15C76AE7C57355BC6F223D78 /* AmbientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A84BFBD62F91ECB0F6F0FEA1 /* AmbientBackground.swift */; };
 		17A30B9F55D45A0A66F3ECCD /* VoiceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5405E229A26696711BD3E4 /* VoiceSettingsView.swift */; };
 		1B1FFD0D092DDCBAC8C25985 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300B205487E939976B54F2E5 /* MainTabView.swift */; };
+		A1F97E65D2A14E1197E64001 /* SpeechEndpointingConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F97E65D2A14E1197E64003 /* SpeechEndpointingConfig.swift */; };
+		A1F97E65D2A14E1197E64002 /* VoiceEndpointDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F97E65D2A14E1197E64004 /* VoiceEndpointDetector.swift */; };
+		A1F97E65D2A14E1197E64005 /* VoiceEndpointDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F97E65D2A14E1197E64006 /* VoiceEndpointDetectorTests.swift */; };
 		281AF5E40B088B3C3E3B41F4 /* AIProviderFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C333B1733CB85E84B8481A7C /* AIProviderFactory.swift */; };
 		2E94FE207A2587A9001E29D7 /* ConversationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF41257D3A9CA0E7A2E15B58 /* ConversationStore.swift */; };
 		35E3940DD79B82349A0B5612 /* CarPlayTemplateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED20D4D71733DF698992B623 /* CarPlayTemplateManager.swift */; };
@@ -113,6 +116,9 @@
 		8E238B17188B86A81A0AD8EB /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
 		901FD01251EBDEA3D9552E76 /* VoiceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSession.swift; sourceTree = "<group>"; };
 		9B5405E229A26696711BD3E4 /* VoiceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettingsView.swift; sourceTree = "<group>"; };
+		A1F97E65D2A14E1197E64003 /* SpeechEndpointingConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechEndpointingConfig.swift; sourceTree = "<group>"; };
+		A1F97E65D2A14E1197E64004 /* VoiceEndpointDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEndpointDetector.swift; sourceTree = "<group>"; };
+		A1F97E65D2A14E1197E64006 /* VoiceEndpointDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEndpointDetectorTests.swift; sourceTree = "<group>"; };
 		A0EA940A5CC9B5C897E21637 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A4A34D773EEF32852B379512 /* CarChatApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarChatApp.swift; sourceTree = "<group>"; };
 		A4E84090874CC4E3EA33ED46 /* OllamaProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaProvider.swift; sourceTree = "<group>"; };
@@ -210,6 +216,7 @@
 			isa = PBXGroup;
 			children = (
 				F773814AB8F53A17FCD47833 /* CarChatTests.swift */,
+				A1F97E65D2A14E1197E64006 /* VoiceEndpointDetectorTests.swift */,
 			);
 			path = CarChatTests;
 			sourceTree = "<group>";
@@ -218,7 +225,9 @@
 			isa = PBXGroup;
 			children = (
 				396369CF8865713366A6BFFF /* SFSpeechSTT.swift */,
+				A1F97E65D2A14E1197E64003 /* SpeechEndpointingConfig.swift */,
 				DC538F07B00886001C7D4F91 /* STTEngine.swift */,
+				A1F97E65D2A14E1197E64004 /* VoiceEndpointDetector.swift */,
 			);
 			path = STT;
 			sourceTree = "<group>";
@@ -536,7 +545,9 @@
 				4DA9DC04E190065089F89B4D /* Provider.swift in Sources */,
 				751D26EF0D7B12F82E3AA017 /* RealtimeVoiceSession.swift in Sources */,
 				0E5F314B5B25A62AD094626C /* SFSpeechSTT.swift in Sources */,
+				A1F97E65D2A14E1197E64001 /* SpeechEndpointingConfig.swift in Sources */,
 				C7D3AF31D923A33C5AC6A4CF /* STTEngine.swift in Sources */,
+				A1F97E65D2A14E1197E64002 /* VoiceEndpointDetector.swift in Sources */,
 				9EDC5EA500924644F1154C97 /* SettingsView.swift in Sources */,
 				C3243E104E4BDD5354D68BF2 /* SettingsViewModel.swift in Sources */,
 				736C1061F9A97FBB55DD14E7 /* SystemTTS.swift in Sources */,
@@ -557,6 +568,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EEF8A8009FA801A4C15644A7 /* CarChatTests.swift in Sources */,
+				A1F97E65D2A14E1197E64005 /* VoiceEndpointDetectorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

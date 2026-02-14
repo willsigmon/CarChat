@@ -120,7 +120,7 @@ final class ConversationViewModel {
             apiKey: apiKey
         )
 
-        let stt = SFSpeechSTT()
+        let stt = SFSpeechSTT(paceProfile: .fast)
         let tts = try await buildTTSEngine()
 
         return PipelineVoiceSession(
