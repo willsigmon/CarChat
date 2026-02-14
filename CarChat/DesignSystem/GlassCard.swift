@@ -96,34 +96,3 @@ extension View {
     }
 }
 
-// MARK: - Embossed Text
-
-struct EmbossedText: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .shadow(color: .white.opacity(0.15), radius: 0, x: 0, y: 1)
-            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: -1)
-    }
-}
-
-extension View {
-    func embossed() -> some View {
-        modifier(EmbossedText())
-    }
-}
-
-// MARK: - Glass Card Press Style
-
-/// Button style that adds subtle press feedback to any view
-struct GlassCardButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.975 : 1.0)
-            .brightness(configuration.isPressed ? 0.02 : 0)
-            .animation(CarChatTheme.Animation.micro, value: configuration.isPressed)
-    }
-}
-
-extension ButtonStyle where Self == GlassCardButtonStyle {
-    static var glassPress: GlassCardButtonStyle { .init() }
-}

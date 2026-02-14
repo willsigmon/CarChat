@@ -5,6 +5,7 @@ struct VoiceWaveformView: View {
     let state: VoiceSessionState
 
     private let barCount = 48
+    @State private var appeared = false
 
     private var stateColor: Color {
         switch state {
@@ -40,26 +41,69 @@ struct VoiceWaveformView: View {
                         )
                 }
 
-                // Waveform bars
-                HStack(spacing: 2.5) {
-                    ForEach(0..<barCount, id: \.self) { index in
-                        WaveformBar(
-                            level: level,
-                            index: index,
-                            totalBars: barCount,
-                            gradient: stateGradient,
-                            isActive: state.isActive
-                        )
+                VStack(spacing: 0) {
+                    // Waveform bars
+                    HStack(spacing: 2.5) {
+                        ForEach(0..<barCount, id: \.self) { index in
+                            WaveformBar(
+                                level: level,
+                                index: index,
+                                totalBars: barCount,
+                                gradient: stateGradient,
+                                isActive: state.isActive
+                            )
+                            .opacity(appeared ? 1 : 0)
+                            .animation(
+                                .easeOut(duration: 0.4)
+                                    .delay(entranceDelay(for: index)),
+                                value: appeared
+                            )
+                        }
                     }
+                    .frame(
+                        width: geometry.size.width,
+                        height: geometry.size.height * 0.85
+                    )
+
+                    // Subtle reflection below bars
+                    HStack(spacing: 2.5) {
+                        ForEach(0..<barCount, id: \.self) { index in
+                            WaveformBar(
+                                level: level,
+                                index: index,
+                                totalBars: barCount,
+                                gradient: stateGradient,
+                                isActive: state.isActive
+                            )
+                        }
+                    }
+                    .frame(
+                        width: geometry.size.width,
+                        height: geometry.size.height * 0.15
+                    )
+                    .scaleEffect(y: -1, anchor: .top)
+                    .opacity(0.12)
+                    .blur(radius: 1)
+                    .mask(
+                        LinearGradient(
+                            colors: [.white, .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                 }
-                .frame(
-                    width: geometry.size.width,
-                    height: geometry.size.height
-                )
             }
         }
         .padding(.horizontal, CarChatTheme.Spacing.xl)
         .animation(CarChatTheme.Animation.fast, value: state)
+        .onAppear { appeared = true }
+    }
+
+    /// Stagger entrance from center outward
+    private func entranceDelay(for index: Int) -> Double {
+        let center = Double(barCount) / 2.0
+        let distance = abs(Double(index) - center) / center
+        return distance * 0.3
     }
 }
 

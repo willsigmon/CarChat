@@ -139,5 +139,8 @@ private struct PermissionCard: View {
             }
         }
         .animation(.default, value: isGranted)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(isGranted ? "granted" : "not granted")")
+        .accessibilityHint(description)
     }
 }

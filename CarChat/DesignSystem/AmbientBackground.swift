@@ -6,6 +6,7 @@ import SwiftUI
 struct AmbientBackground: View {
     let state: VoiceSessionState
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var phase: CGFloat = 0
     @State private var orb1Offset: CGSize = .zero
     @State private var orb2Offset: CGSize = .zero
@@ -97,7 +98,9 @@ struct AmbientBackground: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            startOrbAnimation()
+            if !reduceMotion {
+                startOrbAnimation()
+            }
         }
         .onChange(of: state) { _, _ in
             // Smooth transition of orb colors handled by animation
@@ -125,6 +128,7 @@ struct FloatingParticles: View {
     let isActive: Bool
     let color: Color
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var particles: [Particle] = []
 
     struct Particle: Identifiable {
@@ -143,32 +147,36 @@ struct FloatingParticles: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-                Canvas { context, size in
-                    for particle in particles {
-                        let rect = CGRect(
-                            x: particle.x * size.width,
-                            y: particle.y * size.height,
-                            width: particle.size,
-                            height: particle.size
-                        )
-                        context.opacity = isActive ? particle.opacity : particle.opacity * 0.3
-                        context.fill(
-                            Circle().path(in: rect),
-                            with: .color(color)
-                        )
+        if reduceMotion {
+            Color.clear
+        } else {
+            GeometryReader { geo in
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                    Canvas { context, size in
+                        for particle in particles {
+                            let rect = CGRect(
+                                x: particle.x * size.width,
+                                y: particle.y * size.height,
+                                width: particle.size,
+                                height: particle.size
+                            )
+                            context.opacity = isActive ? particle.opacity : particle.opacity * 0.3
+                            context.fill(
+                                Circle().path(in: rect),
+                                with: .color(color)
+                            )
+                        }
                     }
                 }
+                .onAppear {
+                    initializeParticles()
+                }
+                .task {
+                    await animateParticles()
+                }
             }
-            .onAppear {
-                initializeParticles()
-            }
-            .task {
-                await animateParticles()
-            }
+            .allowsHitTesting(false)
         }
-        .allowsHitTesting(false)
     }
 
     private func initializeParticles() {
@@ -198,50 +206,3 @@ struct FloatingParticles: View {
     }
 }
 
-// MARK: - Pulsing Ring
-
-struct PulsingRing: View {
-    let color: Color
-    let isActive: Bool
-    let maxScale: CGFloat
-    let lineWidth: CGFloat
-
-    @State private var scale: CGFloat = 1.0
-    @State private var opacity: CGFloat = 0.6
-
-    init(
-        color: Color = CarChatTheme.Colors.accentGradientStart,
-        isActive: Bool = true,
-        maxScale: CGFloat = 1.8,
-        lineWidth: CGFloat = 1.5
-    ) {
-        self.color = color
-        self.isActive = isActive
-        self.maxScale = maxScale
-        self.lineWidth = lineWidth
-    }
-
-    var body: some View {
-        Circle()
-            .strokeBorder(color, lineWidth: lineWidth)
-            .scaleEffect(isActive ? scale : 1.0)
-            .opacity(isActive ? opacity : 0)
-            .onAppear {
-                guard isActive else { return }
-                withAnimation(.easeOut(duration: 1.5).repeatForever(autoreverses: false)) {
-                    scale = maxScale
-                    opacity = 0
-                }
-            }
-            .onChange(of: isActive) { _, active in
-                if active {
-                    scale = 1.0
-                    opacity = 0.6
-                    withAnimation(.easeOut(duration: 1.5).repeatForever(autoreverses: false)) {
-                        scale = maxScale
-                        opacity = 0
-                    }
-                }
-            }
-    }
-}

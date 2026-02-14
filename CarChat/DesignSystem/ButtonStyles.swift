@@ -68,31 +68,6 @@ struct CarChatGhostButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Icon Button Style
-
-struct CarChatIconButtonStyle: ButtonStyle {
-    let size: CGFloat
-
-    init(size: CGFloat = 44) {
-        self.size = size
-    }
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .frame(width: size, height: size)
-            .background(
-                Circle()
-                    .fill(CarChatTheme.Colors.surfaceGlass)
-            )
-            .overlay(
-                Circle()
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
-            )
-            .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
-            .animation(CarChatTheme.Animation.springy, value: configuration.isPressed)
-    }
-}
-
 // MARK: - Convenience Extensions
 
 extension ButtonStyle where Self == CarChatPrimaryButtonStyle {

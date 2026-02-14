@@ -190,7 +190,7 @@ struct VoiceStateIcon: View {
     let state: VoiceSessionState
 
     @State private var rotation: Double = 0
-    @State private var pulse = false
+    @State private var tilt: Bool = false
 
     var body: some View {
         ZStack {
@@ -205,6 +205,12 @@ struct VoiceStateIcon: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(CarChatTheme.Colors.listening)
                     .symbolEffect(.variableColor.iterative, isActive: true)
+                    .rotationEffect(.degrees(tilt ? 3 : -3))
+                    .animation(
+                        .easeInOut(duration: 0.8).repeatForever(autoreverses: true),
+                        value: tilt
+                    )
+                    .onAppear { tilt = true }
 
             case .processing:
                 Image(systemName: "circle.dotted")

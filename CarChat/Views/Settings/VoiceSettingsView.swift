@@ -91,22 +91,10 @@ struct VoiceSettingsView: View {
 
                         Spacer()
 
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(hasElevenLabsKey ? CarChatTheme.Colors.success : CarChatTheme.Colors.textTertiary)
-                                .frame(width: 6, height: 6)
-
-                            Text(hasElevenLabsKey ? "Configured" : "Not Set")
-                                .font(CarChatTheme.Typography.micro)
-                                .foregroundStyle(
-                                    hasElevenLabsKey
-                                        ? CarChatTheme.Colors.success
-                                        : CarChatTheme.Colors.textTertiary
-                                )
-                        }
-                        .padding(.horizontal, CarChatTheme.Spacing.xs)
-                        .padding(.vertical, CarChatTheme.Spacing.xxs)
-                        .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
+                        StatusBadge(
+                            text: hasElevenLabsKey ? "Configured" : "Not Set",
+                            color: hasElevenLabsKey ? CarChatTheme.Colors.success : CarChatTheme.Colors.textTertiary
+                        )
                     }
 
                     if isEditingKey {

@@ -21,10 +21,15 @@ enum CarChatTheme {
         static let surfaceGlass = Color.white.opacity(0.08)
         static let surfaceBorder = Color.white.opacity(0.10)
 
+        // Borders
+        static let borderSubtle = Color.white.opacity(0.06)
+        static let borderMedium = Color.white.opacity(0.12)
+        static let borderStrong = Color.white.opacity(0.20)
+
         // Text
         static let textPrimary = Color.white
         static let textSecondary = Color.white.opacity(0.60)
-        static let textTertiary = Color.white.opacity(0.35)
+        static let textTertiary = Color.white.opacity(0.45)
 
         // State Colors
         static let listening = Color(hex: 0x00E676)
@@ -104,6 +109,7 @@ enum CarChatTheme {
     // MARK: - Spacing
 
     enum Spacing {
+        static let xxxs: CGFloat = 2
         static let xxs: CGFloat = 4
         static let xs: CGFloat = 8
         static let sm: CGFloat = 12
@@ -143,18 +149,18 @@ enum CarChatTheme {
     // MARK: - Typography
 
     enum Typography {
-        static let heroTitle = Font.system(size: 34, weight: .bold, design: .rounded)
-        static let title = Font.system(size: 24, weight: .bold, design: .rounded)
-        static let headline = Font.system(size: 17, weight: .semibold)
-        static let body = Font.system(size: 15, weight: .regular)
-        static let callout = Font.system(size: 14, weight: .medium)
-        static let caption = Font.system(size: 12, weight: .medium)
+        static let heroTitle = Font.system(.largeTitle, design: .rounded).weight(.bold)
+        static let title = Font.system(.title2, design: .rounded).weight(.bold)
+        static let headline = Font.system(.headline).weight(.semibold)
+        static let body = Font.system(.subheadline)
+        static let callout = Font.system(.footnote).weight(.medium)
+        static let caption = Font.system(.caption).weight(.medium)
         static let micro = Font.system(size: 10, weight: .semibold)
 
-        static let statusLabel = Font.system(size: 14, weight: .semibold, design: .rounded)
+        static let statusLabel = Font.system(.footnote, design: .rounded).weight(.semibold)
             .monospacedDigit()
-        static let transcriptUser = Font.system(size: 16, weight: .medium)
-        static let transcriptAssistant = Font.system(size: 15, weight: .regular)
+        static let transcriptUser = Font.system(.body).weight(.medium)
+        static let transcriptAssistant = Font.system(.subheadline)
     }
 
     // MARK: - Shadows

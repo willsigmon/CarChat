@@ -64,6 +64,8 @@ struct SettingsView: View {
                                 versionTapCount += 1
                                 Haptics.tap()
                             }
+                            .accessibilityLabel("Version \(versionLabel)")
+                            .accessibilityAddTraits(.isStaticText)
                         }
 
                         // Footer
@@ -114,6 +116,7 @@ private struct SettingsSection<Content: View>: View {
                 Text(title.uppercased())
                     .font(CarChatTheme.Typography.micro)
                     .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    .accessibilityAddTraits(.isHeader)
 
                 if let subtitle {
                     Text(subtitle)
@@ -124,6 +127,11 @@ private struct SettingsSection<Content: View>: View {
             .padding(.horizontal, CarChatTheme.Spacing.xs)
 
             content()
+        }
+        .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+            content
+                .opacity(phase.isIdentity ? 1 : 0.5)
+                .scaleEffect(phase.isIdentity ? 1 : 0.96)
         }
     }
 }
@@ -159,5 +167,7 @@ private struct SettingsRow<Destination: View>: View {
             }
         }
         .sensoryFeedback(.selection, trigger: false)
+        .accessibilityLabel(title)
+        .accessibilityHint("Opens \(title.lowercased())")
     }
 }

@@ -1,9 +1,12 @@
 import UIKit
+import AudioToolbox
+import SwiftUI
 
 /// Centralized haptic feedback patterns for CarChat.
 /// Gives every interaction a tactile signature.
 @MainActor
 enum Haptics {
+    @AppStorage("soundEffects") private static var soundEnabled = true
     private static let light = UIImpactFeedbackGenerator(style: .light)
     private static let medium = UIImpactFeedbackGenerator(style: .medium)
     private static let heavy = UIImpactFeedbackGenerator(style: .heavy)
@@ -98,5 +101,31 @@ enum Haptics {
     /// Conversation ended — gentle close
     static func conversationEnded() {
         soft.impactOccurred(intensity: 0.3)
+    }
+
+    // MARK: - Sound Companions
+
+    /// Play a subtle system sound alongside haptic feedback
+    private static func playSound(_ soundID: SystemSoundID) {
+        guard soundEnabled else { return }
+        AudioServicesPlaySystemSound(soundID)
+    }
+
+    /// Listening start — crisp begin-recording sound
+    static func listeningStartSound() {
+        rigid.impactOccurred(intensity: 0.7)
+        playSound(1306)
+    }
+
+    /// Speaking start — gentle tink
+    static func speakingStartSound() {
+        medium.impactOccurred(intensity: 0.5)
+        playSound(1054)
+    }
+
+    /// Error with sound — audible error feedback
+    static func errorSound() {
+        notification.notificationOccurred(.error)
+        playSound(1053)
     }
 }

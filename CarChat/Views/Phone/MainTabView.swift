@@ -14,18 +14,24 @@ struct MainTabView: View {
                     Label("Talk", systemImage: "mic.fill")
                 }
                 .tag(Tab.talk)
+                .accessibilityLabel("Talk")
+                .accessibilityHint("Start a voice conversation")
 
             ConversationListView()
                 .tabItem {
                     Label("History", systemImage: "clock.fill")
                 }
                 .tag(Tab.history)
+                .accessibilityLabel("History")
+                .accessibilityHint("View past conversations")
 
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
                 .tag(Tab.settings)
+                .accessibilityLabel("Settings")
+                .accessibilityHint("Configure app settings")
         }
         .tint(CarChatTheme.Colors.accentGradientStart)
         .preferredColorScheme(.dark)

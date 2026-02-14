@@ -5,6 +5,7 @@ struct ConversationView: View {
     @State private var viewModel: ConversationViewModel?
     @State private var showGreeting = false
     @State private var statusLabel = Microcopy.Status.label(for: .idle)
+    @State private var showSettings = false
 
     var body: some View {
         Group {
@@ -106,9 +107,31 @@ struct ConversationView: View {
         }
         .animation(.easeInOut(duration: 0.4), value: vm.voiceState)
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                APIKeySettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { showSettings = false }
+                                .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                        }
+                    }
+            }
+            .preferredColorScheme(.dark)
+        }
         .onChange(of: vm.voiceState) { oldState, newState in
-            // Haptic per state transition
+            // Haptic per state transition with sound companions
             Haptics.voiceStateChanged(to: newState)
+            switch newState {
+            case .listening where oldState == .idle:
+                Haptics.listeningStartSound()
+            case .speaking where oldState != .speaking:
+                Haptics.speakingStartSound()
+            case .error:
+                Haptics.errorSound()
+            default:
+                break
+            }
 
             // Refresh status label on each transition
             withAnimation(CarChatTheme.Animation.fast) {
@@ -148,6 +171,8 @@ struct ConversationView: View {
             }
         }
         .padding(.horizontal, CarChatTheme.Spacing.xxxl)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Greeting")
     }
 
     // MARK: - Top Bar
@@ -171,6 +196,8 @@ struct ConversationView: View {
             // Voice state badge
             VoiceStateBadge(state: vm.voiceState)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("CarChat, \(vm.voiceState.isActive ? "Live" : "Ready")")
     }
 
     // MARK: - Status Indicator
@@ -189,6 +216,8 @@ struct ConversationView: View {
         .padding(.horizontal, CarChatTheme.Spacing.md)
         .padding(.vertical, CarChatTheme.Spacing.xs)
         .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Status: \(statusLabel)")
     }
 
     // MARK: - Transcript Area
@@ -239,17 +268,59 @@ struct ConversationView: View {
 
     // MARK: - Error Banner
 
+    private var isAPIKeyError: Bool {
+        guard let error = viewModel?.errorMessage?.lowercased() else { return false }
+        return error.contains("api") || error.contains("key") || error.contains("auth")
+            || error.contains("401") || error.contains("403")
+    }
+
     @ViewBuilder
     private func errorBanner(_ error: String) -> some View {
-        HStack(spacing: CarChatTheme.Spacing.xs) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(CarChatTheme.Colors.error)
+        VStack(spacing: CarChatTheme.Spacing.xs) {
+            HStack(spacing: CarChatTheme.Spacing.xs) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(CarChatTheme.Colors.error)
 
-            Text(error)
-                .font(CarChatTheme.Typography.caption)
-                .foregroundStyle(CarChatTheme.Colors.error.opacity(0.9))
-                .lineLimit(2)
+                Text(error)
+                    .font(CarChatTheme.Typography.caption)
+                    .foregroundStyle(CarChatTheme.Colors.error.opacity(0.9))
+                    .lineLimit(2)
+
+                Spacer()
+            }
+
+            HStack(spacing: CarChatTheme.Spacing.xs) {
+                Button {
+                    viewModel?.startListening()
+                } label: {
+                    Text("Try Again")
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, CarChatTheme.Spacing.sm)
+                        .padding(.vertical, CarChatTheme.Spacing.xxs)
+                        .background(Capsule().fill(CarChatTheme.Colors.error.opacity(0.3)))
+                }
+                .accessibilityLabel("Try again")
+                .accessibilityHint("Retries the voice conversation")
+
+                if isAPIKeyError {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Text("Settings")
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                            .padding(.horizontal, CarChatTheme.Spacing.sm)
+                            .padding(.vertical, CarChatTheme.Spacing.xxs)
+                            .background(Capsule().fill(CarChatTheme.Colors.surfaceGlass))
+                    }
+                    .accessibilityLabel("Open settings")
+                    .accessibilityHint("Configure your API key")
+                }
+
+                Spacer()
+            }
         }
         .padding(CarChatTheme.Spacing.sm)
         .background(
@@ -260,6 +331,8 @@ struct ConversationView: View {
                         .strokeBorder(CarChatTheme.Colors.error.opacity(0.2), lineWidth: 0.5)
                 )
         )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Error: \(error)")
     }
 
     // MARK: - Helpers
@@ -301,18 +374,11 @@ private struct VoiceStateBadge: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 6, height: 6)
-                .opacity(state.isActive ? 1.0 : 0.5)
-
-            Text(state.isActive ? "Live" : "Ready")
-                .font(CarChatTheme.Typography.micro)
-                .foregroundStyle(color)
-        }
-        .padding(.horizontal, CarChatTheme.Spacing.xs)
-        .padding(.vertical, CarChatTheme.Spacing.xxs)
+        StatusBadge(
+            text: state.isActive ? "Live" : "Ready",
+            color: color,
+            isActive: state.isActive
+        )
         .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
     }
 }

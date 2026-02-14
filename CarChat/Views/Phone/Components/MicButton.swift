@@ -6,6 +6,7 @@ struct MicButton: View {
 
     private let size: CGFloat = 88
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
     @State private var ring1Scale: CGFloat = 1.0
     @State private var ring1Opacity: CGFloat = 0.5
@@ -118,16 +119,19 @@ struct MicButton: View {
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
-                    .contentTransition(.symbolEffect(.replace))
+                    .contentTransition(.symbolEffect(.replace.downUp))
+                    .symbolEffect(.bounce, value: state)
             }
         }
         .buttonStyle(.plain)
-        .scaleEffect(isActive && breathe ? 1.04 : 1.0)
+        .scaleEffect(isActive && breathe && !reduceMotion ? 1.04 : 1.0)
         .sensoryFeedback(.impact(weight: .medium), trigger: state)
-        .animation(CarChatTheme.Animation.breathe, value: breathe)
+        .animation(reduceMotion ? nil : CarChatTheme.Animation.breathe, value: breathe)
         .animation(CarChatTheme.Animation.springy, value: state)
         .onAppear {
-            breathe = true
+            if !reduceMotion {
+                breathe = true
+            }
         }
         .accessibilityLabel(
             isActive ? "Stop conversation" : "Start conversation"

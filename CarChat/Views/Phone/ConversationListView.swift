@@ -7,6 +7,7 @@ struct ConversationListView: View {
     private var conversations: [Conversation]
 
     @State private var emptyStateVisible = false
+    @State private var conversationToDelete: Conversation?
 
     var body: some View {
         NavigationStack {
@@ -23,6 +24,29 @@ struct ConversationListView: View {
             }
             .navigationTitle("History")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .confirmationDialog(
+                "Delete Conversation?",
+                isPresented: Binding(
+                    get: { conversationToDelete != nil },
+                    set: { if !$0 { conversationToDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let conversation = conversationToDelete {
+                        Haptics.thud()
+                        withAnimation {
+                            appServices.conversationStore.delete(conversation)
+                        }
+                        conversationToDelete = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    conversationToDelete = nil
+                }
+            } message: {
+                Text("This conversation will be permanently deleted.")
+            }
         }
         .preferredColorScheme(.dark)
     }
@@ -50,6 +74,7 @@ struct ConversationListView: View {
             }
             .scaleEffect(emptyStateVisible ? 1.0 : 0.8)
             .opacity(emptyStateVisible ? 1.0 : 0)
+            .accessibilityHidden(true)
 
             VStack(spacing: CarChatTheme.Spacing.xs) {
                 Text(Microcopy.EmptyState.historyTitle)
@@ -65,6 +90,7 @@ struct ConversationListView: View {
             .opacity(emptyStateVisible ? 1.0 : 0)
             .offset(y: emptyStateVisible ? 0 : 10)
         }
+        .accessibilityElement(children: .combine)
         .onAppear {
             withAnimation(CarChatTheme.Animation.smooth.delay(0.2)) {
                 emptyStateVisible = true
@@ -78,6 +104,18 @@ struct ConversationListView: View {
             LazyVStack(spacing: CarChatTheme.Spacing.sm) {
                 ForEach(Array(conversations.enumerated()), id: \.element.id) { index, conversation in
                     ConversationRow(conversation: conversation)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                conversationToDelete = conversation
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .scaleEffect(phase.isIdentity ? 1 : 0.96)
+                        }
                         .transition(.asymmetric(
                             insertion: .move(edge: .trailing).combined(with: .opacity),
                             removal: .opacity
@@ -137,5 +175,8 @@ private struct ConversationRow: View {
                     .foregroundStyle(CarChatTheme.Colors.textTertiary)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(conversation.displayTitle), \(conversation.personaName)")
+        .accessibilityHint("Opens conversation")
     }
 }

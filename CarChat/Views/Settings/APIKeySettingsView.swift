@@ -76,22 +76,10 @@ private struct APIKeyCard: View {
                     Spacer()
 
                     // Status badge
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(hasKey ? CarChatTheme.Colors.success : CarChatTheme.Colors.textTertiary)
-                            .frame(width: 6, height: 6)
-
-                        Text(hasKey ? "Configured" : "Not Set")
-                            .font(CarChatTheme.Typography.micro)
-                            .foregroundStyle(
-                                hasKey
-                                    ? CarChatTheme.Colors.success
-                                    : CarChatTheme.Colors.textTertiary
-                            )
-                    }
-                    .padding(.horizontal, CarChatTheme.Spacing.xs)
-                    .padding(.vertical, CarChatTheme.Spacing.xxs)
-                    .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
+                    StatusBadge(
+                        text: hasKey ? "Configured" : "Not Set",
+                        color: hasKey ? CarChatTheme.Colors.success : CarChatTheme.Colors.textTertiary
+                    )
                 }
 
                 // Edit section

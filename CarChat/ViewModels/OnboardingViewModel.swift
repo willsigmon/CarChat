@@ -60,6 +60,15 @@ final class OnboardingViewModel {
         case .ready: completeOnboarding()
         }
     }
+
+    func goBack() {
+        switch currentStep {
+        case .welcome: break
+        case .permissions: currentStep = .welcome
+        case .apiKey: currentStep = .permissions
+        case .ready: currentStep = .apiKey
+        }
+    }
 }
 
 enum OnboardingStep: CaseIterable {
