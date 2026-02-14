@@ -15,6 +15,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
     private var conversationHistory: [(role: MessageRole, content: String)] = []
 
     private(set) var state: VoiceSessionState = .idle
+    private let handoffDelay: Duration = .milliseconds(120)
 
     let stateStream: AsyncStream<VoiceSessionState>
     let transcriptStream: AsyncStream<VoiceTranscript>
@@ -177,11 +178,19 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
 
                 await sttEngine.stopListening()
 
-                guard !finalText.isEmpty, !Task.isCancelled else { continue }
+                let trimmedFinalText = finalText.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                guard trimmedFinalText.count >= 2, !Task.isCancelled else {
+                    continue
+                }
+
+                try? await Task.sleep(for: handoffDelay)
+                guard !Task.isCancelled else { continue }
 
                 // Process through AI
                 updateState(.processing)
-                conversationHistory.append((.user, finalText))
+                conversationHistory.append((.user, trimmedFinalText))
 
                 do {
                     var fullResponse = ""
