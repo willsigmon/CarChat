@@ -3,26 +3,61 @@ import AVFoundation
 @MainActor
 final class AudioSessionManager {
     static let shared = AudioSessionManager()
+    private static let outputModeKey = "audioOutputMode"
     private let audioSession = AVAudioSession.sharedInstance()
 
     private init() {}
 
     func configureForVoiceChat() throws {
+        let outputMode = preferredOutputMode
+        var options: AVAudioSession.CategoryOptions = [
+            .allowBluetoothHFP,
+            .allowBluetoothA2DP,
+            .duckOthers
+        ]
+        if outputMode == .speakerphone {
+            options.insert(.defaultToSpeaker)
+        }
+
         try audioSession.setCategory(
             .playAndRecord,
             mode: .voiceChat,
-            options: [
-                .allowBluetoothHFP,
-                .allowBluetoothA2DP,
-                .duckOthers,
-                .defaultToSpeaker
-            ]
+            options: options
         )
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        try applyOutputOverride(for: outputMode)
     }
 
     func deactivate() throws {
         try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    var preferredOutputMode: AudioOutputMode {
+        guard
+            let raw = UserDefaults.standard.string(forKey: Self.outputModeKey),
+            let mode = AudioOutputMode(rawValue: raw)
+        else {
+            return .defaultMode
+        }
+        return mode
+    }
+
+    func setPreferredOutputMode(_ mode: AudioOutputMode) {
+        UserDefaults.standard.set(mode.rawValue, forKey: Self.outputModeKey)
+        try? applyOutputOverride(for: mode)
+    }
+
+    var currentOutputRouteName: String {
+        audioSession.currentRoute.outputs.first?.portName ?? "Unknown"
+    }
+
+    private func applyOutputOverride(for mode: AudioOutputMode) throws {
+        switch mode {
+        case .automatic:
+            try audioSession.overrideOutputAudioPort(.none)
+        case .speakerphone:
+            try audioSession.overrideOutputAudioPort(.speaker)
+        }
     }
 
     var isBluetoothConnected: Bool {

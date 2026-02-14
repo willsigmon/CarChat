@@ -5,6 +5,7 @@ struct VoiceSettingsView: View {
     @Environment(AppServices.self) private var appServices
     @AppStorage("ttsEngine") private var ttsEngine = TTSEngineType.system.rawValue
     @AppStorage("elevenLabsModel") private var elevenLabsModel = ElevenLabsModel.flash.rawValue
+    @AppStorage("audioOutputMode") private var audioOutputMode = AudioOutputMode.defaultMode.rawValue
 
     @State private var elevenLabsKey = ""
     @State private var hasElevenLabsKey = false
@@ -25,6 +26,7 @@ struct VoiceSettingsView: View {
             ScrollView {
                 VStack(spacing: CarChatTheme.Spacing.md) {
                     ttsEngineSection
+                    audioOutputSection
                     if isElevenLabsSelected {
                         elevenLabsKeySection
                         if hasElevenLabsKey {
@@ -61,6 +63,43 @@ struct VoiceSettingsView: View {
                     withAnimation(CarChatTheme.Animation.fast) {
                         ttsEngine = engine.rawValue
                     }
+                }
+            }
+        }
+    }
+
+    // MARK: - ElevenLabs API Key
+
+    @ViewBuilder
+    private var audioOutputSection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+            Text("AUDIO OUTPUT")
+                .font(CarChatTheme.Typography.micro)
+                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+            ForEach(AudioOutputMode.allCases) { mode in
+                let isSelected = mode.rawValue == audioOutputMode
+                Button {
+                    withAnimation(CarChatTheme.Animation.fast) {
+                        audioOutputMode = mode.rawValue
+                        AudioSessionManager.shared.setPreferredOutputMode(mode)
+                    }
+                } label: {
+                    AudioOutputCard(mode: mode, isSelected: isSelected)
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.selection, trigger: isSelected)
+            }
+
+            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    Text("Current route: \(AudioSessionManager.shared.currentOutputRouteName)")
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(CarChatTheme.Colors.textSecondary)
                 }
             }
         }
@@ -400,6 +439,54 @@ struct VoiceSettingsView: View {
             predicate: #Predicate { $0.isDefault == true }
         )
         return (try? context.fetch(descriptor))?.first
+    }
+}
+
+// MARK: - Audio Output Card
+
+private struct AudioOutputCard: View {
+    let mode: AudioOutputMode
+    let isSelected: Bool
+
+    private var icon: String {
+        switch mode {
+        case .automatic: "point.3.connected.trianglepath.dotted"
+        case .speakerphone: "speaker.wave.3.fill"
+        }
+    }
+
+    var body: some View {
+        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+            HStack(spacing: CarChatTheme.Spacing.sm) {
+                LayeredFeatureIcon(
+                    systemName: icon,
+                    color: isSelected
+                        ? CarChatTheme.Colors.accentGradientStart
+                        : CarChatTheme.Colors.textTertiary,
+                    accentShape: .none
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(mode.displayName)
+                        .font(CarChatTheme.Typography.headline)
+                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                    Text(mode.subtitle)
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(
+                        isSelected
+                            ? CarChatTheme.Colors.accentGradientStart
+                            : CarChatTheme.Colors.textTertiary
+                    )
+            }
+        }
     }
 }
 

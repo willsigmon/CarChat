@@ -7,6 +7,7 @@ final class AppServices {
     let modelContainer: ModelContainer
     let keychainManager: KeychainManager
     let conversationStore: ConversationStore
+    let watchConnectivityManager: WatchConnectivityManager
 
     private(set) var isOnboardingComplete: Bool
 
@@ -44,6 +45,9 @@ final class AppServices {
         self.keychainManager = KeychainManager()
         self.conversationStore = ConversationStore(
             modelContainer: container
+        )
+        self.watchConnectivityManager = WatchConnectivityManager(
+            keychainManager: self.keychainManager
         )
         self.isOnboardingComplete = UserDefaults.standard.bool(
             forKey: "onboardingComplete"
