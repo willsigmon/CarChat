@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @State private var versionTapCount = 0
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -8,7 +10,7 @@ struct SettingsView: View {
 
                 ScrollView {
                     VStack(spacing: CarChatTheme.Spacing.md) {
-                        SettingsSection(title: "AI Providers") {
+                        SettingsSection(title: "AI Providers", subtitle: Microcopy.Settings.aiProviders) {
                             SettingsRow(
                                 icon: "key.fill",
                                 title: "API Keys",
@@ -17,7 +19,7 @@ struct SettingsView: View {
                             )
                         }
 
-                        SettingsSection(title: "Voice") {
+                        SettingsSection(title: "Voice", subtitle: Microcopy.Settings.voice) {
                             SettingsRow(
                                 icon: "waveform",
                                 title: "Voice Settings",
@@ -26,7 +28,7 @@ struct SettingsView: View {
                             )
                         }
 
-                        SettingsSection(title: "Personas") {
+                        SettingsSection(title: "Personas", subtitle: Microcopy.Settings.personas) {
                             SettingsRow(
                                 icon: "person.crop.circle",
                                 title: "Manage Personas",
@@ -35,7 +37,7 @@ struct SettingsView: View {
                             )
                         }
 
-                        SettingsSection(title: "About") {
+                        SettingsSection(title: "About", subtitle: Microcopy.Settings.about) {
                             GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
                                 HStack {
                                     HStack(spacing: CarChatTheme.Spacing.sm) {
@@ -52,16 +54,23 @@ struct SettingsView: View {
 
                                     Spacer()
 
-                                    Text(
-                                        Bundle.main.infoDictionary?[
-                                            "CFBundleShortVersionString"
-                                        ] as? String ?? "1.0"
-                                    )
-                                    .font(CarChatTheme.Typography.caption)
-                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                                    Text(versionLabel)
+                                        .font(CarChatTheme.Typography.caption)
+                                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                                        .contentTransition(.numericText())
                                 }
                             }
+                            .onTapGesture {
+                                versionTapCount += 1
+                                Haptics.tap()
+                            }
                         }
+
+                        // Footer
+                        Text("Made with love for the open road")
+                            .font(CarChatTheme.Typography.micro)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary.opacity(0.5))
+                            .padding(.top, CarChatTheme.Spacing.lg)
                     }
                     .padding(.horizontal, CarChatTheme.Spacing.md)
                     .padding(.top, CarChatTheme.Spacing.sm)
@@ -72,20 +81,47 @@ struct SettingsView: View {
         }
         .preferredColorScheme(.dark)
     }
+
+    private var versionLabel: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        if versionTapCount >= 7 {
+            return "\(version) (you found me!)"
+        }
+        return version
+    }
 }
 
 // MARK: - Settings Section
 
 private struct SettingsSection<Content: View>: View {
     let title: String
+    let subtitle: String?
     @ViewBuilder let content: () -> Content
+
+    init(
+        title: String,
+        subtitle: String? = nil,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.content = content
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
-            Text(title.uppercased())
-                .font(CarChatTheme.Typography.micro)
-                .foregroundStyle(CarChatTheme.Colors.textTertiary)
-                .padding(.horizontal, CarChatTheme.Spacing.xs)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title.uppercased())
+                    .font(CarChatTheme.Typography.micro)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary.opacity(0.6))
+                }
+            }
+            .padding(.horizontal, CarChatTheme.Spacing.xs)
 
             content()
         }
@@ -122,5 +158,6 @@ private struct SettingsRow<Destination: View>: View {
                 }
             }
         }
+        .sensoryFeedback(.selection, trigger: false)
     }
 }

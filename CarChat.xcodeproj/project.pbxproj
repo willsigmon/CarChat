@@ -41,6 +41,7 @@
 		92B381FE3345FC8DA3C0FF57 /* CarChatApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4A34D773EEF32852B379512 /* CarChatApp.swift */; };
 		934A84BEA57972AD422B7806 /* CarPlayVoiceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C0FE40158A28B4471CB831 /* CarPlayVoiceController.swift */; };
 		98358AEDF821C693EEF0F9F2 /* PipelineVoiceSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97DA4CB8174A652C3574702 /* PipelineVoiceSession.swift */; };
+		9B2922479317A91601DED7EA /* HapticEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA8750566AB0A805FB6BBBA /* HapticEngine.swift */; };
 		9B89B6DEB4DB025472B829C7 /* ConversationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 204A76A74092B4583E5F7724 /* ConversationListView.swift */; };
 		9EDC5EA500924644F1154C97 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF592615FC8A6CBCBC261184 /* SettingsView.swift */; };
 		A24C7F27AE85A85B39D0D6EF /* VoiceWaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1A30D2D21CFD5782DB5C09 /* VoiceWaveformView.swift */; };
@@ -49,6 +50,7 @@
 		B8125DC5A69AAD7A854202F0 /* WelcomeStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE1BF7A0362BEAD5598E08 /* WelcomeStepView.swift */; };
 		C1D636BDF108DF90035BAAA2 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE3159EECD5E804E5482CD3 /* OnboardingContainerView.swift */; };
 		C3243E104E4BDD5354D68BF2 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF52E64026E19179D086D8F /* SettingsViewModel.swift */; };
+		C5B050193FDFFE5DD513ED3D /* Microcopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E9A3321C881C405C56510 /* Microcopy.swift */; };
 		C7D3AF31D923A33C5AC6A4CF /* STTEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC538F07B00886001C7D4F91 /* STTEngine.swift */; };
 		CFAC008AD29903DCC3B7AAB6 /* ElevenLabsTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AC1A8D6A157118EFB816CF /* ElevenLabsTTS.swift */; };
 		D1FC1FC0896B7EFFD289366F /* SwiftOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = F5E986B53B20293112078B44 /* SwiftOpenAI */; };
@@ -87,6 +89,7 @@
 		2CAB4A0A31D7A3729F9B5958 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		300B205487E939976B54F2E5 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		396369CF8865713366A6BFFF /* SFSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSpeechSTT.swift; sourceTree = "<group>"; };
+		3FA8750566AB0A805FB6BBBA /* HapticEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticEngine.swift; sourceTree = "<group>"; };
 		44C953FE0B65B863AC7FD38F /* RealtimeVoiceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeVoiceSession.swift; sourceTree = "<group>"; };
 		48E2100FA2159425B5F576A1 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		538AAEDF32D37855D7B0FCAA /* SigmonPersona.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = SigmonPersona.json; sourceTree = "<group>"; };
@@ -98,6 +101,7 @@
 		74AC1A8D6A157118EFB816CF /* ElevenLabsTTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsTTS.swift; sourceTree = "<group>"; };
 		83725F15F057A9F770150664 /* GrokProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrokProvider.swift; sourceTree = "<group>"; };
 		84E4FC1BF33117EB7EA719D4 /* Persona.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persona.swift; sourceTree = "<group>"; };
+		863E9A3321C881C405C56510 /* Microcopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Microcopy.swift; sourceTree = "<group>"; };
 		8642F60C5D25290FF1D42983 /* PermissionsStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsStepView.swift; sourceTree = "<group>"; };
 		8E238B17188B86A81A0AD8EB /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
 		901FD01251EBDEA3D9552E76 /* VoiceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSession.swift; sourceTree = "<group>"; };
@@ -343,6 +347,8 @@
 				295BC3BFF8A75A33EC462775 /* CustomIcons.swift */,
 				541C52FD8103A54605DE5929 /* DesignTokens.swift */,
 				C8D54E5116FF8F289FFCD6F5 /* GlassCard.swift */,
+				3FA8750566AB0A805FB6BBBA /* HapticEngine.swift */,
+				863E9A3321C881C405C56510 /* Microcopy.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -501,10 +507,12 @@
 				144EF9292F56C2D0F8C1F38C /* GeminiProvider.swift in Sources */,
 				FBBFAF0733ACC4D63645A699 /* GlassCard.swift in Sources */,
 				0C9F1086ABF215A994A2BE28 /* GrokProvider.swift in Sources */,
+				9B2922479317A91601DED7EA /* HapticEngine.swift in Sources */,
 				920778165BB0FDFE5AABD5BC /* KeychainManager.swift in Sources */,
 				1B1FFD0D092DDCBAC8C25985 /* MainTabView.swift in Sources */,
 				E20450E9E542539B9A007C50 /* Message.swift in Sources */,
 				F2A01266909579CC559B5147 /* MicButton.swift in Sources */,
+				C5B050193FDFFE5DD513ED3D /* Microcopy.swift in Sources */,
 				F43D7022937A784386091DBB /* OllamaProvider.swift in Sources */,
 				C1D636BDF108DF90035BAAA2 /* OnboardingContainerView.swift in Sources */,
 				7E0FD551B876A1090591C723 /* OnboardingViewModel.swift in Sources */,

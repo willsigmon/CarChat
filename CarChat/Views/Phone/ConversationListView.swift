@@ -6,6 +6,8 @@ struct ConversationListView: View {
     @Query(sort: \Conversation.updatedAt, order: .reverse)
     private var conversations: [Conversation]
 
+    @State private var emptyStateVisible = false
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -27,24 +29,46 @@ struct ConversationListView: View {
 
     @ViewBuilder
     private var emptyState: some View {
-        VStack(spacing: CarChatTheme.Spacing.md) {
-            GradientIcon(
-                systemName: "bubble.left.and.bubble.right",
-                gradient: CarChatTheme.Gradients.accent,
-                size: 64,
-                iconSize: 28,
-                glowColor: CarChatTheme.Colors.glowCyan
-            )
+        VStack(spacing: CarChatTheme.Spacing.lg) {
+            // Animated icon
+            ZStack {
+                // Breathing glow
+                Circle()
+                    .fill(CarChatTheme.Colors.glowCyan)
+                    .frame(width: 100, height: 100)
+                    .blur(radius: 30)
+                    .opacity(emptyStateVisible ? 0.5 : 0.2)
 
-            Text("No Conversations")
-                .font(CarChatTheme.Typography.title)
-                .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                GradientIcon(
+                    systemName: "bubble.left.and.bubble.right",
+                    gradient: CarChatTheme.Gradients.accent,
+                    size: 72,
+                    iconSize: 30,
+                    glowColor: CarChatTheme.Colors.glowCyan,
+                    isAnimated: true
+                )
+            }
+            .scaleEffect(emptyStateVisible ? 1.0 : 0.8)
+            .opacity(emptyStateVisible ? 1.0 : 0)
 
-            Text("Start talking to create your first conversation.")
-                .font(CarChatTheme.Typography.body)
-                .foregroundStyle(CarChatTheme.Colors.textTertiary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, CarChatTheme.Spacing.xxxl)
+            VStack(spacing: CarChatTheme.Spacing.xs) {
+                Text(Microcopy.EmptyState.historyTitle)
+                    .font(CarChatTheme.Typography.title)
+                    .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                Text(Microcopy.EmptyState.historySubtitle)
+                    .font(CarChatTheme.Typography.body)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, CarChatTheme.Spacing.xxxl)
+            }
+            .opacity(emptyStateVisible ? 1.0 : 0)
+            .offset(y: emptyStateVisible ? 0 : 10)
+        }
+        .onAppear {
+            withAnimation(CarChatTheme.Animation.smooth.delay(0.2)) {
+                emptyStateVisible = true
+            }
         }
     }
 
@@ -52,8 +76,13 @@ struct ConversationListView: View {
     private var conversationList: some View {
         ScrollView {
             LazyVStack(spacing: CarChatTheme.Spacing.sm) {
-                ForEach(conversations) { conversation in
+                ForEach(Array(conversations.enumerated()), id: \.element.id) { index, conversation in
                     ConversationRow(conversation: conversation)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                        .sensoryFeedback(.selection, trigger: conversation.id)
                 }
             }
             .padding(.horizontal, CarChatTheme.Spacing.md)
@@ -62,6 +91,7 @@ struct ConversationListView: View {
     }
 
     private func deleteConversations(at offsets: IndexSet) {
+        Haptics.thud()
         for index in offsets {
             appServices.conversationStore.delete(conversations[index])
         }

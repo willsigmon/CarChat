@@ -29,5 +29,6 @@ struct MainTabView: View {
         }
         .tint(CarChatTheme.Colors.accentGradientStart)
         .preferredColorScheme(.dark)
+        .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }

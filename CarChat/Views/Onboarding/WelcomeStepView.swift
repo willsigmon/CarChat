@@ -4,7 +4,10 @@ struct WelcomeStepView: View {
     let viewModel: OnboardingViewModel
 
     @State private var showContent = false
-    @State private var showFeatures = false
+    @State private var showFeature1 = false
+    @State private var showFeature2 = false
+    @State private var showFeature3 = false
+    @State private var showButton = false
 
     var body: some View {
         ZStack {
@@ -28,7 +31,7 @@ struct WelcomeStepView: View {
                         .font(CarChatTheme.Typography.heroTitle)
                         .foregroundStyle(CarChatTheme.Colors.textPrimary)
 
-                    Text("Voice-first AI conversations\nbuilt for the road.")
+                    Text("Your AI copilot for the road.\nJust talk — I'll handle the rest.")
                         .font(.system(size: 17, weight: .regular))
                         .foregroundStyle(CarChatTheme.Colors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -38,59 +41,71 @@ struct WelcomeStepView: View {
 
                 Spacer()
 
-                // Feature cards
+                // Feature cards — staggered entrance
                 VStack(spacing: CarChatTheme.Spacing.sm) {
                     FeatureCard(
                         icon: "mic.fill",
                         title: "Talk Naturally",
-                        description: "Like a phone call with AI",
+                        description: "Like calling your smartest friend",
                         color: CarChatTheme.Colors.accentGradientStart,
                         accentShape: .ring
                     )
-                    .opacity(showFeatures ? 1 : 0)
-                    .offset(x: showFeatures ? 0 : -30)
+                    .opacity(showFeature1 ? 1 : 0)
+                    .offset(x: showFeature1 ? 0 : -30)
 
                     FeatureCard(
                         icon: "car.fill",
-                        title: "CarPlay Ready",
-                        description: "Designed for your car stereo",
+                        title: "Built for Driving",
+                        description: "CarPlay ready, eyes-free design",
                         color: CarChatTheme.Colors.speaking,
                         accentShape: .rays
                     )
-                    .opacity(showFeatures ? 1 : 0)
-                    .offset(x: showFeatures ? 0 : -30)
+                    .opacity(showFeature2 ? 1 : 0)
+                    .offset(x: showFeature2 ? 0 : -30)
 
                     FeatureCard(
                         icon: "sparkles",
-                        title: "Multiple AI Providers",
+                        title: "Pick Your Brain",
                         description: "OpenAI, Claude, Gemini, Grok & more",
                         color: CarChatTheme.Colors.processing,
                         accentShape: .sparkle
                     )
-                    .opacity(showFeatures ? 1 : 0)
-                    .offset(x: showFeatures ? 0 : -30)
+                    .opacity(showFeature3 ? 1 : 0)
+                    .offset(x: showFeature3 ? 0 : -30)
                 }
                 .padding(.horizontal, CarChatTheme.Spacing.xl)
 
                 Spacer()
 
                 // Continue button
-                Button("Continue") {
+                Button("Let's Go") {
+                    Haptics.impact()
                     viewModel.advance()
                 }
                 .buttonStyle(.carChatPrimary)
                 .padding(.horizontal, CarChatTheme.Spacing.xl)
                 .padding(.bottom, CarChatTheme.Spacing.xxxl)
-                .opacity(showFeatures ? 1 : 0)
+                .opacity(showButton ? 1 : 0)
+                .offset(y: showButton ? 0 : 10)
             }
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            // Staggered entrance — each element cascades in
             withAnimation(.easeOut(duration: 0.6)) {
                 showContent = true
             }
             withAnimation(.easeOut(duration: 0.5).delay(0.3)) {
-                showFeatures = true
+                showFeature1 = true
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(0.45)) {
+                showFeature2 = true
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(0.6)) {
+                showFeature3 = true
+            }
+            withAnimation(.easeOut(duration: 0.4).delay(0.85)) {
+                showButton = true
             }
         }
     }

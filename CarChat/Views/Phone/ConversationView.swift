@@ -3,22 +3,40 @@ import SwiftUI
 struct ConversationView: View {
     @Environment(AppServices.self) private var appServices
     @State private var viewModel: ConversationViewModel?
+    @State private var showGreeting = false
+    @State private var statusLabel = Microcopy.Status.label(for: .idle)
 
     var body: some View {
         Group {
             if let viewModel {
                 voiceContent(viewModel)
             } else {
-                ZStack {
-                    CarChatTheme.Colors.background.ignoresSafeArea()
-                    ProgressView()
-                        .tint(CarChatTheme.Colors.accentGradientStart)
-                }
+                loadingState
             }
         }
         .task {
             if viewModel == nil {
                 viewModel = ConversationViewModel(appServices: appServices)
+            }
+        }
+    }
+
+    // MARK: - Loading State
+
+    @ViewBuilder
+    private var loadingState: some View {
+        ZStack {
+            CarChatTheme.Colors.background.ignoresSafeArea()
+
+            VStack(spacing: CarChatTheme.Spacing.md) {
+                Image(systemName: "car.fill")
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(CarChatTheme.Gradients.accent)
+                    .symbolEffect(.pulse.byLayer, options: .repeating)
+
+                Text(Microcopy.Loading.message)
+                    .font(CarChatTheme.Typography.callout)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
             }
         }
     }
@@ -44,6 +62,16 @@ struct ConversationView: View {
                     .padding(.top, CarChatTheme.Spacing.sm)
 
                 Spacer()
+
+                // Idle greeting (shows when not active)
+                if !vm.voiceState.isActive && showGreeting {
+                    greetingBubble
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.9).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                        .padding(.bottom, CarChatTheme.Spacing.md)
+                }
 
                 // Status indicator
                 statusIndicator(vm)
@@ -78,6 +106,48 @@ struct ConversationView: View {
         }
         .animation(.easeInOut(duration: 0.4), value: vm.voiceState)
         .preferredColorScheme(.dark)
+        .onChange(of: vm.voiceState) { oldState, newState in
+            // Haptic per state transition
+            Haptics.voiceStateChanged(to: newState)
+
+            // Refresh status label on each transition
+            withAnimation(CarChatTheme.Animation.fast) {
+                statusLabel = Microcopy.Status.label(for: newState)
+            }
+
+            // Show/hide greeting
+            if newState == .idle && oldState != .idle {
+                withAnimation(CarChatTheme.Animation.smooth) {
+                    showGreeting = false
+                }
+            }
+        }
+        .onAppear {
+            // Delayed greeting entrance
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation(CarChatTheme.Animation.smooth) {
+                    showGreeting = true
+                }
+            }
+        }
+    }
+
+    // MARK: - Greeting Bubble
+
+    @ViewBuilder
+    private var greetingBubble: some View {
+        GlassCard(cornerRadius: CarChatTheme.Radius.lg, padding: CarChatTheme.Spacing.sm) {
+            HStack(spacing: CarChatTheme.Spacing.xs) {
+                Image(systemName: "hand.wave.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(CarChatTheme.Colors.processing)
+
+                Text(Microcopy.Greeting.greeting)
+                    .font(CarChatTheme.Typography.callout)
+                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
+            }
+        }
+        .padding(.horizontal, CarChatTheme.Spacing.xxxl)
     }
 
     // MARK: - Top Bar
@@ -110,27 +180,11 @@ struct ConversationView: View {
         HStack(spacing: CarChatTheme.Spacing.xs) {
             VoiceStateIcon(state: vm.voiceState)
 
-            Group {
-                switch vm.voiceState {
-                case .idle:
-                    Text("Tap to talk")
-                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
-                case .listening:
-                    Text("Listening...")
-                        .foregroundStyle(CarChatTheme.Colors.listening)
-                case .processing:
-                    Text("Thinking...")
-                        .foregroundStyle(CarChatTheme.Colors.processing)
-                case .speaking:
-                    Text("Speaking...")
-                        .foregroundStyle(CarChatTheme.Colors.speaking)
-                case .error:
-                    Text("Error")
-                        .foregroundStyle(CarChatTheme.Colors.error)
-                }
-            }
-            .font(CarChatTheme.Typography.statusLabel)
-            .contentTransition(.numericText())
+            Text(statusLabel)
+                .font(CarChatTheme.Typography.statusLabel)
+                .foregroundStyle(stateColor(for: vm.voiceState))
+                .contentTransition(.numericText())
+                .id(statusLabel)
         }
         .padding(.horizontal, CarChatTheme.Spacing.md)
         .padding(.vertical, CarChatTheme.Spacing.xs)
@@ -213,6 +267,16 @@ struct ConversationView: View {
     private func particleColor(for state: VoiceSessionState) -> Color {
         switch state {
         case .idle: CarChatTheme.Colors.accentGradientStart
+        case .listening: CarChatTheme.Colors.listening
+        case .processing: CarChatTheme.Colors.processing
+        case .speaking: CarChatTheme.Colors.speaking
+        case .error: CarChatTheme.Colors.error
+        }
+    }
+
+    private func stateColor(for state: VoiceSessionState) -> Color {
+        switch state {
+        case .idle: CarChatTheme.Colors.textTertiary
         case .listening: CarChatTheme.Colors.listening
         case .processing: CarChatTheme.Colors.processing
         case .speaking: CarChatTheme.Colors.speaking
