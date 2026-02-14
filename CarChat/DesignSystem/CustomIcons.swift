@@ -144,7 +144,7 @@ struct LayeredFeatureIcon: View {
 
 // MARK: - Provider Logo
 
-/// Styled provider icon with brand color
+/// Styled provider icon using official brand logos with a tinted background circle
 struct ProviderIcon: View {
     let provider: AIProviderType
     let size: CGFloat
@@ -167,20 +167,7 @@ struct ProviderIcon: View {
                         )
                 )
 
-            Image(systemName: providerSystemImage)
-                .font(.system(size: size * 0.4, weight: .medium))
-                .foregroundStyle(CarChatTheme.Colors.providerColor(provider))
-        }
-    }
-
-    private var providerSystemImage: String {
-        switch provider {
-        case .openAI: "brain.head.profile"
-        case .anthropic: "sparkles"
-        case .gemini: "diamond"
-        case .grok: "bolt.fill"
-        case .apple: "apple.logo"
-        case .ollama: "server.rack"
+            BrandLogo(provider, size: size * 0.65, tint: CarChatTheme.Colors.providerColor(provider))
         }
     }
 }

@@ -21,6 +21,18 @@ enum AIProviderType: String, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
 
+    /// Compact name for small chips and badges
+    var shortName: String {
+        switch self {
+        case .openAI: "OpenAI"
+        case .anthropic: "Claude"
+        case .gemini: "Gemini"
+        case .grok: "Grok"
+        case .apple: "Apple"
+        case .ollama: "Ollama"
+        }
+    }
+
     /// Short, fun tagline for the provider card
     var tagline: String {
         switch self {

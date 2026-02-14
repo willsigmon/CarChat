@@ -4,73 +4,155 @@ struct APIKeyStepView: View {
     @Bindable var viewModel: OnboardingViewModel
 
     @State private var showContent = false
+    @State private var selectedCategory: ProviderCategory = .cloud
+
+    enum ProviderCategory: String, CaseIterable {
+        case cloud = "Cloud"
+        case local = "On-Device"
+    }
 
     var body: some View {
         ZStack {
             CarChatTheme.Colors.background.ignoresSafeArea()
 
-            VStack(spacing: CarChatTheme.Spacing.xxl) {
+            VStack(spacing: 0) {
                 Spacer()
+                    .frame(height: CarChatTheme.Spacing.huge)
 
-                // Hero icon
-                GradientIcon(
-                    systemName: "key.fill",
-                    gradient: CarChatTheme.Gradients.accent,
-                    size: 72,
-                    iconSize: 30,
-                    glowColor: CarChatTheme.Colors.glowCyan
-                )
-                .opacity(showContent ? 1 : 0)
+                // Hero — animated brand logo of selected provider
+                ZStack {
+                    // Glow ring behind the logo
+                    Circle()
+                        .fill(CarChatTheme.Colors.providerColor(viewModel.selectedProvider))
+                        .frame(width: 100, height: 100)
+                        .blur(radius: 30)
+                        .opacity(showContent ? 0.4 : 0)
 
-                VStack(spacing: CarChatTheme.Spacing.sm) {
-                    Text("Connect an AI Provider")
+                    BrandLogoCard(viewModel.selectedProvider, size: 72)
+                        .scaleEffect(showContent ? 1 : 0.7)
+                }
+                .animation(CarChatTheme.Animation.springy, value: viewModel.selectedProvider)
+                .padding(.bottom, CarChatTheme.Spacing.lg)
+
+                // Title + subtitle
+                VStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("Pick Your Brain")
                         .font(CarChatTheme.Typography.title)
                         .foregroundStyle(CarChatTheme.Colors.textPrimary)
 
-                    Text("Enter an API key to get started.\nYou can add more providers later.")
+                    Text("Choose an AI provider to power your conversations.")
                         .font(CarChatTheme.Typography.body)
                         .foregroundStyle(CarChatTheme.Colors.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, CarChatTheme.Spacing.xl)
                 }
                 .opacity(showContent ? 1 : 0)
+                .padding(.bottom, CarChatTheme.Spacing.lg)
 
-                // Provider picker + key field
-                VStack(spacing: CarChatTheme.Spacing.md) {
-                    // Provider picker
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: CarChatTheme.Spacing.xs) {
-                            ForEach(
-                                AIProviderType.allCases.filter(\.requiresAPIKey)
-                            ) { provider in
-                                ProviderChip(
-                                    provider: provider,
-                                    isSelected: viewModel.selectedProvider == provider
-                                ) {
+                // Cloud / On-Device toggle
+                HStack(spacing: 0) {
+                    ForEach(ProviderCategory.allCases, id: \.self) { category in
+                        Button {
+                            withAnimation(CarChatTheme.Animation.fast) {
+                                selectedCategory = category
+                                // Auto-select first provider in this category
+                                if category == .cloud {
+                                    viewModel.selectedProvider = .openAI
+                                } else {
+                                    viewModel.selectedProvider = .apple
+                                }
+                            }
+                        } label: {
+                            Text(category.rawValue)
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(
+                                    selectedCategory == category
+                                        ? CarChatTheme.Colors.textPrimary
+                                        : CarChatTheme.Colors.textTertiary
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, CarChatTheme.Spacing.xs)
+                                .background(
+                                    selectedCategory == category
+                                        ? Capsule().fill(CarChatTheme.Colors.surfaceGlass)
+                                        : nil
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(3)
+                .background(
+                    Capsule().fill(CarChatTheme.Colors.surfaceSecondary)
+                )
+                .padding(.horizontal, CarChatTheme.Spacing.xxxl)
+                .opacity(showContent ? 1 : 0)
+                .padding(.bottom, CarChatTheme.Spacing.md)
+
+                // Provider grid
+                let providers = selectedCategory == .cloud
+                    ? AIProviderType.cloudProviders
+                    : AIProviderType.localProviders
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: CarChatTheme.Spacing.sm) {
+                        ForEach(providers) { provider in
+                            OnboardingProviderChip(
+                                provider: provider,
+                                isSelected: viewModel.selectedProvider == provider
+                            ) {
+                                withAnimation(CarChatTheme.Animation.springy) {
                                     viewModel.selectedProvider = provider
                                 }
                             }
-                        }
-                        .padding(.horizontal, CarChatTheme.Spacing.xl)
-                    }
-
-                    // API key field
-                    GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
-                        HStack(spacing: CarChatTheme.Spacing.sm) {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 14))
-                                .foregroundStyle(CarChatTheme.Colors.textTertiary)
-
-                            SecureField("API Key", text: $viewModel.apiKey)
-                                .foregroundStyle(CarChatTheme.Colors.textPrimary)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                                .tint(CarChatTheme.Colors.accentGradientStart)
                         }
                     }
                     .padding(.horizontal, CarChatTheme.Spacing.xl)
                 }
                 .opacity(showContent ? 1 : 0)
+                .padding(.bottom, CarChatTheme.Spacing.lg)
+
+                // API key field (only for cloud providers)
+                if selectedCategory == .cloud {
+                    GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                        HStack(spacing: CarChatTheme.Spacing.sm) {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(
+                                    CarChatTheme.Colors.providerColor(viewModel.selectedProvider).opacity(0.6)
+                                )
+
+                            SecureField("Paste your API key", text: $viewModel.apiKey)
+                                .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .tint(CarChatTheme.Colors.providerColor(viewModel.selectedProvider))
+                        }
+                    }
+                    .padding(.horizontal, CarChatTheme.Spacing.xl)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .top)),
+                        removal: .opacity
+                    ))
+                } else {
+                    // Local provider info
+                    GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                        HStack(spacing: CarChatTheme.Spacing.sm) {
+                            Image(systemName: "checkmark.shield.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(CarChatTheme.Colors.success)
+
+                            Text("No API key needed — runs privately on your device.")
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                        }
+                    }
+                    .padding(.horizontal, CarChatTheme.Spacing.xl)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .top)),
+                        removal: .opacity
+                    ))
+                }
 
                 Spacer()
 
@@ -80,7 +162,7 @@ struct APIKeyStepView: View {
                         viewModel.advance()
                     }
                     .buttonStyle(.carChatPrimary)
-                    .disabled(viewModel.apiKey.isEmpty)
+                    .disabled(selectedCategory == .cloud && viewModel.apiKey.isEmpty)
 
                     Button("Skip for Now") {
                         viewModel.advance()
@@ -100,48 +182,56 @@ struct APIKeyStepView: View {
     }
 }
 
-// MARK: - Provider Chip
+// MARK: - Onboarding Provider Chip
 
-private struct ProviderChip: View {
+private struct OnboardingProviderChip: View {
     let provider: AIProviderType
     let isSelected: Bool
     let action: () -> Void
 
+    private var brandColor: Color {
+        CarChatTheme.Colors.providerColor(provider)
+    }
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: CarChatTheme.Spacing.xs) {
-                ProviderIcon(provider: provider, size: 24)
+            VStack(spacing: CarChatTheme.Spacing.xs) {
+                // Brand logo in a circle
+                ZStack {
+                    Circle()
+                        .fill(
+                            isSelected
+                                ? brandColor.opacity(0.2)
+                                : CarChatTheme.Colors.surfaceSecondary
+                        )
+                        .frame(width: 56, height: 56)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(
+                                    isSelected
+                                        ? brandColor.opacity(0.5)
+                                        : Color.white.opacity(0.06),
+                                    lineWidth: isSelected ? 1.5 : 0.5
+                                )
+                        )
 
-                Text(provider.displayName)
-                    .font(CarChatTheme.Typography.caption)
+                    BrandLogo(provider, size: 36, tint: isSelected ? brandColor : CarChatTheme.Colors.textTertiary)
+                }
+
+                Text(provider.shortName)
+                    .font(CarChatTheme.Typography.micro)
                     .foregroundStyle(
                         isSelected
                             ? CarChatTheme.Colors.textPrimary
                             : CarChatTheme.Colors.textTertiary
                     )
             }
-            .padding(.horizontal, CarChatTheme.Spacing.sm)
-            .padding(.vertical, CarChatTheme.Spacing.xs)
-            .background(
-                Capsule()
-                    .fill(
-                        isSelected
-                            ? CarChatTheme.Colors.providerColor(provider).opacity(0.15)
-                            : CarChatTheme.Colors.surfaceSecondary
-                    )
-            )
-            .overlay(
-                Capsule()
-                    .strokeBorder(
-                        isSelected
-                            ? CarChatTheme.Colors.providerColor(provider).opacity(0.3)
-                            : Color.white.opacity(0.06),
-                        lineWidth: 0.5
-                    )
-            )
+            .scaleEffect(isSelected ? 1.05 : 1.0)
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: isSelected)
         .animation(CarChatTheme.Animation.fast, value: isSelected)
+        .accessibilityLabel(provider.displayName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

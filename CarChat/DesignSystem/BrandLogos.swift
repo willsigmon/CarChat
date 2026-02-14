@@ -4,13 +4,16 @@ import SwiftUI
 
 /// Renders the official brand logo for each AI provider from bundled PNG assets.
 /// Apple uses the SF Symbol `apple.logo` since it's Apple's own platform.
+/// Pass a `tint` color to override the default white foreground on monochrome logos.
 struct BrandLogo: View {
     let provider: AIProviderType
     let size: CGFloat
+    let tint: Color?
 
-    init(_ provider: AIProviderType, size: CGFloat = 32) {
+    init(_ provider: AIProviderType, size: CGFloat = 32, tint: Color? = nil) {
         self.provider = provider
         self.size = size
+        self.tint = tint
     }
 
     var body: some View {
@@ -18,16 +21,23 @@ struct BrandLogo: View {
             switch provider {
             case .apple:
                 // Apple's own SF Symbol — no need for a bundled asset
-                Image(systemName: "apple.logo")
-                    .font(.system(size: size * 0.55, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color(hex: 0xA8A8A8), Color(hex: 0xE0E0E0)],
-                            startPoint: .top,
-                            endPoint: .bottom
+                if let tint {
+                    Image(systemName: "apple.logo")
+                        .font(.system(size: size * 0.55, weight: .medium))
+                        .foregroundStyle(tint)
+                        .frame(width: size, height: size)
+                } else {
+                    Image(systemName: "apple.logo")
+                        .font(.system(size: size * 0.55, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color(hex: 0xA8A8A8), Color(hex: 0xE0E0E0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
                         )
-                    )
-                    .frame(width: size, height: size)
+                        .frame(width: size, height: size)
+                }
             case .gemini:
                 // Gemini has its own multicolor logo — render original
                 Image("ProviderLogos/gemini-logo")
@@ -36,12 +46,12 @@ struct BrandLogo: View {
                     .frame(width: size * 0.75, height: size * 0.75)
                     .frame(width: size, height: size)
             default:
-                // Monochrome logos — render as white for dark backgrounds
+                // Monochrome logos — render as template with tint (default: white)
                 Image("ProviderLogos/\(assetName)-logo")
                     .renderingMode(.template)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(tint ?? .white)
                     .frame(width: size * 0.75, height: size * 0.75)
                     .frame(width: size, height: size)
             }
