@@ -32,15 +32,26 @@ final class OllamaProvider: AIProvider, @unchecked Sendable {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 30
+        request.timeoutInterval = 300
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        let bytes: URLSession.AsyncBytes
+        let response: URLResponse
+        do {
+            (bytes, response) = try await URLSession.shared.bytes(for: request)
+        } catch {
+            throw AIProviderError.translate(error)
+        }
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw AIProviderError.networkError("Ollama not running at \(baseURL)")
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AIProviderError.networkError("Invalid response from Ollama")
+        }
+        guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 404 {
+                throw AIProviderError.modelUnavailable("Model '\(model)' not found — run 'ollama pull \(model)' first")
+            }
+            throw AIProviderError.networkError("Ollama error (HTTP \(httpResponse.statusCode))")
         }
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)

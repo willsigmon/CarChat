@@ -45,16 +45,20 @@ final class SystemTTS: NSObject, TTSEngineProtocol {
     }
 
     func stop() {
+        // Resume continuation BEFORE stopping the synthesizer to avoid
+        // a race where the didCancel delegate also tries to resume it.
+        completeSpeaking()
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
-        completeSpeaking()
     }
 
     private func completeSpeaking() {
-        speakingContinuation?.resume()
+        // Grab-and-nil atomically so only one caller ever resumes.
+        guard let continuation = speakingContinuation else { return }
         speakingContinuation = nil
         isSpeaking = false
+        continuation.resume()
     }
 }
 

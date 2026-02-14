@@ -27,7 +27,13 @@ final class OpenAIProvider: AIProvider, @unchecked Sendable {
             model: .custom(model)
         )
 
-        nonisolated(unsafe) let stream = try await service.startStreamedChat(parameters: parameters)
+        let stream: AsyncThrowingStream<ChatCompletionChunkObject, Error>
+        do {
+            nonisolated(unsafe) let s = try await service.startStreamedChat(parameters: parameters)
+            stream = s
+        } catch {
+            throw AIProviderError.translate(error)
+        }
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
 
@@ -41,7 +47,7 @@ final class OpenAIProvider: AIProvider, @unchecked Sendable {
                 }
                 continuation.finish()
             } catch {
-                continuation.finish(throwing: error)
+                continuation.finish(throwing: AIProviderError.translate(error))
             }
         }
 

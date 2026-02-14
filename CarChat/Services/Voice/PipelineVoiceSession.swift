@@ -138,6 +138,9 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
     }
 
     private func startListeningLoop() {
+        // Cancel any existing loop before starting a new one
+        listeningTask?.cancel()
+
         listeningTask = Task { [weak self] in
             guard let self else { return }
 
@@ -147,6 +150,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                 do {
                     try await sttEngine.startListening()
                 } catch {
+                    try? AudioSessionManager.shared.deactivate()
                     updateState(.error(error.localizedDescription))
                     return
                 }
@@ -159,6 +163,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                         audioLevelContinuation?.yield(level)
                     }
                 }
+                defer { levelTask.cancel() }
 
                 // Wait for final transcript
                 var finalText = ""
@@ -170,7 +175,6 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                     }
                 }
 
-                levelTask.cancel()
                 await sttEngine.stopListening()
 
                 guard !finalText.isEmpty, !Task.isCancelled else { continue }

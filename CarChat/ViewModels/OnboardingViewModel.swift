@@ -49,6 +49,8 @@ final class OnboardingViewModel {
 
     func completeOnboarding() {
         saveAPIKey()
+        // Persist the user's chosen provider so conversations use it
+        UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selectedProvider")
         appServices.completeOnboarding()
     }
 

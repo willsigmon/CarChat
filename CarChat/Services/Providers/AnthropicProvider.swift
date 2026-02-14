@@ -42,7 +42,13 @@ final class AnthropicProvider: AIProvider, @unchecked Sendable {
             system: systemPrompt.map { .text($0) }
         )
 
-        nonisolated(unsafe) let stream = try await service.streamMessage(parameters)
+        let stream: AsyncThrowingStream<MessageStreamResponse, Error>
+        do {
+            nonisolated(unsafe) let s = try await service.streamMessage(parameters)
+            stream = s
+        } catch {
+            throw AIProviderError.translate(error)
+        }
 
         let (outputStream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
 
@@ -56,7 +62,7 @@ final class AnthropicProvider: AIProvider, @unchecked Sendable {
                 }
                 continuation.finish()
             } catch {
-                continuation.finish(throwing: error)
+                continuation.finish(throwing: AIProviderError.translate(error))
             }
         }
 

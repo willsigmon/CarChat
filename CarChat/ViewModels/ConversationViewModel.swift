@@ -250,11 +250,15 @@ final class ConversationViewModel {
     }
 
     private func resolveProviderType() -> AIProviderType {
-        // Use the conversation's provider if resuming, otherwise check what keys are available
+        // Use the conversation's provider if resuming
         if let conversation {
             return conversation.provider
         }
-        // Default: first provider with an API key, fallback to openAI
+        // Use the provider the user chose during onboarding / settings
+        if let saved = UserDefaults.standard.string(forKey: "selectedProvider"),
+           let provider = AIProviderType(rawValue: saved) {
+            return provider
+        }
         return .openAI
     }
 }
