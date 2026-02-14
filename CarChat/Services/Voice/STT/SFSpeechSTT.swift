@@ -5,12 +5,12 @@ import AVFoundation
 @MainActor
 final class SFSpeechSTT: STTEngine {
     private let speechRecognizer: SFSpeechRecognizer?
-    nonisolated(unsafe) private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
 
-    nonisolated(unsafe) private var transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?
-    nonisolated(unsafe) private var audioLevelContinuation: AsyncStream<Float>.Continuation?
+    private var transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?
+    private var audioLevelContinuation: AsyncStream<Float>.Continuation?
 
     private(set) var isListening = false
 
@@ -52,31 +52,15 @@ final class SFSpeechSTT: STTEngine {
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
-        // Capture values directly — the tap callback runs on the audio thread,
-        // NOT the MainActor, so we cannot access `self` (which is @MainActor).
-        let request = recognitionRequest
-        let levelContinuation = audioLevelContinuation
-
-        nonisolated(unsafe) let req = request
-        nonisolated(unsafe) let lvl = levelContinuation
-
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { @Sendable buffer, _ in
-            req.append(buffer)
-
-            // Inline audio level processing (avoids going through @MainActor self)
-            guard let channelData = buffer.floatChannelData?[0] else { return }
-            let frameCount = Int(buffer.frameLength)
-            guard frameCount > 0 else { return }
-            var sum: Float = 0
-            for i in 0..<frameCount {
-                let sample = channelData[i]
-                sum += sample * sample
-            }
-            let rms = sqrt(sum / Float(frameCount))
-            let db = 20 * log10(max(rms, 0.000001))
-            let normalized = max(0, min(1, (db + 60) / 60))
-            lvl?.yield(normalized)
-        }
+        inputNode.installTap(
+            onBus: 0,
+            bufferSize: 1024,
+            format: recordingFormat,
+            block: makeAudioTapBlock(
+                request: recognitionRequest,
+                audioLevelContinuation: audioLevelContinuation
+            )
+        )
 
         audioEngine.prepare()
 
@@ -89,35 +73,20 @@ final class SFSpeechSTT: STTEngine {
 
         isListening = true
 
-        // Capture the continuation directly — recognitionTask callback runs
-        // on an arbitrary queue, not the MainActor.
-        let transcriptCont = transcriptContinuation
-
-        recognitionTask = speechRecognizer.recognitionTask(
-            with: recognitionRequest
-        ) { [weak self] result, error in
-            if let result {
-                let transcript = VoiceTranscript(
-                    text: result.bestTranscription.formattedString,
-                    isFinal: result.isFinal,
-                    role: .user
-                )
-                transcriptCont?.yield(transcript)
-            }
-
-            if error != nil {
-                transcriptCont?.yield(
-                    VoiceTranscript(text: "", isFinal: true, role: .user)
-                )
-                Task { @MainActor [weak self] in
-                    self?.cleanupRecognition()
-                }
-            } else if result?.isFinal == true {
-                Task { @MainActor [weak self] in
-                    self?.cleanupRecognition()
-                }
+        let cleanup: @Sendable () -> Void = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.cleanupRecognition()
             }
         }
+        let transcriptContinuation = self.transcriptContinuation
+
+        recognitionTask = speechRecognizer.recognitionTask(
+            with: recognitionRequest,
+            resultHandler: makeRecognitionResultHandler(
+                transcriptContinuation: transcriptContinuation,
+                cleanup: cleanup
+            )
+        )
     }
 
     func stopListening() async {
@@ -138,6 +107,70 @@ final class SFSpeechSTT: STTEngine {
         isListening = false
     }
 
+}
+
+private func makeAudioTapBlock(
+    request: SFSpeechAudioBufferRecognitionRequest,
+    audioLevelContinuation: AsyncStream<Float>.Continuation?
+) -> AVAudioNodeTapBlock {
+    return { buffer, _ in
+        request.append(buffer)
+
+        guard let channelData = buffer.floatChannelData?[0] else { return }
+        let frameCount = Int(buffer.frameLength)
+        guard frameCount > 0 else { return }
+
+        var sum: Float = 0
+        for i in 0..<frameCount {
+            let sample = channelData[i]
+            sum += sample * sample
+        }
+
+        let rms = sqrt(sum / Float(frameCount))
+        let db = 20 * log10(max(rms, 0.000001))
+        let normalized = max(0, min(1, (db + 60) / 60))
+        audioLevelContinuation?.yield(normalized)
+    }
+}
+
+private func recognitionResultHandler(
+    transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?,
+    result: SFSpeechRecognitionResult?,
+    error: (any Error)?,
+    cleanup: @escaping @Sendable () -> Void
+) {
+    if let result {
+        transcriptContinuation?.yield(
+            VoiceTranscript(
+                text: result.bestTranscription.formattedString,
+                isFinal: result.isFinal,
+                role: .user
+            )
+        )
+    }
+
+    if error != nil {
+        transcriptContinuation?.yield(
+            VoiceTranscript(text: "", isFinal: true, role: .user)
+        )
+        cleanup()
+    } else if result?.isFinal == true {
+        cleanup()
+    }
+}
+
+private func makeRecognitionResultHandler(
+    transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?,
+    cleanup: @escaping @Sendable () -> Void
+) -> (SFSpeechRecognitionResult?, (any Error)?) -> Void {
+    return { result, error in
+        recognitionResultHandler(
+            transcriptContinuation: transcriptContinuation,
+            result: result,
+            error: error,
+            cleanup: cleanup
+        )
+    }
 }
 
 enum STTError: LocalizedError {
