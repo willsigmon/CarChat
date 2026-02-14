@@ -63,10 +63,10 @@ struct ConversationView: View {
                     .padding(.horizontal, CarChatTheme.Spacing.xl)
                     .padding(.top, CarChatTheme.Spacing.sm)
 
-                Spacer()
-
-                // Idle suggestions (shows when not active)
                 if !vm.voiceState.isActive && showSuggestions {
+                    // Idle: center suggestions vertically
+                    Spacer()
+
                     SuggestionChipsView(suggestions: suggestions) { suggestion in
                         withAnimation(CarChatTheme.Animation.fast) {
                             showSuggestions = false
@@ -77,23 +77,26 @@ struct ConversationView: View {
                         insertion: .scale(scale: 0.9).combined(with: .opacity),
                         removal: .opacity
                     ))
-                    .padding(.horizontal, CarChatTheme.Spacing.xl)
-                    .padding(.bottom, CarChatTheme.Spacing.md)
+                    .padding(.horizontal, CarChatTheme.Spacing.md)
+
+                    Spacer()
+                } else {
+                    Spacer()
+
+                    // Status indicator
+                    statusIndicator(vm)
+                        .padding(.bottom, CarChatTheme.Spacing.md)
+
+                    // Waveform visualization
+                    VoiceWaveformView(level: vm.audioLevel, state: vm.voiceState)
+                        .frame(height: 160)
+
+                    // Transcript area
+                    transcriptArea(vm)
+                        .padding(.horizontal, CarChatTheme.Spacing.xxl)
+                        .frame(minHeight: 80)
+                        .padding(.top, CarChatTheme.Spacing.md)
                 }
-
-                // Status indicator
-                statusIndicator(vm)
-                    .padding(.bottom, CarChatTheme.Spacing.md)
-
-                // Waveform visualization
-                VoiceWaveformView(level: vm.audioLevel, state: vm.voiceState)
-                    .frame(height: 160)
-
-                // Transcript area
-                transcriptArea(vm)
-                    .padding(.horizontal, CarChatTheme.Spacing.xxl)
-                    .frame(minHeight: 80)
-                    .padding(.top, CarChatTheme.Spacing.md)
 
                 // Error banner
                 if let error = vm.errorMessage {
