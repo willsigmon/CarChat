@@ -57,8 +57,11 @@ final class SFSpeechSTT: STTEngine {
         let request = recognitionRequest
         let levelContinuation = audioLevelContinuation
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
-            request.append(buffer)
+        nonisolated(unsafe) let req = request
+        nonisolated(unsafe) let lvl = levelContinuation
+
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { @Sendable buffer, _ in
+            req.append(buffer)
 
             // Inline audio level processing (avoids going through @MainActor self)
             guard let channelData = buffer.floatChannelData?[0] else { return }
@@ -72,7 +75,7 @@ final class SFSpeechSTT: STTEngine {
             let rms = sqrt(sum / Float(frameCount))
             let db = 20 * log10(max(rms, 0.000001))
             let normalized = max(0, min(1, (db + 60) / 60))
-            levelContinuation?.yield(normalized)
+            lvl?.yield(normalized)
         }
 
         audioEngine.prepare()
