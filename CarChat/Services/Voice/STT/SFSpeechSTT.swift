@@ -48,6 +48,7 @@ final class SFSpeechSTT: STTEngine {
 
         recognitionRequest.shouldReportPartialResults = true
         recognitionRequest.addsPunctuation = true
+        recognitionRequest.taskHint = .dictation
 
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
@@ -113,7 +114,13 @@ private func makeAudioTapBlock(
     request: SFSpeechAudioBufferRecognitionRequest,
     audioLevelContinuation: AsyncStream<Float>.Continuation?
 ) -> AVAudioNodeTapBlock {
+    var hasDetectedSpeech = false
+    var utteranceDuration: TimeInterval = 0
+    var trailingSilenceDuration: TimeInterval = 0
+    var hasEndedAudio = false
+
     return { buffer, _ in
+        guard !hasEndedAudio else { return }
         request.append(buffer)
 
         guard let channelData = buffer.floatChannelData?[0] else { return }
@@ -130,6 +137,29 @@ private func makeAudioTapBlock(
         let db = 20 * log10(max(rms, 0.000001))
         let normalized = max(0, min(1, (db + 60) / 60))
         audioLevelContinuation?.yield(normalized)
+
+        let seconds = Double(frameCount) / buffer.format.sampleRate
+        let speakingThreshold = hasDetectedSpeech
+            ? SpeechEndpointing.speakingFloor
+            : SpeechEndpointing.speakingStart
+
+        if normalized >= speakingThreshold {
+            hasDetectedSpeech = true
+            utteranceDuration += seconds
+            trailingSilenceDuration = 0
+            return
+        }
+
+        guard hasDetectedSpeech else { return }
+        trailingSilenceDuration += seconds
+
+        let readyToEndUtterance = utteranceDuration >= SpeechEndpointing.minimumUtterance
+            && trailingSilenceDuration >= SpeechEndpointing.trailingSilenceToCommit
+
+        if readyToEndUtterance {
+            hasEndedAudio = true
+            request.endAudio()
+        }
     }
 }
 
@@ -171,6 +201,17 @@ private func makeRecognitionResultHandler(
             cleanup: cleanup
         )
     }
+}
+
+private enum SpeechEndpointing {
+    /// Speech must rise above this level before we consider the user "speaking".
+    static let speakingStart: Float = 0.09
+    /// After speech starts, stay in the utterance with a lower floor to avoid clipping words.
+    static let speakingFloor: Float = 0.04
+    /// Ignore accidental taps/noise shorter than this.
+    static let minimumUtterance: TimeInterval = 0.25
+    /// End of thought pause before we hand off to the assistant.
+    static let trailingSilenceToCommit: TimeInterval = 0.9
 }
 
 enum STTError: LocalizedError {

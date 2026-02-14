@@ -6,42 +6,71 @@ struct SuggestionChipsView: View {
 
     @State private var appeared = false
 
+    private let chipColors: [Color] = [
+        CarChatTheme.Colors.accentGradientStart,
+        CarChatTheme.Colors.listening,
+        CarChatTheme.Colors.speaking,
+        CarChatTheme.Colors.processing
+    ]
+
     var body: some View {
         VStack(spacing: CarChatTheme.Spacing.lg) {
-            Text("Try saying...")
-                .font(CarChatTheme.Typography.callout)
-                .foregroundStyle(CarChatTheme.Colors.textTertiary)
-                .opacity(appeared ? 1 : 0)
+            HStack(spacing: CarChatTheme.Spacing.xs) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+
+                Text("Try one of these")
+                    .font(CarChatTheme.Typography.callout)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+            }
+            .opacity(appeared ? 1 : 0)
 
             VStack(spacing: CarChatTheme.Spacing.md) {
                 ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                    let tint = chipColors[index % chipColors.count]
+
                     Button {
                         Haptics.tap()
                         onTap(suggestion)
                     } label: {
-                        HStack(spacing: CarChatTheme.Spacing.sm) {
-                            Image(systemName: suggestion.icon)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
-                                .frame(width: 28)
+                        HStack(spacing: CarChatTheme.Spacing.md) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
+                                    .fill(tint.opacity(0.20))
+                                    .frame(width: 34, height: 34)
 
-                            Text(suggestion.text)
-                                .font(CarChatTheme.Typography.body)
-                                .foregroundStyle(CarChatTheme.Colors.textSecondary)
-                                .lineLimit(2)
+                                Image(systemName: suggestion.icon)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(tint)
+                            }
+
+                            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxxs) {
+                                Text(suggestion.text)
+                                    .font(CarChatTheme.Typography.body.weight(.semibold))
+                                    .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                    .lineLimit(2)
+
+                                Text("Tap to ask")
+                                    .font(CarChatTheme.Typography.caption)
+                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            }
 
                             Spacer()
 
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(tint.opacity(0.9))
+                                .padding(8)
+                                .background(
+                                    Circle().fill(tint.opacity(0.15))
+                                )
                         }
                         .padding(.horizontal, CarChatTheme.Spacing.lg)
-                        .padding(.vertical, CarChatTheme.Spacing.md)
+                        .padding(.vertical, CarChatTheme.Spacing.sm + 2)
                         .frame(maxWidth: .infinity)
-                        .glassBackground(cornerRadius: CarChatTheme.Radius.md)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SuggestionChipButtonStyle(tint: tint))
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 12)
                     .animation(
@@ -59,5 +88,50 @@ struct SuggestionChipsView: View {
                 appeared = true
             }
         }
+    }
+}
+
+private struct SuggestionChipButtonStyle: ButtonStyle {
+    let tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                CarChatTheme.Colors.surfaceGlass.opacity(configuration.isPressed ? 0.95 : 0.85),
+                                CarChatTheme.Colors.surfaceSecondary.opacity(configuration.isPressed ? 0.80 : 0.65)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                tint.opacity(configuration.isPressed ? 0.75 : 0.55),
+                                Color.white.opacity(configuration.isPressed ? 0.18 : 0.12)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: configuration.isPressed ? 1.2 : 0.9
+                    )
+            )
+            .shadow(
+                color: tint.opacity(configuration.isPressed ? 0.18 : 0.30),
+                radius: configuration.isPressed ? 8 : 14,
+                x: 0,
+                y: configuration.isPressed ? 4 : 8
+            )
+            .scaleEffect(configuration.isPressed ? 0.985 : 1.0)
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .animation(reduceMotion ? nil : CarChatTheme.Animation.fast, value: configuration.isPressed)
     }
 }
