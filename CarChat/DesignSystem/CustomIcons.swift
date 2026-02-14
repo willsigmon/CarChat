@@ -179,6 +179,7 @@ struct ProviderIcon: View {
         case .anthropic: "sparkles"
         case .gemini: "diamond"
         case .grok: "bolt.fill"
+        case .apple: "apple.logo"
         case .ollama: "server.rack"
         }
     }

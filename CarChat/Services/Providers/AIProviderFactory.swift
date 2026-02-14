@@ -47,6 +47,14 @@ enum AIProviderFactory {
             return OllamaProvider(
                 model: model ?? type.defaultModel
             )
+
+        case .apple:
+            // Apple Foundation models use the same local interface as Ollama for now
+            // TODO: Integrate with Apple's Foundation Models framework when available
+            return OllamaProvider(
+                baseURL: "http://localhost:11434",
+                model: model ?? "apple-foundation"
+            )
         }
     }
 }

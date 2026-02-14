@@ -12,8 +12,8 @@ struct SettingsView: View {
                     VStack(spacing: CarChatTheme.Spacing.md) {
                         SettingsSection(title: "AI Providers", subtitle: Microcopy.Settings.aiProviders) {
                             SettingsRow(
-                                icon: "key.fill",
-                                title: "API Keys",
+                                icon: "cpu",
+                                title: "AI Providers",
                                 color: CarChatTheme.Colors.accentGradientStart,
                                 destination: APIKeySettingsView()
                             )
