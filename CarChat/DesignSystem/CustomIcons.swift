@@ -167,7 +167,7 @@ struct ProviderIcon: View {
                         )
                 )
 
-            BrandLogo(provider, size: size * 0.65, tint: CarChatTheme.Colors.providerColor(provider))
+            BrandLogo(provider, size: size * 0.75, tint: CarChatTheme.Colors.providerColor(provider))
         }
     }
 }

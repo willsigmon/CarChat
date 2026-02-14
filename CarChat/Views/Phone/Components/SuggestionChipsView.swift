@@ -28,7 +28,7 @@ struct SuggestionChipsView: View {
                             Text(suggestion.text)
                                 .font(CarChatTheme.Typography.body)
                                 .foregroundStyle(CarChatTheme.Colors.textSecondary)
-                                .lineLimit(1)
+                                .lineLimit(2)
 
                             Spacer()
 
