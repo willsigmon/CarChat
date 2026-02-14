@@ -27,19 +27,21 @@ final class SettingsViewModel {
     }
 
     func saveKey(for provider: AIProviderType, key: String) {
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         Task {
             do {
-                if key.isEmpty {
+                if trimmedKey.isEmpty {
                     try await appServices.keychainManager.deleteAPIKey(
                         for: provider
                     )
                 } else {
                     try await appServices.keychainManager.saveAPIKey(
                         for: provider,
-                        key: key
+                        key: trimmedKey
                     )
+                    UserDefaults.standard.set(provider.rawValue, forKey: "selectedProvider")
                 }
-                apiKeys[provider] = key
+                apiKeys[provider] = trimmedKey
                 keyValidationStatus[provider] = .saved
             } catch {
                 keyValidationStatus[provider] = .error(error.localizedDescription)

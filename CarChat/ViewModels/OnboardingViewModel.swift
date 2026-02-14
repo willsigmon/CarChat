@@ -38,11 +38,12 @@ final class OnboardingViewModel {
     }
 
     func saveAPIKey() {
-        guard !apiKey.isEmpty else { return }
+        let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKey.isEmpty else { return }
         Task {
             try? await appServices.keychainManager.saveAPIKey(
                 for: selectedProvider,
-                key: apiKey
+                key: trimmedKey
             )
         }
     }

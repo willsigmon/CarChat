@@ -47,7 +47,7 @@ final class ConversationViewModel {
 
                 if conversation == nil {
                     let persona = fetchActivePersona()
-                    let providerType = resolveProviderType()
+                    let providerType = await resolveProviderType()
                     conversation = appServices.conversationStore.create(
                         providerType: providerType,
                         personaName: persona?.name ?? "Sigmon"
@@ -75,7 +75,7 @@ final class ConversationViewModel {
 
                 if conversation == nil {
                     let persona = fetchActivePersona()
-                    let providerType = resolveProviderType()
+                    let providerType = await resolveProviderType()
                     conversation = appServices.conversationStore.create(
                         providerType: providerType,
                         personaName: persona?.name ?? "Sigmon"
@@ -112,7 +112,7 @@ final class ConversationViewModel {
     // MARK: - Session Builder
 
     private func buildVoiceSession() async throws -> PipelineVoiceSession {
-        let providerType = resolveProviderType()
+        let providerType = await resolveProviderType()
         let apiKey: String? = try? await appServices.keychainManager.getAPIKey(for: providerType)
 
         let aiProvider = try AIProviderFactory.create(
@@ -249,7 +249,7 @@ final class ConversationViewModel {
         return (try? context.fetch(descriptor))?.first
     }
 
-    private func resolveProviderType() -> AIProviderType {
+    private func resolveProviderType() async -> AIProviderType {
         // Use the conversation's provider if resuming
         if let conversation {
             return conversation.provider
@@ -258,6 +258,13 @@ final class ConversationViewModel {
         if let saved = UserDefaults.standard.string(forKey: "selectedProvider"),
            let provider = AIProviderType(rawValue: saved) {
             return provider
+        }
+        // Fallback: find the first cloud provider that actually has a key saved
+        for provider in AIProviderType.cloudProviders {
+            if let hasKey = try? await appServices.keychainManager.hasAPIKey(for: provider),
+               hasKey {
+                return provider
+            }
         }
         return .openAI
     }
