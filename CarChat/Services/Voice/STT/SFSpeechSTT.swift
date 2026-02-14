@@ -5,11 +5,11 @@ import AVFoundation
 @MainActor
 final class SFSpeechSTT: STTEngine {
     private let speechRecognizer: SFSpeechRecognizer?
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    nonisolated(unsafe) private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
 
-    private var transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?
+    nonisolated(unsafe) private var transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?
     nonisolated(unsafe) private var audioLevelContinuation: AsyncStream<Float>.Continuation?
 
     private(set) var isListening = false
@@ -52,10 +52,27 @@ final class SFSpeechSTT: STTEngine {
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) {
-            [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-            self?.processAudioLevel(buffer: buffer)
+        // Capture values directly — the tap callback runs on the audio thread,
+        // NOT the MainActor, so we cannot access `self` (which is @MainActor).
+        let request = recognitionRequest
+        let levelContinuation = audioLevelContinuation
+
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+            request.append(buffer)
+
+            // Inline audio level processing (avoids going through @MainActor self)
+            guard let channelData = buffer.floatChannelData?[0] else { return }
+            let frameCount = Int(buffer.frameLength)
+            guard frameCount > 0 else { return }
+            var sum: Float = 0
+            for i in 0..<frameCount {
+                let sample = channelData[i]
+                sum += sample * sample
+            }
+            let rms = sqrt(sum / Float(frameCount))
+            let db = 20 * log10(max(rms, 0.000001))
+            let normalized = max(0, min(1, (db + 60) / 60))
+            levelContinuation?.yield(normalized)
         }
 
         audioEngine.prepare()
@@ -69,30 +86,32 @@ final class SFSpeechSTT: STTEngine {
 
         isListening = true
 
+        // Capture the continuation directly — recognitionTask callback runs
+        // on an arbitrary queue, not the MainActor.
+        let transcriptCont = transcriptContinuation
+
         recognitionTask = speechRecognizer.recognitionTask(
             with: recognitionRequest
         ) { [weak self] result, error in
-            guard let self else { return }
-
             if let result {
                 let transcript = VoiceTranscript(
                     text: result.bestTranscription.formattedString,
                     isFinal: result.isFinal,
                     role: .user
                 )
-                self.transcriptContinuation?.yield(transcript)
+                transcriptCont?.yield(transcript)
             }
 
             if error != nil {
-                self.transcriptContinuation?.yield(
+                transcriptCont?.yield(
                     VoiceTranscript(text: "", isFinal: true, role: .user)
                 )
-                Task { @MainActor in
-                    self.cleanupRecognition()
+                Task { @MainActor [weak self] in
+                    self?.cleanupRecognition()
                 }
             } else if result?.isFinal == true {
-                Task { @MainActor in
-                    self.cleanupRecognition()
+                Task { @MainActor [weak self] in
+                    self?.cleanupRecognition()
                 }
             }
         }
@@ -116,22 +135,6 @@ final class SFSpeechSTT: STTEngine {
         isListening = false
     }
 
-    nonisolated private func processAudioLevel(buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData?[0] else { return }
-        let frameCount = Int(buffer.frameLength)
-        guard frameCount > 0 else { return }
-
-        var sum: Float = 0
-        for i in 0..<frameCount {
-            let sample = channelData[i]
-            sum += sample * sample
-        }
-        let rms = sqrt(sum / Float(frameCount))
-        let db = 20 * log10(max(rms, 0.000001))
-        let normalized = max(0, min(1, (db + 60) / 60))
-
-        audioLevelContinuation?.yield(normalized)
-    }
 }
 
 enum STTError: LocalizedError {
