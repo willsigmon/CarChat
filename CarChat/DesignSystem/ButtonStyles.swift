@@ -68,6 +68,73 @@ struct CarChatGhostButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Action Pill Button Style
+
+enum CarChatActionPillTone: Sendable {
+    case danger
+    case accent
+}
+
+struct CarChatActionPillButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    let tone: CarChatActionPillTone
+
+    private var foreground: Color {
+        switch tone {
+        case .danger: .white
+        case .accent: CarChatTheme.Colors.accentGradientStart
+        }
+    }
+
+    private var fillGradient: LinearGradient {
+        switch tone {
+        case .danger:
+            LinearGradient(
+                colors: [
+                    CarChatTheme.Colors.error.opacity(0.65),
+                    CarChatTheme.Colors.error.opacity(0.45)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .accent:
+            LinearGradient(
+                colors: [
+                    CarChatTheme.Colors.surfaceGlass,
+                    CarChatTheme.Colors.surfaceSecondary
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private var border: Color {
+        switch tone {
+        case .danger: Color.white.opacity(0.18)
+        case .accent: CarChatTheme.Colors.accentGradientStart.opacity(0.35)
+        }
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(foreground)
+            .padding(.horizontal, CarChatTheme.Spacing.sm)
+            .padding(.vertical, CarChatTheme.Spacing.xxs + 1)
+            .background(
+                Capsule()
+                    .fill(fillGradient)
+                    .overlay(
+                        Capsule().strokeBorder(border, lineWidth: 0.7)
+                    )
+            )
+            .opacity(isEnabled ? 1 : 0.45)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(CarChatTheme.Animation.micro, value: configuration.isPressed)
+    }
+}
+
 // MARK: - Convenience Extensions
 
 extension ButtonStyle where Self == CarChatPrimaryButtonStyle {
@@ -80,4 +147,12 @@ extension ButtonStyle where Self == CarChatSecondaryButtonStyle {
 
 extension ButtonStyle where Self == CarChatGhostButtonStyle {
     static var carChatGhost: CarChatGhostButtonStyle { .init() }
+}
+
+extension ButtonStyle where Self == CarChatActionPillButtonStyle {
+    static func carChatActionPill(
+        tone: CarChatActionPillTone
+    ) -> CarChatActionPillButtonStyle {
+        .init(tone: tone)
+    }
 }

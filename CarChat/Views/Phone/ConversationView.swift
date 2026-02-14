@@ -292,27 +292,8 @@ struct ConversationView: View {
                         Text("Try Again")
                             .font(CarChatTheme.Typography.caption)
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, CarChatTheme.Spacing.sm)
-                    .padding(.vertical, CarChatTheme.Spacing.xxs + 1)
-                    .background(
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        CarChatTheme.Colors.error.opacity(0.65),
-                                        CarChatTheme.Colors.error.opacity(0.45)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
-                            )
-                    )
                 }
+                .buttonStyle(.carChatActionPill(tone: .danger))
                 .accessibilityLabel("Try again")
                 .accessibilityHint("Retries the voice conversation")
 
@@ -326,18 +307,8 @@ struct ConversationView: View {
                             Text("Settings")
                                 .font(CarChatTheme.Typography.caption)
                         }
-                        .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
-                        .padding(.horizontal, CarChatTheme.Spacing.sm)
-                        .padding(.vertical, CarChatTheme.Spacing.xxs + 1)
-                        .background(
-                            Capsule()
-                                .fill(CarChatTheme.Colors.surfaceGlass)
-                                .overlay(
-                                    Capsule()
-                                        .strokeBorder(CarChatTheme.Colors.accentGradientStart.opacity(0.35), lineWidth: 0.7)
-                                )
-                        )
                     }
+                    .buttonStyle(.carChatActionPill(tone: .accent))
                     .accessibilityLabel("Open settings")
                     .accessibilityHint("Configure your API key")
                 }

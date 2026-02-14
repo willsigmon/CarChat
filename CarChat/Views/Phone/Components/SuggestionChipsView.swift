@@ -69,6 +69,13 @@ struct SuggestionChipsView: View {
                         .padding(.horizontal, CarChatTheme.Spacing.lg)
                         .padding(.vertical, CarChatTheme.Spacing.sm + 2)
                         .frame(maxWidth: .infinity)
+                        .frame(minHeight: 52)
+                        .contentShape(
+                            RoundedRectangle(
+                                cornerRadius: CarChatTheme.Radius.lg,
+                                style: .continuous
+                            )
+                        )
                     }
                     .buttonStyle(SuggestionChipButtonStyle(tint: tint))
                     .opacity(appeared ? 1 : 0)
