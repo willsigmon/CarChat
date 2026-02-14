@@ -39,4 +39,27 @@ actor KeychainManager {
         }
         return !key.isEmpty
     }
+
+    // MARK: - ElevenLabs TTS Key
+
+    private static let elevenLabsKey = "carchat.apikey.elevenlabs"
+
+    func saveElevenLabsKey(_ key: String) throws {
+        try save(key: Self.elevenLabsKey, value: key)
+    }
+
+    func getElevenLabsKey() throws -> String? {
+        try get(key: Self.elevenLabsKey)
+    }
+
+    func deleteElevenLabsKey() throws {
+        try delete(key: Self.elevenLabsKey)
+    }
+
+    func hasElevenLabsKey() throws -> Bool {
+        guard let key = try get(key: Self.elevenLabsKey) else {
+            return false
+        }
+        return !key.isEmpty
+    }
 }

@@ -28,6 +28,7 @@
 		5A68F414D87A1B92BF13919F /* CustomIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 295BC3BFF8A75A33EC462775 /* CustomIcons.swift */; };
 		66C7CAEF8C941577DBD03546 /* PermissionsStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8642F60C5D25290FF1D42983 /* PermissionsStepView.swift */; };
 		693C353A8A2E700E9B8F5C54 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12A10D81E1A5C6689C1A9545 /* ContentView.swift */; };
+		7150BA462E688B82DE7608D4 /* ElevenLabsVoiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A45E63CC6342A6DF97051AE /* ElevenLabsVoiceManager.swift */; };
 		736C1061F9A97FBB55DD14E7 /* SystemTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D0C702B5B9F693CD6AF7B6 /* SystemTTS.swift */; };
 		743BFCC2D80D71E692D8C383 /* OpenAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC92EB21FAF891C8CB7C2784 /* OpenAIProvider.swift */; };
 		751D26EF0D7B12F82E3AA017 /* RealtimeVoiceSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C953FE0B65B863AC7FD38F /* RealtimeVoiceSession.swift */; };
@@ -82,6 +83,7 @@
 		204A76A74092B4583E5F7724 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
 		2289699FF4A82FB1444D3D05 /* ButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonStyles.swift; sourceTree = "<group>"; };
 		295BC3BFF8A75A33EC462775 /* CustomIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomIcons.swift; sourceTree = "<group>"; };
+		2A45E63CC6342A6DF97051AE /* ElevenLabsVoiceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsVoiceManager.swift; sourceTree = "<group>"; };
 		2CAB4A0A31D7A3729F9B5958 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		300B205487E939976B54F2E5 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		396369CF8865713366A6BFFF /* SFSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SFSpeechSTT.swift; sourceTree = "<group>"; };
@@ -233,6 +235,7 @@
 			isa = PBXGroup;
 			children = (
 				74AC1A8D6A157118EFB816CF /* ElevenLabsTTS.swift */,
+				2A45E63CC6342A6DF97051AE /* ElevenLabsVoiceManager.swift */,
 				A7D0C702B5B9F693CD6AF7B6 /* SystemTTS.swift */,
 				55348EDA515FC01CFF75D7FB /* TTSEngine.swift */,
 			);
@@ -494,6 +497,7 @@
 				5A68F414D87A1B92BF13919F /* CustomIcons.swift in Sources */,
 				B154B07DB931B7AC7875E41B /* DesignTokens.swift in Sources */,
 				CFAC008AD29903DCC3B7AAB6 /* ElevenLabsTTS.swift in Sources */,
+				7150BA462E688B82DE7608D4 /* ElevenLabsVoiceManager.swift in Sources */,
 				144EF9292F56C2D0F8C1F38C /* GeminiProvider.swift in Sources */,
 				FBBFAF0733ACC4D63645A699 /* GlassCard.swift in Sources */,
 				0C9F1086ABF215A994A2BE28 /* GrokProvider.swift in Sources */,

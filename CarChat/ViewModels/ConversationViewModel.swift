@@ -93,19 +93,57 @@ final class ConversationViewModel {
         )
 
         let stt = SFSpeechSTT()
-        let tts = SystemTTS()
-
-        // Apply persona voice if available
-        if let persona = fetchActivePersona(),
-           let voiceId = persona.systemTTSVoice {
-            tts.setVoice(identifier: voiceId)
-        }
+        let tts = try await buildTTSEngine()
 
         return PipelineVoiceSession(
             sttEngine: stt,
             ttsEngine: tts,
             aiProvider: aiProvider
         )
+    }
+
+    private func buildTTSEngine() async throws -> TTSEngineProtocol {
+        let engineType = TTSEngineType(
+            rawValue: UserDefaults.standard.string(forKey: "ttsEngine") ?? "system"
+        ) ?? .system
+
+        switch engineType {
+        case .system:
+            let tts = SystemTTS()
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.systemTTSVoice {
+                tts.setVoice(identifier: voiceId)
+            }
+            return tts
+
+        case .elevenLabs:
+            guard let key = try? await appServices.keychainManager.getElevenLabsKey(),
+                  !key.isEmpty else {
+                // Fallback to system if no ElevenLabs key
+                let tts = SystemTTS()
+                if let persona = fetchActivePersona(),
+                   let voiceId = persona.systemTTSVoice {
+                    tts.setVoice(identifier: voiceId)
+                }
+                return tts
+            }
+
+            let modelRaw = UserDefaults.standard.string(forKey: "elevenLabsModel") ?? ElevenLabsModel.flash.rawValue
+            let model = ElevenLabsModel(rawValue: modelRaw) ?? .flash
+
+            let tts = ElevenLabsTTS(
+                apiKey: key,
+                model: model
+            )
+
+            // Apply persona's ElevenLabs voice if set
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.elevenLabsVoiceID {
+                tts.setVoice(id: voiceId)
+            }
+
+            return tts
+        }
     }
 
     // MARK: - Stream Observers
