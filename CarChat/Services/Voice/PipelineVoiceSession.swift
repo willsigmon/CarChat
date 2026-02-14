@@ -76,6 +76,67 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
         updateState(.listening)
     }
 
+    /// Send text directly to AI (skipping STT), then speak the response.
+    /// After the AI responds via TTS, transitions to the normal listening loop.
+    func sendText(_ text: String, systemPrompt override: String? = nil) async {
+        // Initialize system prompt if this is the first interaction
+        if conversationHistory.isEmpty {
+            let prompt = override ?? systemPrompt
+            if !prompt.isEmpty {
+                conversationHistory.append((.system, prompt))
+            }
+        }
+
+        try? AudioSessionManager.shared.configureForVoiceChat()
+
+        updateState(.processing)
+        conversationHistory.append((.user, text))
+        transcriptContinuation?.yield(
+            VoiceTranscript(text: text, isFinal: true, role: .user)
+        )
+
+        do {
+            var fullResponse = ""
+            let stream = try await aiProvider.streamChat(
+                messages: conversationHistory.map {
+                    ChatMessage(role: $0.role, content: $0.content)
+                }
+            )
+
+            updateState(.speaking)
+
+            var sentenceBuffer = ""
+            for try await chunk in stream {
+                if Task.isCancelled { break }
+                fullResponse += chunk
+                sentenceBuffer += chunk
+
+                if let range = sentenceBuffer.range(
+                    of: "[.!?] ",
+                    options: .regularExpression
+                ) {
+                    let sentence = String(sentenceBuffer[..<range.upperBound])
+                    sentenceBuffer = String(sentenceBuffer[range.upperBound...])
+                    await ttsEngine.speak(sentence)
+                }
+            }
+
+            if !sentenceBuffer.isEmpty {
+                await ttsEngine.speak(sentenceBuffer)
+            }
+
+            conversationHistory.append((.assistant, fullResponse))
+            transcriptContinuation?.yield(
+                VoiceTranscript(text: fullResponse, isFinal: true, role: .assistant)
+            )
+
+            // Return to listening after speaking
+            startListeningLoop()
+        } catch {
+            updateState(.error(error.localizedDescription))
+        }
+    }
+
     private func startListeningLoop() {
         listeningTask = Task { [weak self] in
             guard let self else { return }

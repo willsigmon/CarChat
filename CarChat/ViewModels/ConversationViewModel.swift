@@ -65,6 +65,34 @@ final class ConversationViewModel {
         }
     }
 
+    func sendPrompt(_ text: String) {
+        errorMessage = nil
+
+        Task {
+            do {
+                let session = try await buildVoiceSession()
+                voiceSession = session
+
+                if conversation == nil {
+                    let persona = fetchActivePersona()
+                    let providerType = resolveProviderType()
+                    conversation = appServices.conversationStore.create(
+                        providerType: providerType,
+                        personaName: persona?.name ?? "Sigmon"
+                    )
+                }
+
+                observeStreams(session)
+
+                let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
+                await session.sendText(text, systemPrompt: systemPrompt)
+            } catch {
+                voiceState = .idle
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
     func stopListening() {
         Task {
             await voiceSession?.stop()

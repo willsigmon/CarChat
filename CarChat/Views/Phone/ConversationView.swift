@@ -3,7 +3,8 @@ import SwiftUI
 struct ConversationView: View {
     @Environment(AppServices.self) private var appServices
     @State private var viewModel: ConversationViewModel?
-    @State private var showGreeting = false
+    @State private var showSuggestions = false
+    @State private var suggestions: [PromptSuggestions.Suggestion] = []
     @State private var statusLabel = Microcopy.Status.label(for: .idle)
     @State private var showSettings = false
 
@@ -64,14 +65,20 @@ struct ConversationView: View {
 
                 Spacer()
 
-                // Idle greeting (shows when not active)
-                if !vm.voiceState.isActive && showGreeting {
-                    greetingBubble
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.9).combined(with: .opacity),
-                            removal: .opacity
-                        ))
-                        .padding(.bottom, CarChatTheme.Spacing.md)
+                // Idle suggestions (shows when not active)
+                if !vm.voiceState.isActive && showSuggestions {
+                    SuggestionChipsView(suggestions: suggestions) { suggestion in
+                        withAnimation(CarChatTheme.Animation.fast) {
+                            showSuggestions = false
+                        }
+                        vm.sendPrompt(suggestion.text)
+                    }
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.9).combined(with: .opacity),
+                        removal: .opacity
+                    ))
+                    .padding(.horizontal, CarChatTheme.Spacing.xl)
+                    .padding(.bottom, CarChatTheme.Spacing.md)
                 }
 
                 // Status indicator
@@ -138,41 +145,23 @@ struct ConversationView: View {
                 statusLabel = Microcopy.Status.label(for: newState)
             }
 
-            // Show/hide greeting
+            // Refresh suggestions when returning to idle
             if newState == .idle && oldState != .idle {
+                suggestions = PromptSuggestions.current()
                 withAnimation(CarChatTheme.Animation.smooth) {
-                    showGreeting = false
+                    showSuggestions = true
                 }
             }
         }
         .onAppear {
-            // Delayed greeting entrance
+            suggestions = PromptSuggestions.current()
+            // Delayed entrance
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 withAnimation(CarChatTheme.Animation.smooth) {
-                    showGreeting = true
+                    showSuggestions = true
                 }
             }
         }
-    }
-
-    // MARK: - Greeting Bubble
-
-    @ViewBuilder
-    private var greetingBubble: some View {
-        GlassCard(cornerRadius: CarChatTheme.Radius.lg, padding: CarChatTheme.Spacing.sm) {
-            HStack(spacing: CarChatTheme.Spacing.xs) {
-                Image(systemName: "hand.wave.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(CarChatTheme.Colors.processing)
-
-                Text(Microcopy.Greeting.greeting)
-                    .font(CarChatTheme.Typography.callout)
-                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
-            }
-        }
-        .padding(.horizontal, CarChatTheme.Spacing.xxxl)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Greeting")
     }
 
     // MARK: - Top Bar
