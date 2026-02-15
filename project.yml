@@ -58,6 +58,8 @@ targets:
       - package: SwiftOpenAI
       - package: SwiftAnthropic
       - package: KeychainAccess
+      - target: CarChatWatch
+        embed: true
     preBuildScripts: []
     scheme:
       testTargets:
@@ -76,12 +78,14 @@ targets:
         SDKROOT: watchos
         SUPPORTED_PLATFORMS: "watchos watchsimulator"
         TARGETED_DEVICE_FAMILY: "4"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 49HAGQE8FB
         PRODUCT_BUNDLE_IDENTIFIER: com.willsigmon.carchat.watchkitapp
         PRODUCT_NAME: CarChat Watch
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: CarChat
-        INFOPLIST_KEY_WKWatchKitApp: YES
-        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.willsigmon.carchat
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: CarChatWatch/App/Info.plist
     dependencies:
       - target: CarChatWatchExtension
 
@@ -98,13 +102,14 @@ targets:
         SDKROOT: watchos
         SUPPORTED_PLATFORMS: "watchos watchsimulator"
         TARGETED_DEVICE_FAMILY: "4"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 49HAGQE8FB
         PRODUCT_BUNDLE_IDENTIFIER: com.willsigmon.carchat.watchkitapp.watchkitextension
         PRODUCT_NAME: CarChat Watch Extension
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: CarChat
-        INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.watchkit
-        INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).ExtensionDelegate"
-        INFOPLIST_KEY_WKAppBundleIdentifier: com.willsigmon.carchat.watchkitapp
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: CarChatWatch/Extension/Info.plist
 
   CarChatTests:
     type: bundle.unit-test
@@ -124,3 +129,9 @@ targets:
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
         EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/CarChat.app/CarChat"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        LD_RUNPATH_SEARCH_PATHS:
+          - "$(inherited)"
+          - "@loader_path/Frameworks"
+          - "@executable_path/Frameworks"

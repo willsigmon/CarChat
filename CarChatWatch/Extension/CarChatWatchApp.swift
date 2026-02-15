@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct CarChatWatchApp: App {
-    @WKApplicationDelegateAdaptor(ExtensionDelegate.self)
+    @WKExtensionDelegateAdaptor(ExtensionDelegate.self)
     private var extensionDelegate
 
     @StateObject private var viewModel = WatchConversationViewModel()

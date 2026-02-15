@@ -30,7 +30,7 @@ private enum WatchBridgeMessageKey {
     static let chatAction = "chat"
 }
 
-final class WatchPhoneBridge: NSObject {
+final class WatchPhoneBridge: NSObject, @unchecked Sendable {
     static let shared = WatchPhoneBridge()
 
     private let session: WCSession?
