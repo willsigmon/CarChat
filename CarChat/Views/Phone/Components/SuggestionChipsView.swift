@@ -13,6 +13,10 @@ struct SuggestionChipsView: View {
         CarChatTheme.Colors.speaking,
         CarChatTheme.Colors.processing
     ]
+    private let gridColumns = [
+        GridItem(.flexible(), spacing: CarChatTheme.Spacing.md),
+        GridItem(.flexible(), spacing: CarChatTheme.Spacing.md)
+    ]
 
     var body: some View {
         VStack(spacing: CarChatTheme.Spacing.lg) {
@@ -28,6 +32,7 @@ struct SuggestionChipsView: View {
             .opacity(appeared ? 1 : 0)
 
             VStack(spacing: CarChatTheme.Spacing.md) {
+                LazyVGrid(columns: gridColumns, alignment: .leading, spacing: CarChatTheme.Spacing.md) {
                 ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
                     let tint = chipColors[index % chipColors.count]
 
@@ -35,42 +40,38 @@ struct SuggestionChipsView: View {
                         Haptics.tap()
                         onTap(suggestion)
                     } label: {
-                        HStack(spacing: CarChatTheme.Spacing.md) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
-                                    .fill(tint.opacity(0.20))
-                                    .frame(width: 34, height: 34)
+                        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                            HStack {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
+                                        .fill(tint.opacity(0.20))
+                                        .frame(width: 34, height: 34)
 
-                                Image(systemName: suggestion.icon)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(tint)
+                                    Image(systemName: suggestion.icon)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(tint)
+                                }
+
+                                Spacer(minLength: 0)
                             }
 
                             VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxxs) {
                                 Text(suggestion.text)
                                     .font(CarChatTheme.Typography.body.weight(.semibold))
                                     .foregroundStyle(CarChatTheme.Colors.textPrimary)
-                                    .lineLimit(2)
+                                    .lineLimit(3)
+                                    .fixedSize(horizontal: false, vertical: true)
 
                                 Text("Tap to ask")
                                     .font(CarChatTheme.Typography.caption)
                                     .foregroundStyle(CarChatTheme.Colors.textTertiary)
                             }
-
-                            Spacer()
-
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(tint.opacity(0.9))
-                                .padding(8)
-                                .background(
-                                    Circle().fill(tint.opacity(0.15))
-                                )
+                            Spacer(minLength: 0)
                         }
-                        .padding(.horizontal, CarChatTheme.Spacing.lg)
-                        .padding(.vertical, CarChatTheme.Spacing.sm + 2)
+                        .padding(.horizontal, CarChatTheme.Spacing.md)
+                        .padding(.vertical, CarChatTheme.Spacing.sm)
                         .frame(maxWidth: .infinity)
-                        .frame(minHeight: 52)
+                        .frame(minHeight: 112, alignment: .topLeading)
                         .contentShape(
                             RoundedRectangle(
                                 cornerRadius: CarChatTheme.Radius.lg,
@@ -83,11 +84,12 @@ struct SuggestionChipsView: View {
                     .offset(y: appeared ? 0 : 12)
                     .animation(
                         .spring(response: 0.5, dampingFraction: 0.8)
-                            .delay(Double(index) * 0.12),
+                            .delay(Double(index) * 0.07),
                         value: appeared
                     )
                     .accessibilityLabel(suggestion.text)
                     .accessibilityHint("Sends this as a conversation starter")
+                }
                 }
 
                 if let onRefresh {
