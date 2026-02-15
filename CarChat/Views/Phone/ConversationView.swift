@@ -65,9 +65,6 @@ struct ConversationView: View {
                     .padding(.top, CarChatTheme.Spacing.sm)
 
                 if !vm.voiceState.isActive && showSuggestions {
-                    // Idle: keep suggestions discoverable and scrollable
-                    Spacer(minLength: CarChatTheme.Spacing.md)
-
                     ScrollView(.vertical, showsIndicators: false) {
                         SuggestionChipsView(
                             suggestions: suggestions,
@@ -82,28 +79,13 @@ struct ConversationView: View {
                             }
                         )
                         .padding(.horizontal, CarChatTheme.Spacing.md)
-                        .padding(.vertical, CarChatTheme.Spacing.xs)
+                        .padding(.top, CarChatTheme.Spacing.sm)
+                        .padding(.bottom, CarChatTheme.Spacing.lg)
                         .transition(.asymmetric(
                             insertion: .scale(scale: 0.9).combined(with: .opacity),
                             removal: .opacity
                         ))
                     }
-                    .frame(maxHeight: 520)
-                    .overlay(alignment: .bottom) {
-                        LinearGradient(
-                            colors: [
-                                .clear,
-                                CarChatTheme.Colors.background.opacity(0.24),
-                                CarChatTheme.Colors.background.opacity(0.48)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .frame(height: 34)
-                        .allowsHitTesting(false)
-                    }
-
-                    Spacer(minLength: CarChatTheme.Spacing.md)
                 } else {
                     Spacer()
 
@@ -140,13 +122,16 @@ struct ConversationView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                Spacer()
+                if vm.voiceState.isActive {
+                    Spacer()
+                }
 
                 // Premium mic button
                 MicButton(state: vm.voiceState) {
                     vm.toggleListening()
                 }
-                .padding(.bottom, CarChatTheme.Spacing.huge)
+                .padding(.top, CarChatTheme.Spacing.sm)
+                .padding(.bottom, CarChatTheme.Spacing.xl)
                 .zIndex(5)
             }
         }

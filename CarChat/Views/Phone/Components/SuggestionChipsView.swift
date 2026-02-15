@@ -27,16 +27,7 @@ struct SuggestionChipsView: View {
 
                 Text("Pick a quick prompt")
                     .font(CarChatTheme.Typography.callout)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                CarChatTheme.Colors.accentGradientStart,
-                                CarChatTheme.Colors.speaking
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
             }
             .opacity(appeared ? 1 : 0)
 
@@ -82,16 +73,12 @@ struct SuggestionChipsView: View {
                                     .fixedSize(horizontal: false, vertical: true)
 
                                 Spacer(minLength: CarChatTheme.Spacing.xxxs)
-
-                                Text("Tap to ask")
-                                    .font(CarChatTheme.Typography.caption.weight(.semibold))
-                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                             .padding(.horizontal, CarChatTheme.Spacing.md)
                             .padding(.vertical, CarChatTheme.Spacing.sm)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 136, alignment: .topLeading)
+                            .frame(height: 118, alignment: .topLeading)
                             .contentShape(
                                 RoundedRectangle(
                                     cornerRadius: CarChatTheme.Radius.lg,
@@ -147,8 +134,8 @@ private struct SuggestionChipButtonStyle: ButtonStyle {
                     .fill(
                         LinearGradient(
                             colors: [
-                                CarChatTheme.Colors.surfaceGlass.opacity(configuration.isPressed ? 0.95 : 0.85),
-                                CarChatTheme.Colors.surfaceSecondary.opacity(configuration.isPressed ? 0.80 : 0.65)
+                                CarChatTheme.Colors.surfacePrimary.opacity(configuration.isPressed ? 0.93 : 0.88),
+                                CarChatTheme.Colors.surfaceGlass.opacity(configuration.isPressed ? 0.82 : 0.76)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -160,47 +147,34 @@ private struct SuggestionChipButtonStyle: ButtonStyle {
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                tint.opacity(configuration.isPressed ? 0.75 : 0.55),
-                                Color.white.opacity(configuration.isPressed ? 0.18 : 0.12)
+                                tint.opacity(configuration.isPressed ? 0.46 : 0.32),
+                                CarChatTheme.Colors.borderSubtle.opacity(configuration.isPressed ? 0.75 : 0.55)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: configuration.isPressed ? 1.2 : 0.9
+                        lineWidth: configuration.isPressed ? 1.1 : 0.8
                     )
             )
             .shadow(
-                color: tint.opacity(configuration.isPressed ? 0.18 : 0.30),
-                radius: configuration.isPressed ? 6 : 14,
+                color: tint.opacity(configuration.isPressed ? 0.10 : 0.14),
+                radius: configuration.isPressed ? 4 : 8,
                 x: 0,
-                y: configuration.isPressed ? 2 : 8
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(configuration.isPressed ? 0.06 : 0.12),
-                                .clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .center
-                        )
-                    )
+                y: configuration.isPressed ? 2 : 4
             )
             .overlay(alignment: .bottom) {
                 Capsule(style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                tint.opacity(configuration.isPressed ? 0.95 : 0.80),
-                                tint.opacity(configuration.isPressed ? 0.50 : 0.25)
+                                tint.opacity(configuration.isPressed ? 0.80 : 0.68),
+                                tint.opacity(configuration.isPressed ? 0.24 : 0.12)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .frame(height: 3)
+                    .frame(height: 2)
                     .padding(.horizontal, CarChatTheme.Spacing.sm)
                     .padding(.bottom, CarChatTheme.Spacing.xs)
             }
