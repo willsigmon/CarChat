@@ -8,6 +8,7 @@ final class ConversationViewModel {
     private let appServices: AppServices
     private var voiceSession: PipelineVoiceSession?
     private var startTask: Task<Void, Never>?
+    private var sendTask: Task<Void, Never>?
     private var stateTask: Task<Void, Never>?
     private var transcriptTask: Task<Void, Never>?
     private var audioLevelTask: Task<Void, Never>?
@@ -31,7 +32,7 @@ final class ConversationViewModel {
     // MARK: - Voice Control
 
     func toggleListening() {
-        if isActive {
+        if isActive || voiceSession != nil || startTask != nil {
             stopListening()
         } else {
             startListening()
@@ -39,7 +40,7 @@ final class ConversationViewModel {
     }
 
     func startListening() {
-        guard startTask == nil else { return }
+        guard startTask == nil, sendTask == nil, voiceSession == nil else { return }
         errorMessage = nil
 
         startTask = Task { [weak self] in
@@ -47,12 +48,6 @@ final class ConversationViewModel {
             defer { startTask = nil }
 
             do {
-                if voiceSession != nil {
-                    await voiceSession?.stop()
-                    tearDownObservers()
-                    voiceSession = nil
-                }
-
                 let session = try await buildVoiceSession()
                 voiceSession = session
 
@@ -80,10 +75,23 @@ final class ConversationViewModel {
     }
 
     func sendPrompt(_ text: String) {
+        guard sendTask == nil else { return }
         errorMessage = nil
 
-        Task {
+        sendTask = Task { [weak self] in
+            guard let self else { return }
+            defer { sendTask = nil }
+
             do {
+                startTask?.cancel()
+                startTask = nil
+
+                if voiceSession != nil {
+                    await voiceSession?.stop()
+                    tearDownObservers()
+                    voiceSession = nil
+                }
+
                 let session = try await buildVoiceSession()
                 voiceSession = session
 
@@ -101,8 +109,11 @@ final class ConversationViewModel {
                 let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                 await session.sendText(text, systemPrompt: systemPrompt)
             } catch {
+                if Task.isCancelled { return }
                 voiceState = .idle
                 errorMessage = error.localizedDescription
+                tearDownObservers()
+                voiceSession = nil
             }
         }
     }
@@ -111,6 +122,8 @@ final class ConversationViewModel {
         Task {
             startTask?.cancel()
             startTask = nil
+            sendTask?.cancel()
+            sendTask = nil
             await voiceSession?.stop()
             tearDownObservers()
             voiceSession = nil

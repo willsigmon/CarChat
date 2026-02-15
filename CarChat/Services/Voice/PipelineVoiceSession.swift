@@ -115,6 +115,13 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                 if Task.isCancelled { break }
                 fullResponse += chunk
                 sentenceBuffer += chunk
+                transcriptContinuation?.yield(
+                    VoiceTranscript(
+                        text: fullResponse,
+                        isFinal: false,
+                        role: .assistant
+                    )
+                )
 
                 if let range = sentenceBuffer.range(
                     of: "[.!?] ",
@@ -213,6 +220,13 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                         if Task.isCancelled { break }
                         fullResponse += chunk
                         sentenceBuffer += chunk
+                        transcriptContinuation?.yield(
+                            VoiceTranscript(
+                                text: fullResponse,
+                                isFinal: false,
+                                role: .assistant
+                            )
+                        )
 
                         // Speak when we hit sentence boundaries
                         if let range = sentenceBuffer.range(
