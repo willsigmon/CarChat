@@ -40,7 +40,7 @@ struct SuggestionChipsView: View {
                             Haptics.tap()
                             onTap(suggestion)
                         } label: {
-                            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxs) {
                                 HStack(spacing: CarChatTheme.Spacing.xxs) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
@@ -53,25 +53,32 @@ struct SuggestionChipsView: View {
                                     }
 
                                     Text(suggestion.topic)
-                                        .font(CarChatTheme.Typography.caption.weight(.semibold))
-                                        .foregroundStyle(tint.opacity(0.88))
+                                        .font(.system(.subheadline, design: .rounded).weight(.bold))
+                                        .foregroundStyle(tint)
+                                        .textCase(.uppercase)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
 
                                     Spacer(minLength: 0)
                                 }
 
                                 Text(suggestion.text)
-                                    .font(CarChatTheme.Typography.body.weight(.semibold))
-                                    .foregroundStyle(CarChatTheme.Colors.textPrimary)
-                                    .lineLimit(3)
+                                    .font(CarChatTheme.Typography.caption.weight(.medium))
+                                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                                    .lineLimit(2)
                                     .fixedSize(horizontal: false, vertical: true)
 
                                 Spacer(minLength: CarChatTheme.Spacing.xxxs)
+
+                                Text("Tap to ask")
+                                    .font(CarChatTheme.Typography.micro)
+                                    .foregroundStyle(tint.opacity(0.9))
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                             .padding(.horizontal, CarChatTheme.Spacing.md)
                             .padding(.vertical, CarChatTheme.Spacing.sm)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 108, alignment: .topLeading)
+                            .frame(height: 124, alignment: .topLeading)
                             .contentShape(
                                 RoundedRectangle(
                                     cornerRadius: CarChatTheme.Radius.lg,
@@ -160,14 +167,14 @@ private struct SuggestionChipButtonStyle: ButtonStyle {
                     .fill(
                         LinearGradient(
                             colors: [
-                                tint.opacity(configuration.isPressed ? 0.80 : 0.68),
-                                tint.opacity(configuration.isPressed ? 0.24 : 0.12)
+                                tint.opacity(configuration.isPressed ? 0.85 : 0.72),
+                                tint.opacity(configuration.isPressed ? 0.30 : 0.18)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .frame(height: 2)
+                    .frame(height: 3)
                     .padding(.horizontal, CarChatTheme.Spacing.sm)
                     .padding(.bottom, CarChatTheme.Spacing.xs)
             }

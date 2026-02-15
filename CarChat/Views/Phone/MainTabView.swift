@@ -34,6 +34,7 @@ struct MainTabView: View {
                 .accessibilityHint("Configure app settings")
         }
         .tint(CarChatTheme.Colors.accentGradientStart)
+        .toolbarBackground(.hidden, for: .tabBar)
         .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }

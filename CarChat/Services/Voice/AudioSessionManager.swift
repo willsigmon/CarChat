@@ -5,24 +5,29 @@ final class AudioSessionManager {
     static let shared = AudioSessionManager()
     private static let outputModeKey = "audioOutputMode"
     private let audioSession = AVAudioSession.sharedInstance()
+    private var routeEnforcementTask: Task<Void, Never>?
 
     private init() {}
 
     func configureForVoiceChat() throws {
         let outputMode = preferredOutputMode
         let options = categoryOptions(for: outputMode)
+        let mode = audioMode(for: outputMode)
 
         try audioSession.setCategory(
             .playAndRecord,
-            mode: .voiceChat,
+            mode: mode,
             options: options
         )
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         try applyPreferredInput(for: outputMode)
         try applyOutputOverride(for: outputMode)
+        scheduleRouteEnforcement(for: outputMode)
     }
 
     func deactivate() throws {
+        routeEnforcementTask?.cancel()
+        routeEnforcementTask = nil
         try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -45,6 +50,16 @@ final class AudioSessionManager {
 
     var currentOutputRouteName: String {
         audioSession.currentRoute.outputs.first?.portName ?? "Unknown"
+    }
+
+    var currentRouteSummary: String {
+        let outputs = audioSession.currentRoute.outputs.map { output in
+            "\(output.portName) (\(output.portType.rawValue))"
+        }
+        let inputs = audioSession.currentRoute.inputs.map { input in
+            "\(input.portName) (\(input.portType.rawValue))"
+        }
+        return "Out: \(outputs.joined(separator: ", ")) • In: \(inputs.joined(separator: ", "))"
     }
 
     private func applyOutputOverride(for mode: AudioOutputMode) throws {
@@ -82,9 +97,48 @@ final class AudioSessionManager {
         case .speakerphone:
             return [
                 .defaultToSpeaker,
+                .allowBluetoothHFP,
+                .allowBluetoothA2DP,
                 .duckOthers
             ]
         }
+    }
+
+    private func audioMode(for mode: AudioOutputMode) -> AVAudioSession.Mode {
+        switch mode {
+        case .automatic:
+            return .voiceChat
+        case .speakerphone:
+            // Apple docs: `.videoChat` applies voice optimization and speaker-forward routing.
+            return .videoChat
+        }
+    }
+
+    private func scheduleRouteEnforcement(for mode: AudioOutputMode) {
+        routeEnforcementTask?.cancel()
+        routeEnforcementTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: .milliseconds(180))
+            guard !Task.isCancelled else { return }
+
+            try? applyPreferredInput(for: mode)
+            try? applyOutputOverride(for: mode)
+
+            if mode == .speakerphone && !isUsingBuiltInSpeaker {
+                try? audioSession.setCategory(
+                    .playAndRecord,
+                    mode: audioMode(for: mode),
+                    options: categoryOptions(for: mode)
+                )
+                try? audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+                try? applyPreferredInput(for: mode)
+                try? applyOutputOverride(for: mode)
+            }
+        }
+    }
+
+    private var isUsingBuiltInSpeaker: Bool {
+        audioSession.currentRoute.outputs.contains { $0.portType == .builtInSpeaker }
     }
 
     var isBluetoothConnected: Bool {

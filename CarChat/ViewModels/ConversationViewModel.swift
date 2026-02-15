@@ -12,6 +12,8 @@ final class ConversationViewModel {
     private var stateTask: Task<Void, Never>?
     private var transcriptTask: Task<Void, Never>?
     private var audioLevelTask: Task<Void, Never>?
+    private var activeUserBubbleID: UUID?
+    private var activeAssistantBubbleID: UUID?
 
     private(set) var conversation: Conversation?
     private(set) var voiceState: VoiceSessionState = .idle
@@ -20,6 +22,7 @@ final class ConversationViewModel {
     private(set) var assistantTranscript = ""
     private(set) var errorMessage: String?
     private(set) var activeProvider: AIProviderType
+    private(set) var bubbles: [ConversationBubble] = []
 
     var isListening: Bool { voiceState == .listening }
     var isProcessing: Bool { voiceState == .processing }
@@ -60,6 +63,8 @@ final class ConversationViewModel {
                         providerType: activeProvider,
                         personaName: persona?.name ?? "Sigmon"
                     )
+                    resetBubbleDraftState()
+                    bubbles = []
                 }
 
                 observeStreams(session)
@@ -103,6 +108,8 @@ final class ConversationViewModel {
                         providerType: activeProvider,
                         personaName: persona?.name ?? "Sigmon"
                     )
+                    resetBubbleDraftState()
+                    bubbles = []
                 }
 
                 observeStreams(session)
@@ -225,20 +232,15 @@ final class ConversationViewModel {
                 guard let self, !Task.isCancelled else { break }
                 if transcript.role == .user {
                     self.currentTranscript = transcript.text
+                    self.upsertBubble(transcript)
                     if transcript.isFinal, !transcript.text.isEmpty {
                         self.persistMessage(role: .user, content: transcript.text)
                     }
                 } else if transcript.role == .assistant {
                     self.assistantTranscript = transcript.text
+                    self.upsertBubble(transcript)
                     if transcript.isFinal, !transcript.text.isEmpty {
                         self.persistMessage(role: .assistant, content: transcript.text)
-                        // Clear transcripts after assistant finishes
-                        // (next listening loop will reset)
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .seconds(1))
-                            self.currentTranscript = ""
-                            self.assistantTranscript = ""
-                        }
                     }
                 }
             }
@@ -300,5 +302,88 @@ final class ConversationViewModel {
             }
         }
         return .openAI
+    }
+
+    private func resetBubbleDraftState() {
+        activeUserBubbleID = nil
+        activeAssistantBubbleID = nil
+    }
+
+    private func upsertBubble(_ transcript: VoiceTranscript) {
+        let trimmed = transcript.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let existingID: UUID?
+        switch transcript.role {
+        case .user:
+            existingID = activeUserBubbleID
+        case .assistant:
+            existingID = activeAssistantBubbleID
+        case .system:
+            existingID = nil
+        }
+
+        if let existingID,
+           let index = bubbles.firstIndex(where: { $0.id == existingID }) {
+            bubbles[index] = ConversationBubble(
+                id: existingID,
+                role: transcript.role,
+                text: trimmed,
+                isFinal: transcript.isFinal,
+                createdAt: bubbles[index].createdAt
+            )
+        } else {
+            let bubble = ConversationBubble(
+                role: transcript.role,
+                text: trimmed,
+                isFinal: transcript.isFinal
+            )
+            bubbles.append(bubble)
+            switch transcript.role {
+            case .user:
+                activeUserBubbleID = bubble.id
+            case .assistant:
+                activeAssistantBubbleID = bubble.id
+            case .system:
+                break
+            }
+        }
+
+        if transcript.isFinal {
+            switch transcript.role {
+            case .user:
+                activeUserBubbleID = nil
+            case .assistant:
+                activeAssistantBubbleID = nil
+            case .system:
+                break
+            }
+        }
+
+        if bubbles.count > 64 {
+            bubbles.removeFirst(bubbles.count - 64)
+        }
+    }
+}
+
+struct ConversationBubble: Identifiable, Equatable, Sendable {
+    let id: UUID
+    let role: MessageRole
+    let text: String
+    let isFinal: Bool
+    let createdAt: Date
+
+    init(
+        id: UUID = UUID(),
+        role: MessageRole,
+        text: String,
+        isFinal: Bool,
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.role = role
+        self.text = text
+        self.isFinal = isFinal
+        self.createdAt = createdAt
     }
 }

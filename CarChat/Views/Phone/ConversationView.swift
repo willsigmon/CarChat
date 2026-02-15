@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct ConversationView: View {
     @Environment(AppServices.self) private var appServices
@@ -8,6 +11,7 @@ struct ConversationView: View {
     @State private var suggestions: [PromptSuggestions.Suggestion] = []
     @State private var statusLabel = Microcopy.Status.label(for: .idle)
     @State private var showSettings = false
+    @State private var bubbleReactions: [UUID: String] = [:]
 
     var body: some View {
         Group {
@@ -57,14 +61,12 @@ struct ConversationView: View {
                 color: particleColor(for: vm.voiceState)
             )
 
-            // Main content
             VStack(spacing: 0) {
-                // Top bar with persona & provider
                 topBar(vm)
                     .padding(.horizontal, CarChatTheme.Spacing.xl)
                     .padding(.top, CarChatTheme.Spacing.sm)
 
-                if !vm.voiceState.isActive && showSuggestions {
+                if !vm.voiceState.isActive && showSuggestions && vm.bubbles.isEmpty {
                     ScrollView(.vertical, showsIndicators: false) {
                         SuggestionChipsView(
                             suggestions: suggestions,
@@ -80,36 +82,28 @@ struct ConversationView: View {
                         )
                         .padding(.horizontal, CarChatTheme.Spacing.md)
                         .padding(.top, CarChatTheme.Spacing.sm)
-                        .padding(.bottom, CarChatTheme.Spacing.lg)
+                        .padding(.bottom, 180)
                         .transition(.asymmetric(
                             insertion: .scale(scale: 0.9).combined(with: .opacity),
                             removal: .opacity
                         ))
                     }
                 } else {
-                    // Status indicator
                     statusIndicator(vm)
                         .padding(.top, CarChatTheme.Spacing.xl)
-                        .padding(.bottom, CarChatTheme.Spacing.md)
+                        .padding(.bottom, CarChatTheme.Spacing.sm)
 
-                    if vm.voiceState == .speaking {
-                        speakingCaptionArea(vm)
-                            .padding(.horizontal, CarChatTheme.Spacing.xl)
-                            .padding(.top, CarChatTheme.Spacing.xs)
-                            .transition(.asymmetric(
-                                insertion: .scale(scale: 0.95).combined(with: .opacity),
-                                removal: .opacity
-                            ))
-                    } else {
-                        // Waveform visualization
+                    if vm.bubbles.isEmpty {
                         VoiceWaveformView(level: vm.audioLevel, state: vm.voiceState)
-                            .frame(height: 160)
-
-                        // Transcript area
-                        transcriptArea(vm)
-                            .padding(.horizontal, CarChatTheme.Spacing.xxl)
-                            .frame(minHeight: 80)
-                            .padding(.top, CarChatTheme.Spacing.md)
+                            .frame(height: 150)
+                            .padding(.horizontal, CarChatTheme.Spacing.xl)
+                            .padding(.top, CarChatTheme.Spacing.sm)
+                            .padding(.bottom, 180)
+                    } else {
+                        bubbleChatArea(vm)
+                            .padding(.top, CarChatTheme.Spacing.xxs)
+                            .padding(.bottom, 180)
+                            .transition(.opacity)
                     }
                 }
 
@@ -120,21 +114,19 @@ struct ConversationView: View {
                         .padding(.top, CarChatTheme.Spacing.xs)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-
-                if vm.voiceState.isActive {
-                    Spacer()
-                }
-
-                // Premium mic button
-                MicButton(state: vm.voiceState) {
-                    vm.toggleListening()
-                }
-                .padding(.top, CarChatTheme.Spacing.sm)
-                .padding(.bottom, CarChatTheme.Spacing.xl)
-                .zIndex(5)
             }
         }
         .animation(CarChatTheme.Animation.fast, value: vm.voiceState)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            MicButton(state: vm.voiceState) {
+                vm.toggleListening()
+            }
+            .padding(.bottom, CarChatTheme.Spacing.lg)
+            .padding(.top, CarChatTheme.Spacing.xs)
+            .frame(maxWidth: .infinity)
+            .background(Color.clear)
+            .contentShape(Rectangle())
+        }
         .sheet(isPresented: $showSettings) {
             NavigationStack {
                 APIKeySettingsView()
@@ -260,102 +252,43 @@ struct ConversationView: View {
         .accessibilityLabel("Status: \(statusLabel)")
     }
 
-    // MARK: - Transcript Area
+    // MARK: - Bubble Chat
 
     @ViewBuilder
-    private func transcriptArea(_ vm: ConversationViewModel) -> some View {
-        VStack(spacing: CarChatTheme.Spacing.sm) {
-            if !vm.currentTranscript.isEmpty {
-                GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
-                    HStack(spacing: CarChatTheme.Spacing.xs) {
-                        Circle()
-                            .fill(CarChatTheme.Colors.listening)
-                            .frame(width: 6, height: 6)
-
-                        Text(vm.currentTranscript)
-                            .font(CarChatTheme.Typography.transcriptUser)
-                            .foregroundStyle(CarChatTheme.Colors.textPrimary)
-                            .lineLimit(4)
+    private func bubbleChatArea(_ vm: ConversationViewModel) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: CarChatTheme.Spacing.sm) {
+                    ForEach(vm.bubbles) { bubble in
+                        ConversationBubbleRow(
+                            bubble: bubble,
+                            reaction: bubbleReactions[bubble.id],
+                            onReaction: { reaction in
+                                bubbleReactions[bubble.id] = reaction
+                                Haptics.tap()
+                            },
+                            onCopy: {
+                                copyToPasteboard(bubble.text)
+                            }
+                        )
+                        .id(bubble.id)
                     }
                 }
-                .transition(.asymmetric(
-                    insertion: .scale(scale: 0.95).combined(with: .opacity),
-                    removal: .opacity
-                ))
+                .padding(.horizontal, CarChatTheme.Spacing.md)
+                .padding(.vertical, CarChatTheme.Spacing.sm)
             }
-
-            if !vm.assistantTranscript.isEmpty {
-                GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
-                    HStack(spacing: CarChatTheme.Spacing.xs) {
-                        Circle()
-                            .fill(CarChatTheme.Colors.speaking)
-                            .frame(width: 6, height: 6)
-
-                        Text(vm.assistantTranscript)
-                            .font(CarChatTheme.Typography.transcriptAssistant)
-                            .foregroundStyle(CarChatTheme.Colors.textSecondary)
-                            .lineLimit(6)
-                    }
+            .onAppear {
+                if let lastID = vm.bubbles.last?.id {
+                    proxy.scrollTo(lastID, anchor: .bottom)
                 }
-                .transition(.asymmetric(
-                    insertion: .scale(scale: 0.95).combined(with: .opacity),
-                    removal: .opacity
-                ))
+            }
+            .onChange(of: vm.bubbles.last?.id) { _, newID in
+                guard let newID else { return }
+                withAnimation(CarChatTheme.Animation.fast) {
+                    proxy.scrollTo(newID, anchor: .bottom)
+                }
             }
         }
-        .multilineTextAlignment(.leading)
-    }
-
-    // MARK: - Speaking Caption Area
-
-    @ViewBuilder
-    private func speakingCaptionArea(_ vm: ConversationViewModel) -> some View {
-        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.md) {
-            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
-                HStack(spacing: CarChatTheme.Spacing.xs) {
-                    Image(systemName: "speaker.wave.3.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(CarChatTheme.Colors.speaking)
-                        .symbolEffect(.variableColor.iterative, options: .repeating)
-
-                    Text("NOW TALKING")
-                        .font(CarChatTheme.Typography.micro.weight(.bold))
-                        .tracking(0.8)
-                        .foregroundStyle(CarChatTheme.Colors.speaking)
-
-                    Spacer()
-
-                    SpeakingCueView()
-                }
-
-                Text(
-                    vm.assistantTranscript.isEmpty
-                        ? "Generating spoken response…"
-                        : vm.assistantTranscript
-                )
-                .font(CarChatTheme.Typography.body.weight(.semibold))
-                .foregroundStyle(CarChatTheme.Colors.textPrimary)
-                .lineSpacing(3)
-                .lineLimit(8)
-                .multilineTextAlignment(.leading)
-            }
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: CarChatTheme.Radius.md, style: .continuous)
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            CarChatTheme.Colors.speaking.opacity(0.45),
-                            Color.white.opacity(0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Now talking. \(vm.assistantTranscript)")
     }
 
     // MARK: - Error Banner
@@ -480,6 +413,13 @@ struct ConversationView: View {
     private func refreshSuggestions() {
         suggestions = PromptSuggestions.current(count: 8)
     }
+
+    private func copyToPasteboard(_ text: String) {
+#if canImport(UIKit)
+        UIPasteboard.general.string = text
+#endif
+        Haptics.tap()
+    }
 }
 
 // MARK: - Voice State Badge
@@ -526,6 +466,98 @@ private struct SpeakingCueView: View {
             }
         }
         .onAppear { animate = true }
+    }
+}
+
+private struct ConversationBubbleRow: View {
+    let bubble: ConversationBubble
+    let reaction: String?
+    let onReaction: (String) -> Void
+    let onCopy: () -> Void
+
+    private var isUser: Bool { bubble.role == .user }
+
+    var body: some View {
+        HStack {
+            if isUser { Spacer(minLength: 42) }
+
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxs) {
+                if !isUser {
+                    Text(bubble.isFinal ? "CarChat" : "CarChat • Live")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                }
+
+                Text(bubble.text)
+                    .font(
+                        isUser
+                            ? CarChatTheme.Typography.transcriptUser
+                            : CarChatTheme.Typography.transcriptAssistant
+                    )
+                    .foregroundStyle(
+                        isUser ? Color.white : CarChatTheme.Colors.textPrimary
+                    )
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
+            .padding(.horizontal, CarChatTheme.Spacing.sm)
+            .padding(.vertical, CarChatTheme.Spacing.xs)
+            .frame(maxWidth: 310, alignment: .leading)
+            .background(bubbleBackground)
+            .overlay(alignment: .bottomTrailing) {
+                if let reaction {
+                    Text(reaction)
+                        .font(.system(size: 13))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(CarChatTheme.Colors.surfaceGlass.opacity(0.92))
+                        )
+                        .offset(x: 6, y: 8)
+                }
+            }
+            .contextMenu {
+                Button("👍 React") { onReaction("👍") }
+                Button("❤️ React") { onReaction("❤️") }
+                Button("😂 React") { onReaction("😂") }
+                Button("🤔 React") { onReaction("🤔") }
+                Divider()
+                Button {
+                    onCopy()
+                } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
+                }
+                ShareLink(item: bubble.text) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+            }
+            .accessibilityLabel(bubble.text)
+            .accessibilityHint("Long press for reactions, copy, or share")
+
+            if !isUser { Spacer(minLength: 42) }
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private var bubbleBackground: some View {
+        if isUser {
+            RoundedRectangle(cornerRadius: CarChatTheme.Radius.md, style: .continuous)
+                .fill(CarChatTheme.Gradients.accent)
+                .overlay(
+                    RoundedRectangle(cornerRadius: CarChatTheme.Radius.md, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.16), lineWidth: 0.8)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: CarChatTheme.Radius.md, style: .continuous)
+                .fill(CarChatTheme.Colors.surfaceGlass)
+                .overlay(
+                    RoundedRectangle(cornerRadius: CarChatTheme.Radius.md, style: .continuous)
+                        .strokeBorder(CarChatTheme.Colors.borderMedium, lineWidth: 0.8)
+                )
+        }
     }
 }
 

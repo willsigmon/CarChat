@@ -92,13 +92,19 @@ struct VoiceSettingsView: View {
             }
 
             GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
-                HStack(spacing: CarChatTheme.Spacing.xs) {
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 12, weight: .semibold))
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxxs) {
+                    HStack(spacing: CarChatTheme.Spacing.xs) {
+                        Image(systemName: "dot.radiowaves.left.and.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                        Text("Current route: \(AudioSessionManager.shared.currentOutputRouteName)")
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                    }
+                    Text(AudioSessionManager.shared.currentRouteSummary)
+                        .font(CarChatTheme.Typography.micro)
                         .foregroundStyle(CarChatTheme.Colors.textTertiary)
-                    Text("Current route: \(AudioSessionManager.shared.currentOutputRouteName)")
-                        .font(CarChatTheme.Typography.caption)
-                        .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                        .lineLimit(2)
                 }
             }
         }
