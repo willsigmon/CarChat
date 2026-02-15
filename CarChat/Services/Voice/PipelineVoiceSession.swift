@@ -104,6 +104,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                 }
             )
 
+            try? AudioSessionManager.shared.configureForVoiceChat()
             updateState(.speaking)
 
             var sentenceBuffer = ""
@@ -200,6 +201,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                         }
                     )
 
+                    try? AudioSessionManager.shared.configureForVoiceChat()
                     updateState(.speaking)
 
                     // Collect response and speak in sentence chunks

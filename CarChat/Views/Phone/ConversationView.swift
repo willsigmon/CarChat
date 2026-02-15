@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationView: View {
     @Environment(AppServices.self) private var appServices
+    @AppStorage("audioOutputMode") private var audioOutputMode = AudioOutputMode.defaultMode.rawValue
     @State private var viewModel: ConversationViewModel?
     @State private var showSuggestions = false
     @State private var suggestions: [PromptSuggestions.Suggestion] = []
@@ -185,6 +186,26 @@ struct ConversationView: View {
 
             Spacer()
 
+            Button {
+                let current = AudioOutputMode(rawValue: audioOutputMode)
+                    ?? .defaultMode
+                let next: AudioOutputMode = current == .speakerphone
+                    ? .automatic
+                    : .speakerphone
+                audioOutputMode = next.rawValue
+                AudioSessionManager.shared.setPreferredOutputMode(next)
+                Haptics.tap()
+            } label: {
+                Image(systemName: outputModeIconName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(outputModeColor)
+                    .padding(8)
+                    .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Audio output: \(outputModeDisplayName)")
+            .accessibilityHint("Double tap to toggle speakerphone mode")
+
             // Voice state badge
             VoiceStateBadge(state: vm.voiceState)
         }
@@ -348,6 +369,31 @@ struct ConversationView: View {
         case .processing: CarChatTheme.Colors.processing
         case .speaking: CarChatTheme.Colors.speaking
         case .error: CarChatTheme.Colors.error
+        }
+    }
+
+    private var outputModeDisplayName: String {
+        let mode = AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
+        return mode.displayName
+    }
+
+    private var outputModeIconName: String {
+        let mode = AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
+        switch mode {
+        case .automatic:
+            return "point.3.connected.trianglepath.dotted"
+        case .speakerphone:
+            return "speaker.wave.3.fill"
+        }
+    }
+
+    private var outputModeColor: Color {
+        let mode = AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
+        switch mode {
+        case .automatic:
+            return CarChatTheme.Colors.textTertiary
+        case .speakerphone:
+            return CarChatTheme.Colors.accentGradientStart
         }
     }
 }

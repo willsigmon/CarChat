@@ -44,7 +44,11 @@ final class AudioSessionManager {
 
     func setPreferredOutputMode(_ mode: AudioOutputMode) {
         UserDefaults.standard.set(mode.rawValue, forKey: Self.outputModeKey)
-        try? applyOutputOverride(for: mode)
+        if audioSession.category == .playAndRecord {
+            try? configureForVoiceChat()
+        } else {
+            try? applyOutputOverride(for: mode)
+        }
     }
 
     var currentOutputRouteName: String {

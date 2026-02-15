@@ -21,6 +21,7 @@ final class SystemTTS: NSObject, TTSEngineProtocol {
         guard !text.isEmpty else { return }
 
         stop()
+        try? AudioSessionManager.shared.configureForVoiceChat()
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
