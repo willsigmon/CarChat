@@ -30,12 +30,28 @@ final class AudioSessionManager {
         routeEnforcementTask = nil
 
         let outputMode = preferredOutputMode
-        try audioSession.setCategory(
-            .playback,
-            mode: .spokenAudio,
-            options: speakingCategoryOptions(for: outputMode)
-        )
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        switch outputMode {
+        case .automatic:
+            try audioSession.setCategory(
+                .playback,
+                mode: .spokenAudio,
+                options: speakingCategoryOptions(for: outputMode)
+            )
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        case .speakerphone:
+            // Force loudspeaker route for spoken response.
+            try audioSession.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: [
+                    .defaultToSpeaker,
+                    .duckOthers
+                ]
+            )
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            try audioSession.setPreferredInput(nil)
+            try audioSession.overrideOutputAudioPort(.speaker)
+        }
     }
 
     // Backward-compatible alias for existing call sites.
@@ -134,14 +150,11 @@ final class AudioSessionManager {
         switch mode {
         case .automatic:
             return [
-                .duckOthers,
-                .allowBluetoothA2DP,
-                .allowAirPlay
+                .duckOthers
             ]
         case .speakerphone:
             return [
-                .duckOthers,
-                .allowAirPlay
+                .duckOthers
             ]
         }
     }

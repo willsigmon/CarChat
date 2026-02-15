@@ -12,8 +12,8 @@ struct ConversationView: View {
     @State private var statusLabel = Microcopy.Status.label(for: .idle)
     @State private var showSettings = false
     @State private var bubbleReactions: [UUID: String] = [:]
-    private let floatingMicBottomOffset: CGFloat = 92
-    private let contentBottomInset: CGFloat = 118
+    private let floatingMicBottomOffset: CGFloat = 60
+    private let contentBottomInset: CGFloat = 92
 
     var body: some View {
         Group {
@@ -90,6 +90,7 @@ struct ConversationView: View {
                             removal: .opacity
                         ))
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 } else {
                     statusIndicator(vm)
                         .padding(.top, CarChatTheme.Spacing.xl)
@@ -101,10 +102,12 @@ struct ConversationView: View {
                             .padding(.horizontal, CarChatTheme.Spacing.xl)
                             .padding(.top, CarChatTheme.Spacing.sm)
                             .padding(.bottom, contentBottomInset)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     } else {
                         bubbleChatArea(vm)
                             .padding(.top, CarChatTheme.Spacing.xxs)
                             .padding(.bottom, contentBottomInset)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                             .transition(.opacity)
                     }
                 }
@@ -116,7 +119,10 @@ struct ConversationView: View {
                         .padding(.top, CarChatTheme.Spacing.xs)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .animation(CarChatTheme.Animation.fast, value: vm.voiceState)
         .overlay(alignment: .bottom) {
