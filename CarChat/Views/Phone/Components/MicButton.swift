@@ -3,8 +3,9 @@ import SwiftUI
 struct MicButton: View {
     let state: VoiceSessionState
     let action: () -> Void
+    var isDragging: Bool = false
 
-    private let size: CGFloat = 88
+    private let size: CGFloat = 70
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathe = false
@@ -116,7 +117,7 @@ struct MicButton: View {
 
                 // Icon
                 Image(systemName: iconName)
-                    .font(.system(size: 30, weight: .semibold))
+                    .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
                     .contentTransition(.symbolEffect(.replace.downUp))
@@ -124,8 +125,11 @@ struct MicButton: View {
             }
         }
         .buttonStyle(.plain)
-        .scaleEffect(isActive && breathe && !reduceMotion ? 1.04 : 1.0)
+        .scaleEffect(isDragging ? 1.12 : (isActive && breathe && !reduceMotion ? 1.04 : 1.0))
+        .opacity(isDragging ? 0.85 : 1.0)
+        .shadow(color: stateColor.opacity(isDragging ? 0.6 : 0), radius: isDragging ? 24 : 0)
         .sensoryFeedback(.impact(weight: .medium), trigger: state)
+        .animation(.spring(response: 0.28, dampingFraction: 0.65), value: isDragging)
         .animation(reduceMotion ? nil : CarChatTheme.Animation.breathe, value: breathe)
         .animation(CarChatTheme.Animation.springy, value: state)
         .onAppear {

@@ -12,9 +12,13 @@ struct ConversationView: View {
     @State private var statusLabel = Microcopy.Status.label(for: .idle)
     @State private var showSettings = false
     @State private var bubbleReactions: [UUID: String] = [:]
-    private let floatingMicBottomOffset: CGFloat = 60
-    // Must clear the floating mic button: bottom offset (60) + button height (88) + breathing room (12)
-    private let contentBottomInset: CGFloat = 160
+    @State private var micOffset: CGSize = .zero
+    @State private var micRestPosition: CGSize = .zero
+    @State private var isDraggingMic = false
+    private let micBottomPadding: CGFloat = 24
+    private let micTrailingPadding: CGFloat = 16
+    // Enough room for the floating mic even at bottom-right
+    private let contentBottomInset: CGFloat = 110
 
     var body: some View {
         Group {
@@ -125,11 +129,31 @@ struct ConversationView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .animation(CarChatTheme.Animation.fast, value: vm.voiceState)
-        .overlay(alignment: .bottom) {
-            MicButton(state: vm.voiceState) {
-                vm.toggleListening()
-            }
-            .padding(.bottom, floatingMicBottomOffset)
+        .overlay(alignment: .bottomTrailing) {
+            MicButton(state: vm.voiceState, action: { vm.toggleListening() }, isDragging: isDraggingMic)
+            .offset(x: micRestPosition.width + micOffset.width,
+                    y: micRestPosition.height + micOffset.height)
+            .gesture(
+                DragGesture(minimumDistance: 8)
+                    .onChanged { value in
+                        if !isDraggingMic {
+                            isDraggingMic = true
+                            Haptics.tap()
+                        }
+                        micOffset = value.translation
+                    }
+                    .onEnded { value in
+                        Haptics.tap()
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            micRestPosition.width += value.translation.width
+                            micRestPosition.height += value.translation.height
+                            micOffset = .zero
+                            isDraggingMic = false
+                        }
+                    }
+            )
+            .padding(.bottom, micBottomPadding)
+            .padding(.trailing, micTrailingPadding)
         }
         .sheet(isPresented: $showSettings) {
             NavigationStack {

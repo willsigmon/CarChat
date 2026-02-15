@@ -34,29 +34,15 @@ final class AudioSessionManager {
         routeEnforcementTask?.cancel()
         routeEnforcementTask = nil
 
-        switch requirement {
-        case .speechSynthesizer:
-            // AVSpeechSynthesizer requires .playAndRecord — it silently
-            // produces zero audio under .playback.  Force the speaker via
-            // .defaultToSpeaker + overrideOutputAudioPort to avoid earpiece.
-            try audioSession.setCategory(
-                .playAndRecord,
-                mode: .spokenAudio,
-                options: [.defaultToSpeaker, .duckOthers]
-            )
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            try audioSession.overrideOutputAudioPort(.speaker)
-
-        case .audioPlayer:
-            // AVAudioPlayer works fine with .playback — always routes to
-            // the speaker (never earpiece), no mic needed.
-            try audioSession.setCategory(
-                .playback,
-                mode: .spokenAudio,
-                options: [.duckOthers]
-            )
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        }
+        // Matches Leavn's proven working audio session config.
+        // .playback + .spokenAudio routes to speaker, no mic needed.
+        // .mixWithOthers + .allowBluetoothHFP needed for AVSpeechSynthesizer.
+        try audioSession.setCategory(
+            .playback,
+            mode: .spokenAudio,
+            options: [.duckOthers]
+        )
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     }
 
     // Backward-compatible alias for existing call sites.

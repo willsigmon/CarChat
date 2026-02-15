@@ -91,8 +91,6 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
             }
         }
 
-        try? AudioSessionManager.shared.configureForListening()
-
         updateState(.processing)
         conversationHistory.append((.user, text))
         transcriptContinuation?.yield(
