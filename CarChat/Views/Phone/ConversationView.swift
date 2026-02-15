@@ -13,7 +13,8 @@ struct ConversationView: View {
     @State private var showSettings = false
     @State private var bubbleReactions: [UUID: String] = [:]
     private let floatingMicBottomOffset: CGFloat = 60
-    private let contentBottomInset: CGFloat = 92
+    // Must clear the floating mic button: bottom offset (60) + button height (88) + breathing room (12)
+    private let contentBottomInset: CGFloat = 160
 
     var body: some View {
         Group {
@@ -106,7 +107,6 @@ struct ConversationView: View {
                     } else {
                         bubbleChatArea(vm)
                             .padding(.top, CarChatTheme.Spacing.xxs)
-                            .padding(.bottom, contentBottomInset)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                             .transition(.opacity)
                     }
@@ -279,7 +279,8 @@ struct ConversationView: View {
                     }
                 }
                 .padding(.horizontal, CarChatTheme.Spacing.md)
-                .padding(.vertical, CarChatTheme.Spacing.sm)
+                .padding(.top, CarChatTheme.Spacing.sm)
+                .padding(.bottom, contentBottomInset)
             }
             .onAppear {
                 if let lastID = vm.bubbles.last?.id {
