@@ -12,6 +12,8 @@ struct ConversationView: View {
     @State private var statusLabel = Microcopy.Status.label(for: .idle)
     @State private var showSettings = false
     @State private var bubbleReactions: [UUID: String] = [:]
+    private let floatingMicBottomOffset: CGFloat = 92
+    private let contentBottomInset: CGFloat = 118
 
     var body: some View {
         Group {
@@ -82,7 +84,7 @@ struct ConversationView: View {
                         )
                         .padding(.horizontal, CarChatTheme.Spacing.md)
                         .padding(.top, CarChatTheme.Spacing.sm)
-                        .padding(.bottom, 180)
+                        .padding(.bottom, contentBottomInset)
                         .transition(.asymmetric(
                             insertion: .scale(scale: 0.9).combined(with: .opacity),
                             removal: .opacity
@@ -98,11 +100,11 @@ struct ConversationView: View {
                             .frame(height: 150)
                             .padding(.horizontal, CarChatTheme.Spacing.xl)
                             .padding(.top, CarChatTheme.Spacing.sm)
-                            .padding(.bottom, 180)
+                            .padding(.bottom, contentBottomInset)
                     } else {
                         bubbleChatArea(vm)
                             .padding(.top, CarChatTheme.Spacing.xxs)
-                            .padding(.bottom, 180)
+                            .padding(.bottom, contentBottomInset)
                             .transition(.opacity)
                     }
                 }
@@ -117,15 +119,11 @@ struct ConversationView: View {
             }
         }
         .animation(CarChatTheme.Animation.fast, value: vm.voiceState)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .overlay(alignment: .bottom) {
             MicButton(state: vm.voiceState) {
                 vm.toggleListening()
             }
-            .padding(.bottom, CarChatTheme.Spacing.lg)
-            .padding(.top, CarChatTheme.Spacing.xs)
-            .frame(maxWidth: .infinity)
-            .background(Color.clear)
-            .contentShape(Rectangle())
+            .padding(.bottom, floatingMicBottomOffset)
         }
         .sheet(isPresented: $showSettings) {
             NavigationStack {
@@ -286,6 +284,12 @@ struct ConversationView: View {
                 guard let newID else { return }
                 withAnimation(CarChatTheme.Animation.fast) {
                     proxy.scrollTo(newID, anchor: .bottom)
+                }
+            }
+            .onChange(of: vm.bubbles.last?.text) { _, _ in
+                guard let lastID = vm.bubbles.last?.id else { return }
+                withAnimation(CarChatTheme.Animation.micro) {
+                    proxy.scrollTo(lastID, anchor: .bottom)
                 }
             }
         }

@@ -54,7 +54,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
     }
 
     func start(systemPrompt: String) async throws {
-        try AudioSessionManager.shared.configureForVoiceChat()
+        try AudioSessionManager.shared.configureForListening()
         setUpAudioObservers()
 
         let prompt = systemPrompt.isEmpty ? self.systemPrompt : systemPrompt
@@ -91,7 +91,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
             }
         }
 
-        try? AudioSessionManager.shared.configureForVoiceChat()
+        try? AudioSessionManager.shared.configureForListening()
 
         updateState(.processing)
         conversationHistory.append((.user, text))
@@ -107,7 +107,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                 }
             )
 
-            try? AudioSessionManager.shared.configureForVoiceChat()
+            try? AudioSessionManager.shared.configureForSpeaking()
             updateState(.speaking)
 
             var sentenceBuffer = ""
@@ -158,6 +158,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
 
             while !Task.isCancelled {
                 updateState(.listening)
+                try? AudioSessionManager.shared.configureForListening()
 
                 do {
                     try await sttEngine.startListening()
@@ -211,7 +212,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                         }
                     )
 
-                    try? AudioSessionManager.shared.configureForVoiceChat()
+                    try? AudioSessionManager.shared.configureForSpeaking()
                     updateState(.speaking)
 
                     // Collect response and speak in sentence chunks
@@ -273,7 +274,11 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
         routeChangeObserver = AudioSessionManager.shared.observeRouteChanges { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, self.state.isActive else { return }
-                try? AudioSessionManager.shared.configureForVoiceChat()
+                if self.state == .speaking {
+                    try? AudioSessionManager.shared.configureForSpeaking()
+                } else {
+                    try? AudioSessionManager.shared.configureForListening()
+                }
             }
         }
     }

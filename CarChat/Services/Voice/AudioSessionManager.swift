@@ -9,10 +9,10 @@ final class AudioSessionManager {
 
     private init() {}
 
-    func configureForVoiceChat() throws {
+    func configureForListening() throws {
         let outputMode = preferredOutputMode
-        let options = categoryOptions(for: outputMode)
-        let mode = audioMode(for: outputMode)
+        let options = listeningCategoryOptions(for: outputMode)
+        let mode = listeningMode(for: outputMode)
 
         try audioSession.setCategory(
             .playAndRecord,
@@ -23,6 +23,24 @@ final class AudioSessionManager {
         try applyPreferredInput(for: outputMode)
         try applyOutputOverride(for: outputMode)
         scheduleRouteEnforcement(for: outputMode)
+    }
+
+    func configureForSpeaking() throws {
+        routeEnforcementTask?.cancel()
+        routeEnforcementTask = nil
+
+        let outputMode = preferredOutputMode
+        try audioSession.setCategory(
+            .playback,
+            mode: .spokenAudio,
+            options: speakingCategoryOptions(for: outputMode)
+        )
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+    }
+
+    // Backward-compatible alias for existing call sites.
+    func configureForVoiceChat() throws {
+        try configureForListening()
     }
 
     func deactivate() throws {
@@ -43,8 +61,13 @@ final class AudioSessionManager {
 
     func setPreferredOutputMode(_ mode: AudioOutputMode) {
         UserDefaults.standard.set(mode.rawValue, forKey: Self.outputModeKey)
-        if audioSession.category == .playAndRecord {
-            try? configureForVoiceChat()
+        switch audioSession.category {
+        case .playAndRecord:
+            try? configureForListening()
+        case .playback:
+            try? configureForSpeaking()
+        default:
+            break
         }
     }
 
@@ -76,17 +99,11 @@ final class AudioSessionManager {
         case .automatic:
             try audioSession.setPreferredInput(nil)
         case .speakerphone:
-            if let builtInMic = audioSession.availableInputs?.first(
-                where: { $0.portType == .builtInMic }
-            ) {
-                try audioSession.setPreferredInput(builtInMic)
-            } else {
-                try audioSession.setPreferredInput(nil)
-            }
+            try audioSession.setPreferredInput(nil)
         }
     }
 
-    private func categoryOptions(for mode: AudioOutputMode) -> AVAudioSession.CategoryOptions {
+    private func listeningCategoryOptions(for mode: AudioOutputMode) -> AVAudioSession.CategoryOptions {
         switch mode {
         case .automatic:
             return [
@@ -104,13 +121,28 @@ final class AudioSessionManager {
         }
     }
 
-    private func audioMode(for mode: AudioOutputMode) -> AVAudioSession.Mode {
+    private func listeningMode(for mode: AudioOutputMode) -> AVAudioSession.Mode {
         switch mode {
         case .automatic:
             return .voiceChat
         case .speakerphone:
-            // Apple docs: `.videoChat` applies voice optimization and speaker-forward routing.
-            return .videoChat
+            return .default
+        }
+    }
+
+    private func speakingCategoryOptions(for mode: AudioOutputMode) -> AVAudioSession.CategoryOptions {
+        switch mode {
+        case .automatic:
+            return [
+                .duckOthers,
+                .allowBluetoothA2DP,
+                .allowAirPlay
+            ]
+        case .speakerphone:
+            return [
+                .duckOthers,
+                .allowAirPlay
+            ]
         }
     }
 
@@ -127,8 +159,8 @@ final class AudioSessionManager {
             if mode == .speakerphone && !isUsingBuiltInSpeaker {
                 try? audioSession.setCategory(
                     .playAndRecord,
-                    mode: audioMode(for: mode),
-                    options: categoryOptions(for: mode)
+                    mode: listeningMode(for: mode),
+                    options: listeningCategoryOptions(for: mode)
                 )
                 try? audioSession.setActive(true, options: .notifyOthersOnDeactivation)
                 try? applyPreferredInput(for: mode)

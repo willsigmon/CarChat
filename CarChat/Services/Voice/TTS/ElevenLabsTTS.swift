@@ -50,7 +50,7 @@ final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
         guard !text.isEmpty else { return }
 
         stop()
-        try? AudioSessionManager.shared.configureForVoiceChat()
+        try? AudioSessionManager.shared.configureForSpeaking()
         isSpeaking = true
 
         do {
