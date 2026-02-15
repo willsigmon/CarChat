@@ -68,18 +68,19 @@ enum PromptSuggestions {
 
     // MARK: - Selection Logic
 
-    /// Returns 3 suggestions: 1-2 contextual + 1-2 random, shuffled.
-    static func current() -> [Suggestion] {
+    /// Returns contextual + random suggestions, shuffled.
+    static func current(count: Int = 5) -> [Suggestion] {
+        let total = max(1, count)
         let contextual = contextualPool()
         let random = anytime.shuffled()
 
-        // Pick 1-2 contextual, fill rest from random (total = 3)
-        let contextCount = Bool.random() ? 2 : 1
+        // Pick 2-3 contextual, fill the rest from random.
+        let contextCount = min(total, Int.random(in: 2...3))
         let contextPicks = Array(contextual.shuffled().prefix(contextCount))
         let randomPicks = Array(
             random
                 .filter { r in !contextPicks.contains(where: { $0.text == r.text }) }
-                .prefix(3 - contextCount)
+                .prefix(max(0, total - contextCount))
         )
 
         return (contextPicks + randomPicks).shuffled()

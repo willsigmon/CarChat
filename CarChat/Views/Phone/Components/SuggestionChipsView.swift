@@ -3,6 +3,7 @@ import SwiftUI
 struct SuggestionChipsView: View {
     let suggestions: [PromptSuggestions.Suggestion]
     let onTap: (PromptSuggestions.Suggestion) -> Void
+    let onRefresh: (() -> Void)?
 
     @State private var appeared = false
 
@@ -87,6 +88,21 @@ struct SuggestionChipsView: View {
                     )
                     .accessibilityLabel(suggestion.text)
                     .accessibilityHint("Sends this as a conversation starter")
+                }
+
+                if let onRefresh {
+                    Button {
+                        Haptics.tap()
+                        onRefresh()
+                    } label: {
+                        Label("More ideas", systemImage: "arrow.clockwise")
+                            .font(CarChatTheme.Typography.caption.weight(.semibold))
+                            .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                    }
+                    .buttonStyle(.carChatActionPill(tone: .accent))
+                    .padding(.top, CarChatTheme.Spacing.xs)
                 }
             }
         }

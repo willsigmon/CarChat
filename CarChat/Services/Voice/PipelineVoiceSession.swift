@@ -10,6 +10,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
     private var stateContinuation: AsyncStream<VoiceSessionState>.Continuation?
     private var transcriptContinuation: AsyncStream<VoiceTranscript>.Continuation?
     private var audioLevelContinuation: AsyncStream<Float>.Continuation?
+    private var routeChangeObserver: NSObjectProtocol?
 
     private var listeningTask: Task<Void, Never>?
     private var conversationHistory: [(role: MessageRole, content: String)] = []
@@ -54,6 +55,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
 
     func start(systemPrompt: String) async throws {
         try AudioSessionManager.shared.configureForVoiceChat()
+        setUpAudioObservers()
 
         let prompt = systemPrompt.isEmpty ? self.systemPrompt : systemPrompt
         if !prompt.isEmpty {
@@ -68,6 +70,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
         listeningTask = nil
         await sttEngine.stopListening()
         ttsEngine.stop()
+        tearDownAudioObservers()
         updateState(.idle)
         try? AudioSessionManager.shared.deactivate()
     }
@@ -249,5 +252,22 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
     private func updateState(_ newState: VoiceSessionState) {
         state = newState
         stateContinuation?.yield(newState)
+    }
+
+    private func setUpAudioObservers() {
+        guard routeChangeObserver == nil else { return }
+        routeChangeObserver = AudioSessionManager.shared.observeRouteChanges { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.state.isActive else { return }
+                try? AudioSessionManager.shared.configureForVoiceChat()
+            }
+        }
+    }
+
+    private func tearDownAudioObservers() {
+        if let routeChangeObserver {
+            NotificationCenter.default.removeObserver(routeChangeObserver)
+            self.routeChangeObserver = nil
+        }
     }
 }

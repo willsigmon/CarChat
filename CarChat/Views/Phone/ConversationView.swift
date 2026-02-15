@@ -68,12 +68,18 @@ struct ConversationView: View {
                     // Idle: center suggestions vertically
                     Spacer()
 
-                    SuggestionChipsView(suggestions: suggestions) { suggestion in
-                        withAnimation(CarChatTheme.Animation.fast) {
-                            showSuggestions = false
+                    SuggestionChipsView(
+                        suggestions: suggestions,
+                        onTap: { suggestion in
+                            withAnimation(CarChatTheme.Animation.fast) {
+                                showSuggestions = false
+                            }
+                            vm.sendPrompt(suggestion.text)
+                        },
+                        onRefresh: {
+                            refreshSuggestions()
                         }
-                        vm.sendPrompt(suggestion.text)
-                    }
+                    )
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.9).combined(with: .opacity),
                         removal: .opacity
@@ -151,14 +157,14 @@ struct ConversationView: View {
 
             // Refresh suggestions when returning to idle
             if newState == .idle && oldState != .idle {
-                suggestions = PromptSuggestions.current()
+                refreshSuggestions()
                 withAnimation(CarChatTheme.Animation.smooth) {
                     showSuggestions = true
                 }
             }
         }
         .onAppear {
-            suggestions = PromptSuggestions.current()
+            refreshSuggestions()
             // Delayed entrance
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 withAnimation(CarChatTheme.Animation.smooth) {
@@ -186,25 +192,33 @@ struct ConversationView: View {
 
             Spacer()
 
-            Button {
-                let current = AudioOutputMode(rawValue: audioOutputMode)
-                    ?? .defaultMode
-                let next: AudioOutputMode = current == .speakerphone
-                    ? .automatic
-                    : .speakerphone
-                audioOutputMode = next.rawValue
-                AudioSessionManager.shared.setPreferredOutputMode(next)
-                Haptics.tap()
+            Menu {
+                ForEach(AudioOutputMode.allCases) { mode in
+                    Button {
+                        audioOutputMode = mode.rawValue
+                        AudioSessionManager.shared.setPreferredOutputMode(mode)
+                        Haptics.tap()
+                    } label: {
+                        Label(
+                            mode.displayName,
+                            systemImage: mode == currentOutputMode ? "checkmark" : "speaker.wave.2"
+                        )
+                    }
+                }
             } label: {
-                Image(systemName: outputModeIconName)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(outputModeColor)
-                    .padding(8)
-                    .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
+                HStack(spacing: CarChatTheme.Spacing.xxxs) {
+                    Image(systemName: outputModeIconName)
+                    Text(outputModeShortLabel)
+                        .font(CarChatTheme.Typography.caption.weight(.semibold))
+                }
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(outputModeColor)
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+                .padding(.vertical, 7)
+                .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
             }
-            .buttonStyle(.plain)
             .accessibilityLabel("Audio output: \(outputModeDisplayName)")
-            .accessibilityHint("Double tap to toggle speakerphone mode")
+            .accessibilityHint("Opens audio output options including speakerphone mode")
 
             // Voice state badge
             VoiceStateBadge(state: vm.voiceState)
@@ -373,13 +387,20 @@ struct ConversationView: View {
     }
 
     private var outputModeDisplayName: String {
-        let mode = AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
-        return mode.displayName
+        currentOutputMode.displayName
+    }
+
+    private var outputModeShortLabel: String {
+        switch currentOutputMode {
+        case .automatic:
+            return "Auto"
+        case .speakerphone:
+            return "Speaker"
+        }
     }
 
     private var outputModeIconName: String {
-        let mode = AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
-        switch mode {
+        switch currentOutputMode {
         case .automatic:
             return "point.3.connected.trianglepath.dotted"
         case .speakerphone:
@@ -388,13 +409,20 @@ struct ConversationView: View {
     }
 
     private var outputModeColor: Color {
-        let mode = AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
-        switch mode {
+        switch currentOutputMode {
         case .automatic:
             return CarChatTheme.Colors.textTertiary
         case .speakerphone:
             return CarChatTheme.Colors.accentGradientStart
         }
+    }
+
+    private var currentOutputMode: AudioOutputMode {
+        AudioOutputMode(rawValue: audioOutputMode) ?? .defaultMode
+    }
+
+    private func refreshSuggestions() {
+        suggestions = PromptSuggestions.current(count: 5)
     }
 }
 
