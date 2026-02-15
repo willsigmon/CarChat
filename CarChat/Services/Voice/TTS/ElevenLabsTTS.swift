@@ -50,9 +50,7 @@ final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
         guard !text.isEmpty else { return }
 
         stop()
-        // Audio session is already configured by PipelineVoiceSession
-        // before entering speaking state. Don't reconfigure here —
-        // redundant setCategory calls thrash the audio route.
+        try? AudioSessionManager.shared.configureForSpeaking()
         isSpeaking = true
 
         do {
