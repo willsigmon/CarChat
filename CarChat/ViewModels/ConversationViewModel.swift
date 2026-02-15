@@ -19,6 +19,7 @@ final class ConversationViewModel {
     private(set) var currentTranscript = ""
     private(set) var assistantTranscript = ""
     private(set) var errorMessage: String?
+    private(set) var activeProvider: AIProviderType
 
     var isListening: Bool { voiceState == .listening }
     var isProcessing: Bool { voiceState == .processing }
@@ -27,6 +28,8 @@ final class ConversationViewModel {
 
     init(appServices: AppServices) {
         self.appServices = appServices
+        let storedProvider = UserDefaults.standard.string(forKey: "selectedProvider")
+        self.activeProvider = AIProviderType(rawValue: storedProvider ?? "") ?? .openAI
     }
 
     // MARK: - Voice Control
@@ -53,9 +56,8 @@ final class ConversationViewModel {
 
                 if conversation == nil {
                     let persona = fetchActivePersona()
-                    let providerType = await resolveProviderType()
                     conversation = appServices.conversationStore.create(
-                        providerType: providerType,
+                        providerType: activeProvider,
                         personaName: persona?.name ?? "Sigmon"
                     )
                 }
@@ -97,9 +99,8 @@ final class ConversationViewModel {
 
                 if conversation == nil {
                     let persona = fetchActivePersona()
-                    let providerType = await resolveProviderType()
                     conversation = appServices.conversationStore.create(
-                        providerType: providerType,
+                        providerType: activeProvider,
                         personaName: persona?.name ?? "Sigmon"
                     )
                 }
@@ -142,6 +143,7 @@ final class ConversationViewModel {
 
     private func buildVoiceSession() async throws -> PipelineVoiceSession {
         let providerType = await resolveProviderType()
+        activeProvider = providerType
         let apiKey: String? = try? await appServices.keychainManager.getAPIKey(for: providerType)
 
         let aiProvider = try AIProviderFactory.create(

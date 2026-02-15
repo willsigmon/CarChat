@@ -4,7 +4,8 @@ import SwiftUI
 
 /// Renders the official brand logo for each AI provider from bundled PNG assets.
 /// Apple uses the SF Symbol `apple.logo` since it's Apple's own platform.
-/// Pass a `tint` color to override the default white foreground on monochrome logos.
+/// Pass a `tint` color to force monochrome rendering.
+/// Without tint, providers render in their official full-color branding.
 struct BrandLogo: View {
     let provider: AIProviderType
     let size: CGFloat
@@ -39,21 +40,30 @@ struct BrandLogo: View {
                         .frame(width: size, height: size)
                 }
             case .gemini:
-                // Gemini has its own multicolor logo — render original
+                // Gemini has its own multicolor logo — always render original
                 Image("ProviderLogos/gemini-logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: size * 0.75, height: size * 0.75)
                     .frame(width: size, height: size)
             default:
-                // Monochrome logos — render as template with tint (default: white)
-                Image("ProviderLogos/\(assetName)-logo")
-                    .renderingMode(.template)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .foregroundStyle(tint ?? .white)
-                    .frame(width: size * 0.75, height: size * 0.75)
-                    .frame(width: size, height: size)
+                if let tint {
+                    // Monochrome variant for constrained UI contexts.
+                    Image("ProviderLogos/\(assetName)-logo")
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .foregroundStyle(tint)
+                        .frame(width: size * 0.75, height: size * 0.75)
+                        .frame(width: size, height: size)
+                } else {
+                    // Preferred: official full-color branding.
+                    Image("ProviderLogos/\(assetName)-logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: size * 0.75, height: size * 0.75)
+                        .frame(width: size, height: size)
+                }
             }
         }
     }
@@ -63,7 +73,7 @@ struct BrandLogo: View {
         case .openAI: "openai"
         case .anthropic: "claude"
         case .gemini: "gemini"
-        case .grok: "grok"
+        case .grok: "xai"
         case .ollama: "ollama"
         case .apple: "apple" // unused — handled by SF Symbol above
         }

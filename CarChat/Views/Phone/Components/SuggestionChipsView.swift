@@ -27,7 +27,16 @@ struct SuggestionChipsView: View {
 
                 Text("Pick a quick prompt")
                     .font(CarChatTheme.Typography.callout)
-                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                CarChatTheme.Colors.accentGradientStart,
+                                CarChatTheme.Colors.speaking
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
             }
             .opacity(appeared ? 1 : 0)
 
@@ -179,6 +188,22 @@ private struct SuggestionChipButtonStyle: ButtonStyle {
                         )
                     )
             )
+            .overlay(alignment: .bottom) {
+                Capsule(style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                tint.opacity(configuration.isPressed ? 0.95 : 0.80),
+                                tint.opacity(configuration.isPressed ? 0.50 : 0.25)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(height: 3)
+                    .padding(.horizontal, CarChatTheme.Spacing.sm)
+                    .padding(.bottom, CarChatTheme.Spacing.xs)
+            }
             .scaleEffect(configuration.isPressed ? 0.976 : 1.0)
             .brightness(configuration.isPressed ? -0.015 : 0)
             .animation(

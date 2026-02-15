@@ -218,6 +218,8 @@ struct ConversationView: View {
 
             Spacer()
 
+            ProviderBadge(provider: vm.activeProvider)
+
             Menu {
                 ForEach(AudioOutputMode.allCases) { mode in
                     Button {
@@ -544,5 +546,35 @@ private struct SpeakingCueView: View {
             }
         }
         .onAppear { animate = true }
+    }
+}
+
+private struct ProviderBadge: View {
+    let provider: AIProviderType
+
+    private var tint: Color {
+        CarChatTheme.Colors.providerColor(provider)
+    }
+
+    var body: some View {
+        HStack(spacing: CarChatTheme.Spacing.xxs) {
+            BrandLogo(provider, size: 16)
+            Text(provider.shortName)
+                .font(CarChatTheme.Typography.caption.weight(.semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(CarChatTheme.Colors.textSecondary)
+        .padding(.horizontal, CarChatTheme.Spacing.xs)
+        .padding(.vertical, 6)
+        .background(
+            Capsule(style: .continuous)
+                .fill(tint.opacity(0.14))
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(tint.opacity(0.30), lineWidth: 0.8)
+                )
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Provider: \(provider.displayName)")
     }
 }
