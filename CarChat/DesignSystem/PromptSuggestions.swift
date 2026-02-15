@@ -69,21 +69,29 @@ enum PromptSuggestions {
     // MARK: - Selection Logic
 
     /// Returns contextual + random suggestions, shuffled.
-    static func current(count: Int = 5) -> [Suggestion] {
+    static func current(count: Int = 8) -> [Suggestion] {
         let total = max(1, count)
-        let contextual = contextualPool()
-        let random = anytime.shuffled()
+        let contextual = uniqueByText(contextualPool().shuffled())
+        let random = uniqueByText(anytime.shuffled())
 
-        // Pick 2-3 contextual, fill the rest from random.
-        let contextCount = min(total, Int.random(in: 2...3))
-        let contextPicks = Array(contextual.shuffled().prefix(contextCount))
-        let randomPicks = Array(
-            random
-                .filter { r in !contextPicks.contains(where: { $0.text == r.text }) }
-                .prefix(max(0, total - contextCount))
-        )
+        let desiredContextCount = min(total, total >= 4 ? 3 : 2)
+        let contextPicks = Array(contextual.prefix(desiredContextCount))
 
-        return (contextPicks + randomPicks).shuffled()
+        var selected = contextPicks
+        let randomPicks = random.filter { candidate in
+            !selected.contains(where: { $0.text == candidate.text })
+        }
+        selected += randomPicks.prefix(max(0, total - selected.count))
+
+        if selected.count < total {
+            let fallbackPool = uniqueByText(contextual + random)
+            let fallback = fallbackPool.filter { candidate in
+                !selected.contains(where: { $0.text == candidate.text })
+            }
+            selected += fallback.prefix(total - selected.count)
+        }
+
+        return Array(selected.prefix(total)).shuffled()
     }
 
     private static func contextualPool() -> [Suggestion] {
@@ -107,5 +115,12 @@ enum PromptSuggestions {
         }
 
         return pool
+    }
+
+    private static func uniqueByText(_ suggestions: [Suggestion]) -> [Suggestion] {
+        var seen = Set<String>()
+        return suggestions.filter { suggestion in
+            seen.insert(suggestion.text).inserted
+        }
     }
 }

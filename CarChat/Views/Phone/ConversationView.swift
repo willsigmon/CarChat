@@ -65,28 +65,32 @@ struct ConversationView: View {
                     .padding(.top, CarChatTheme.Spacing.sm)
 
                 if !vm.voiceState.isActive && showSuggestions {
-                    // Idle: center suggestions vertically
-                    Spacer()
+                    // Idle: keep suggestions discoverable and scrollable
+                    Spacer(minLength: CarChatTheme.Spacing.md)
 
-                    SuggestionChipsView(
-                        suggestions: suggestions,
-                        onTap: { suggestion in
-                            withAnimation(CarChatTheme.Animation.fast) {
-                                showSuggestions = false
+                    ScrollView(.vertical, showsIndicators: false) {
+                        SuggestionChipsView(
+                            suggestions: suggestions,
+                            onTap: { suggestion in
+                                withAnimation(CarChatTheme.Animation.fast) {
+                                    showSuggestions = false
+                                }
+                                vm.sendPrompt(suggestion.text)
+                            },
+                            onRefresh: {
+                                refreshSuggestions()
                             }
-                            vm.sendPrompt(suggestion.text)
-                        },
-                        onRefresh: {
-                            refreshSuggestions()
-                        }
-                    )
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.9).combined(with: .opacity),
-                        removal: .opacity
-                    ))
-                    .padding(.horizontal, CarChatTheme.Spacing.md)
+                        )
+                        .padding(.horizontal, CarChatTheme.Spacing.md)
+                        .padding(.vertical, CarChatTheme.Spacing.xs)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.9).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                    }
+                    .frame(maxHeight: 520)
 
-                    Spacer()
+                    Spacer(minLength: CarChatTheme.Spacing.md)
                 } else {
                     Spacer()
 
@@ -208,8 +212,9 @@ struct ConversationView: View {
             } label: {
                 HStack(spacing: CarChatTheme.Spacing.xxxs) {
                     Image(systemName: outputModeIconName)
-                    Text(outputModeShortLabel)
+                    Text(outputModeDisplayName)
                         .font(CarChatTheme.Typography.caption.weight(.semibold))
+                        .lineLimit(1)
                 }
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(outputModeColor)
@@ -390,15 +395,6 @@ struct ConversationView: View {
         currentOutputMode.displayName
     }
 
-    private var outputModeShortLabel: String {
-        switch currentOutputMode {
-        case .automatic:
-            return "Auto"
-        case .speakerphone:
-            return "Speaker"
-        }
-    }
-
     private var outputModeIconName: String {
         switch currentOutputMode {
         case .automatic:
@@ -422,7 +418,7 @@ struct ConversationView: View {
     }
 
     private func refreshSuggestions() {
-        suggestions = PromptSuggestions.current(count: 5)
+        suggestions = PromptSuggestions.current(count: 8)
     }
 }
 

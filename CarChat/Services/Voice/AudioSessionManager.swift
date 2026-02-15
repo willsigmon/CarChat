@@ -10,14 +10,7 @@ final class AudioSessionManager {
 
     func configureForVoiceChat() throws {
         let outputMode = preferredOutputMode
-        var options: AVAudioSession.CategoryOptions = [
-            .allowBluetoothHFP,
-            .allowBluetoothA2DP,
-            .duckOthers
-        ]
-        if outputMode == .speakerphone {
-            options.insert(.defaultToSpeaker)
-        }
+        let options = categoryOptions(for: outputMode)
 
         try audioSession.setCategory(
             .playAndRecord,
@@ -25,6 +18,7 @@ final class AudioSessionManager {
             options: options
         )
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        try applyPreferredInput(for: outputMode)
         try applyOutputOverride(for: outputMode)
     }
 
@@ -46,8 +40,6 @@ final class AudioSessionManager {
         UserDefaults.standard.set(mode.rawValue, forKey: Self.outputModeKey)
         if audioSession.category == .playAndRecord {
             try? configureForVoiceChat()
-        } else {
-            try? applyOutputOverride(for: mode)
         }
     }
 
@@ -61,6 +53,37 @@ final class AudioSessionManager {
             try audioSession.overrideOutputAudioPort(.none)
         case .speakerphone:
             try audioSession.overrideOutputAudioPort(.speaker)
+        }
+    }
+
+    private func applyPreferredInput(for mode: AudioOutputMode) throws {
+        switch mode {
+        case .automatic:
+            try audioSession.setPreferredInput(nil)
+        case .speakerphone:
+            if let builtInMic = audioSession.availableInputs?.first(
+                where: { $0.portType == .builtInMic }
+            ) {
+                try audioSession.setPreferredInput(builtInMic)
+            } else {
+                try audioSession.setPreferredInput(nil)
+            }
+        }
+    }
+
+    private func categoryOptions(for mode: AudioOutputMode) -> AVAudioSession.CategoryOptions {
+        switch mode {
+        case .automatic:
+            return [
+                .allowBluetoothHFP,
+                .allowBluetoothA2DP,
+                .duckOthers
+            ]
+        case .speakerphone:
+            return [
+                .defaultToSpeaker,
+                .duckOthers
+            ]
         }
     }
 
