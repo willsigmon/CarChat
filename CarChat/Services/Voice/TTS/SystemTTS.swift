@@ -7,6 +7,7 @@ final class SystemTTS: NSObject, TTSEngineProtocol {
     private var speakingContinuation: CheckedContinuation<Void, Never>?
 
     private(set) var isSpeaking = false
+    let audioRequirement: TTSAudioRequirement = .speechSynthesizer
 
     override init() {
         super.init()
@@ -25,7 +26,7 @@ final class SystemTTS: NSObject, TTSEngineProtocol {
         // configures it earlier, but awaits between config and here can
         // let the session lapse. With .playback category this is
         // idempotent (no route change if already .playback).
-        try? AudioSessionManager.shared.configureForSpeaking()
+        try? AudioSessionManager.shared.configureForSpeaking(.speechSynthesizer)
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate

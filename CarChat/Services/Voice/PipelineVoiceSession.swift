@@ -107,7 +107,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                 }
             )
 
-            try? AudioSessionManager.shared.configureForSpeaking()
+            try? AudioSessionManager.shared.configureForSpeaking(ttsEngine.audioRequirement)
             updateState(.speaking)
 
             var sentenceBuffer = ""
@@ -212,7 +212,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
                         }
                     )
 
-                    try? AudioSessionManager.shared.configureForSpeaking()
+                    try? AudioSessionManager.shared.configureForSpeaking(ttsEngine.audioRequirement)
                     updateState(.speaking)
 
                     // Collect response and speak in sentence chunks
@@ -275,7 +275,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
             Task { @MainActor [weak self] in
                 guard let self, self.state.isActive else { return }
                 if self.state == .speaking {
-                    try? AudioSessionManager.shared.configureForSpeaking()
+                    try? AudioSessionManager.shared.configureForSpeaking(self.ttsEngine.audioRequirement)
                 } else {
                     try? AudioSessionManager.shared.configureForListening()
                 }

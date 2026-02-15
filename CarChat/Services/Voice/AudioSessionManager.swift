@@ -1,5 +1,10 @@
 import AVFoundation
 
+enum TTSAudioRequirement {
+    case speechSynthesizer  // AVSpeechSynthesizer needs .playAndRecord
+    case audioPlayer        // AVAudioPlayer works with .playback
+}
+
 @MainActor
 final class AudioSessionManager {
     static let shared = AudioSessionManager()
@@ -25,21 +30,33 @@ final class AudioSessionManager {
         scheduleRouteEnforcement(for: outputMode)
     }
 
-    func configureForSpeaking() throws {
+    func configureForSpeaking(_ requirement: TTSAudioRequirement = .audioPlayer) throws {
         routeEnforcementTask?.cancel()
         routeEnforcementTask = nil
 
-        // Use .playback for TTS — no mic needed during speech output.
-        // .playback always routes to the speaker (never earpiece).
-        // This fixes the persistent earpiece bug: .playAndRecord defaults
-        // to earpiece, and overrideOutputAudioPort(.speaker) gets reset
-        // on every category change.
-        try audioSession.setCategory(
-            .playback,
-            mode: .spokenAudio,
-            options: [.duckOthers]
-        )
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        switch requirement {
+        case .speechSynthesizer:
+            // AVSpeechSynthesizer requires .playAndRecord — it silently
+            // produces zero audio under .playback.  Force the speaker via
+            // .defaultToSpeaker + overrideOutputAudioPort to avoid earpiece.
+            try audioSession.setCategory(
+                .playAndRecord,
+                mode: .spokenAudio,
+                options: [.defaultToSpeaker, .duckOthers]
+            )
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            try audioSession.overrideOutputAudioPort(.speaker)
+
+        case .audioPlayer:
+            // AVAudioPlayer works fine with .playback — always routes to
+            // the speaker (never earpiece), no mic needed.
+            try audioSession.setCategory(
+                .playback,
+                mode: .spokenAudio,
+                options: [.duckOthers]
+            )
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        }
     }
 
     // Backward-compatible alias for existing call sites.

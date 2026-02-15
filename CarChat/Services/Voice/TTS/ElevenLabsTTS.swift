@@ -16,6 +16,7 @@ final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
     private var currentTask: Task<Void, Never>?
 
     private(set) var isSpeaking = false
+    let audioRequirement: TTSAudioRequirement = .audioPlayer
 
     init(
         apiKey: String,
