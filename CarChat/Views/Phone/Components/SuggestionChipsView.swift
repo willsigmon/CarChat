@@ -25,7 +25,7 @@ struct SuggestionChipsView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
 
-                Text("Try one of these")
+                Text("Pick a quick prompt")
                     .font(CarChatTheme.Typography.callout)
                     .foregroundStyle(CarChatTheme.Colors.textTertiary)
             }
@@ -33,63 +33,74 @@ struct SuggestionChipsView: View {
 
             VStack(spacing: CarChatTheme.Spacing.md) {
                 LazyVGrid(columns: gridColumns, alignment: .leading, spacing: CarChatTheme.Spacing.md) {
-                ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                    let tint = chipColors[index % chipColors.count]
+                    ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                        let tint = chipColors[index % chipColors.count]
 
-                    Button {
-                        Haptics.tap()
-                        onTap(suggestion)
-                    } label: {
-                        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
-                            HStack {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
-                                        .fill(tint.opacity(0.20))
-                                        .frame(width: 34, height: 34)
+                        Button {
+                            Haptics.tap()
+                            onTap(suggestion)
+                        } label: {
+                            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                                HStack(spacing: CarChatTheme.Spacing.xxs) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
+                                            .fill(tint.opacity(0.20))
+                                            .frame(width: 34, height: 34)
 
-                                    Image(systemName: suggestion.icon)
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(tint)
+                                        Image(systemName: suggestion.icon)
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(tint)
+                                    }
+
+                                    Spacer(minLength: 0)
+
+                                    Text("PROMPT")
+                                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                                        .tracking(0.7)
+                                        .foregroundStyle(tint.opacity(0.95))
+                                        .padding(.horizontal, 7)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            Capsule(style: .continuous)
+                                                .fill(tint.opacity(0.15))
+                                        )
                                 }
 
-                                Spacer(minLength: 0)
-                            }
-
-                            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxxs) {
                                 Text(suggestion.text)
                                     .font(CarChatTheme.Typography.body.weight(.semibold))
                                     .foregroundStyle(CarChatTheme.Colors.textPrimary)
                                     .lineLimit(3)
                                     .fixedSize(horizontal: false, vertical: true)
 
+                                Spacer(minLength: CarChatTheme.Spacing.xxxs)
+
                                 Text("Tap to ask")
-                                    .font(CarChatTheme.Typography.caption)
+                                    .font(CarChatTheme.Typography.caption.weight(.semibold))
                                     .foregroundStyle(CarChatTheme.Colors.textTertiary)
                             }
-                            Spacer(minLength: 0)
-                        }
-                        .padding(.horizontal, CarChatTheme.Spacing.md)
-                        .padding(.vertical, CarChatTheme.Spacing.sm)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 112, alignment: .topLeading)
-                        .contentShape(
-                            RoundedRectangle(
-                                cornerRadius: CarChatTheme.Radius.lg,
-                                style: .continuous
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            .padding(.horizontal, CarChatTheme.Spacing.md)
+                            .padding(.vertical, CarChatTheme.Spacing.sm)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 136, alignment: .topLeading)
+                            .contentShape(
+                                RoundedRectangle(
+                                    cornerRadius: CarChatTheme.Radius.lg,
+                                    style: .continuous
+                                )
                             )
+                        }
+                        .buttonStyle(SuggestionChipButtonStyle(tint: tint))
+                        .opacity(appeared ? 1 : 0)
+                        .offset(y: appeared ? 0 : 12)
+                        .animation(
+                            .spring(response: 0.5, dampingFraction: 0.8)
+                                .delay(Double(index) * 0.07),
+                            value: appeared
                         )
+                        .accessibilityLabel(suggestion.text)
+                        .accessibilityHint("Sends this as a conversation starter")
                     }
-                    .buttonStyle(SuggestionChipButtonStyle(tint: tint))
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: appeared ? 0 : 12)
-                    .animation(
-                        .spring(response: 0.5, dampingFraction: 0.8)
-                            .delay(Double(index) * 0.07),
-                        value: appeared
-                    )
-                    .accessibilityLabel(suggestion.text)
-                    .accessibilityHint("Sends this as a conversation starter")
-                }
                 }
 
                 if let onRefresh {
@@ -151,12 +162,30 @@ private struct SuggestionChipButtonStyle: ButtonStyle {
             )
             .shadow(
                 color: tint.opacity(configuration.isPressed ? 0.18 : 0.30),
-                radius: configuration.isPressed ? 8 : 14,
+                radius: configuration.isPressed ? 6 : 14,
                 x: 0,
-                y: configuration.isPressed ? 4 : 8
+                y: configuration.isPressed ? 2 : 8
             )
-            .scaleEffect(configuration.isPressed ? 0.985 : 1.0)
-            .offset(y: configuration.isPressed ? 1 : 0)
-            .animation(reduceMotion ? nil : CarChatTheme.Animation.fast, value: configuration.isPressed)
+            .overlay(
+                RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(configuration.isPressed ? 0.06 : 0.12),
+                                .clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .center
+                        )
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.976 : 1.0)
+            .brightness(configuration.isPressed ? -0.015 : 0)
+            .animation(
+                reduceMotion
+                    ? nil
+                    : .interactiveSpring(response: 0.24, dampingFraction: 0.72, blendDuration: 0.12),
+                value: configuration.isPressed
+            )
     }
 }

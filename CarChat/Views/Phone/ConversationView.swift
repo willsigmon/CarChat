@@ -89,6 +89,19 @@ struct ConversationView: View {
                         ))
                     }
                     .frame(maxHeight: 520)
+                    .overlay(alignment: .bottom) {
+                        LinearGradient(
+                            colors: [
+                                .clear,
+                                CarChatTheme.Colors.background.opacity(0.72),
+                                CarChatTheme.Colors.background
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 40)
+                        .allowsHitTesting(false)
+                    }
 
                     Spacer(minLength: CarChatTheme.Spacing.md)
                 } else {
