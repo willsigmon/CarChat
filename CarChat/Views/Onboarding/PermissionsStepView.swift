@@ -89,7 +89,6 @@ struct PermissionsStepView: View {
                 .padding(.bottom, CarChatTheme.Spacing.xxxl)
             }
         }
-        .preferredColorScheme(.dark)
         .animation(.default, value: allGranted)
         .onAppear {
             withAnimation(.easeOut(duration: 0.5)) {

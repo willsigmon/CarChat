@@ -29,10 +29,8 @@ struct PersonaSettingsView: View {
             }
         }
         .navigationTitle("Personas")
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(item: $editingPersona) { persona in
             PersonaEditSheet(persona: persona)
-                .preferredColorScheme(.dark)
         }
     }
 
@@ -202,7 +200,6 @@ private struct PersonaEditSheet: View {
             }
             .navigationTitle("Edit Persona")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

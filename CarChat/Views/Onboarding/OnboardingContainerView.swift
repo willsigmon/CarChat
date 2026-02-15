@@ -225,7 +225,6 @@ private struct ReadyStepView: View {
                 .opacity(showContent ? 1 : 0)
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             Haptics.success()
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {

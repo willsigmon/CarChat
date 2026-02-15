@@ -7,6 +7,7 @@ struct AmbientBackground: View {
     let state: VoiceSessionState
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
     @State private var phase: CGFloat = 0
     @State private var orb1Offset: CGSize = .zero
     @State private var orb2Offset: CGSize = .zero
@@ -23,14 +24,42 @@ struct AmbientBackground: View {
     }
 
     private var orbIntensity: CGFloat {
-        state.isActive ? 0.15 : 0.06
+        if colorScheme == .light {
+            return state.isActive ? 0.22 : 0.12
+        } else {
+            return state.isActive ? 0.15 : 0.06
+        }
+    }
+
+    private var baseGradient: LinearGradient {
+        if colorScheme == .light {
+            return LinearGradient(
+                colors: [
+                    Color(hex: 0xF4F8FF),
+                    Color(hex: 0xF8F4FF),
+                    Color(hex: 0xF2FBFF)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                colors: [
+                    CarChatTheme.Colors.background,
+                    CarChatTheme.Colors.background
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
     }
 
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 // Base
-                CarChatTheme.Colors.background
+                Rectangle()
+                    .fill(baseGradient)
                     .ignoresSafeArea()
 
                 // Orb 1 - top left, large, slow
@@ -92,7 +121,11 @@ struct AmbientBackground: View {
 
                 // Noise overlay for texture
                 Rectangle()
-                    .fill(CarChatTheme.Colors.background.opacity(0.3))
+                    .fill(
+                        colorScheme == .light
+                            ? Color.white.opacity(0.12)
+                            : CarChatTheme.Colors.background.opacity(0.3)
+                    )
                     .ignoresSafeArea()
             }
         }
@@ -205,4 +238,3 @@ struct FloatingParticles: View {
         }
     }
 }
-

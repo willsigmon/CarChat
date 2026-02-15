@@ -23,22 +23,34 @@ struct GlassCard<Content: View>: View {
             .padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(.ultraThinMaterial)
-                    .opacity(0.7)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                CarChatTheme.Colors.surfaceGlass.opacity(0.94),
+                                CarChatTheme.Colors.surfaceSecondary.opacity(0.82)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(.ultraThinMaterial.opacity(0.30))
+                    )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.15),
-                                Color.white.opacity(0.05),
-                                Color.white.opacity(0.02)
+                                CarChatTheme.Colors.borderStrong.opacity(0.66),
+                                CarChatTheme.Colors.borderMedium.opacity(0.40),
+                                .clear
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 0.5
+                        lineWidth: 0.75
                     )
             )
     }
@@ -53,14 +65,26 @@ struct GlassBackground: ViewModifier {
         content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(.ultraThinMaterial)
-                    .opacity(0.6)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                CarChatTheme.Colors.surfaceGlass.opacity(0.90),
+                                CarChatTheme.Colors.surfaceSecondary.opacity(0.74)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(.ultraThinMaterial.opacity(0.20))
+                    )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .strokeBorder(
-                        Color.white.opacity(0.08),
-                        lineWidth: 0.5
+                        CarChatTheme.Colors.borderMedium.opacity(0.45),
+                        lineWidth: 0.7
                     )
             )
     }
@@ -95,4 +119,3 @@ extension View {
         modifier(GlowEffect(color: color, radius: radius, isActive: isActive))
     }
 }
-

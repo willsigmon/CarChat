@@ -173,7 +173,6 @@ struct APIKeyStepView: View {
                 .padding(.bottom, CarChatTheme.Spacing.xxxl)
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             withAnimation(.easeOut(duration: 0.5)) {
                 showContent = true

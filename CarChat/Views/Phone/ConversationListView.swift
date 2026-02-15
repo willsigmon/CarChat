@@ -23,7 +23,6 @@ struct ConversationListView: View {
                 }
             }
             .navigationTitle("History")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .confirmationDialog(
                 "Delete Conversation?",
                 isPresented: Binding(
@@ -48,7 +47,6 @@ struct ConversationListView: View {
                 Text("This conversation will be permanently deleted.")
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     @ViewBuilder

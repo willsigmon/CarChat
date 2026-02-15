@@ -89,7 +89,6 @@ struct WelcomeStepView: View {
                 .offset(y: showButton ? 0 : 10)
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             // Staggered entrance — each element cascades in
             withAnimation(.easeOut(duration: 0.6)) {

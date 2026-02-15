@@ -79,9 +79,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .preferredColorScheme(.dark)
     }
 
     private var versionLabel: String {

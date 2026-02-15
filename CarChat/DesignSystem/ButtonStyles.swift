@@ -18,7 +18,10 @@ struct CarChatPrimaryButtonStyle: ButtonStyle {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: CarChatTheme.Radius.md)
-                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+                    .strokeBorder(
+                        CarChatTheme.Colors.surfaceBorder.opacity(0.75),
+                        lineWidth: 0.75
+                    )
             )
             .shadow(
                 color: CarChatTheme.Colors.glowCyan,
@@ -112,7 +115,7 @@ struct CarChatActionPillButtonStyle: ButtonStyle {
 
     private var border: Color {
         switch tone {
-        case .danger: Color.white.opacity(0.18)
+        case .danger: CarChatTheme.Colors.error.opacity(0.35)
         case .accent: CarChatTheme.Colors.accentGradientStart.opacity(0.35)
         }
     }

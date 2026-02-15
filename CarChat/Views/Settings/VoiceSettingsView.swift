@@ -41,7 +41,6 @@ struct VoiceSettingsView: View {
             }
         }
         .navigationTitle("Voice")
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadElevenLabsState() }
     }
 

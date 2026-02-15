@@ -62,7 +62,6 @@ struct APIKeySettingsView: View {
             }
         }
         .navigationTitle("AI Providers")
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             if viewModel == nil {
                 viewModel = SettingsViewModel(appServices: appServices)

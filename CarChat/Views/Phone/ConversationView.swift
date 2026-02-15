@@ -151,7 +151,6 @@ struct ConversationView: View {
             }
         }
         .animation(CarChatTheme.Animation.fast, value: vm.voiceState)
-        .preferredColorScheme(.dark)
         .sheet(isPresented: $showSettings) {
             NavigationStack {
                 APIKeySettingsView()
@@ -162,7 +161,6 @@ struct ConversationView: View {
                         }
                     }
             }
-            .preferredColorScheme(.dark)
         }
         .onChange(of: vm.voiceState) { oldState, newState in
             // Haptic per state transition with sound companions

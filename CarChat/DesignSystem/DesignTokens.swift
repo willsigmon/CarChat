@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - Design Tokens
 
@@ -9,27 +12,74 @@ enum CarChatTheme {
     // MARK: - Colors
 
     enum Colors {
+        private static func adaptive(light: Color, dark: Color) -> Color {
+            #if canImport(UIKit)
+                Color(
+                    uiColor: UIColor { trait in
+                        trait.userInterfaceStyle == .dark
+                            ? UIColor(dark)
+                            : UIColor(light)
+                    }
+                )
+            #else
+                dark
+            #endif
+        }
+
         // Brand
         static let accent = Color("AccentCyan")
         static let accentGradientStart = Color(hex: 0x00D4FF)
         static let accentGradientEnd = Color(hex: 0x0066FF)
 
         // Surfaces
-        static let background = Color(hex: 0x0A0A0F)
-        static let surfacePrimary = Color.white.opacity(0.06)
-        static let surfaceSecondary = Color.white.opacity(0.03)
-        static let surfaceGlass = Color.white.opacity(0.08)
-        static let surfaceBorder = Color.white.opacity(0.10)
+        static let background = adaptive(
+            light: Color(hex: 0xF4F7FF),
+            dark: Color(hex: 0x0A0A0F)
+        )
+        static let surfacePrimary = adaptive(
+            light: Color.white.opacity(0.82),
+            dark: Color.white.opacity(0.06)
+        )
+        static let surfaceSecondary = adaptive(
+            light: Color.white.opacity(0.55),
+            dark: Color.white.opacity(0.03)
+        )
+        static let surfaceGlass = adaptive(
+            light: Color.white.opacity(0.72),
+            dark: Color.white.opacity(0.08)
+        )
+        static let surfaceBorder = adaptive(
+            light: Color(hex: 0x5A72B6, opacity: 0.20),
+            dark: Color.white.opacity(0.10)
+        )
 
         // Borders
-        static let borderSubtle = Color.white.opacity(0.06)
-        static let borderMedium = Color.white.opacity(0.12)
-        static let borderStrong = Color.white.opacity(0.20)
+        static let borderSubtle = adaptive(
+            light: Color(hex: 0x2F477F, opacity: 0.10),
+            dark: Color.white.opacity(0.06)
+        )
+        static let borderMedium = adaptive(
+            light: Color(hex: 0x2F477F, opacity: 0.18),
+            dark: Color.white.opacity(0.12)
+        )
+        static let borderStrong = adaptive(
+            light: Color(hex: 0x2F477F, opacity: 0.28),
+            dark: Color.white.opacity(0.20)
+        )
 
         // Text
-        static let textPrimary = Color.white
-        static let textSecondary = Color.white.opacity(0.60)
-        static let textTertiary = Color.white.opacity(0.45)
+        static let textPrimary = adaptive(
+            light: Color(hex: 0x0E1A3B),
+            dark: Color.white
+        )
+        static let textSecondary = adaptive(
+            light: Color(hex: 0x22335E, opacity: 0.80),
+            dark: Color.white.opacity(0.60)
+        )
+        static let textTertiary = adaptive(
+            light: Color(hex: 0x3A4D7A, opacity: 0.68),
+            dark: Color.white.opacity(0.45)
+        )
 
         // State Colors
         static let listening = Color(hex: 0x00E676)
@@ -39,11 +89,26 @@ enum CarChatTheme {
         static let success = Color(hex: 0x00E676)
 
         // Glow Colors
-        static let glowCyan = Color(hex: 0x00D4FF).opacity(0.30)
-        static let glowGreen = Color(hex: 0x00E676).opacity(0.30)
-        static let glowAmber = Color(hex: 0xFFAB00).opacity(0.30)
-        static let glowBlue = Color(hex: 0x448AFF).opacity(0.30)
-        static let glowRed = Color(hex: 0xFF5252).opacity(0.30)
+        static let glowCyan = adaptive(
+            light: Color(hex: 0x00B8FF).opacity(0.20),
+            dark: Color(hex: 0x00D4FF).opacity(0.30)
+        )
+        static let glowGreen = adaptive(
+            light: Color(hex: 0x00C86A).opacity(0.20),
+            dark: Color(hex: 0x00E676).opacity(0.30)
+        )
+        static let glowAmber = adaptive(
+            light: Color(hex: 0xFF9500).opacity(0.20),
+            dark: Color(hex: 0xFFAB00).opacity(0.30)
+        )
+        static let glowBlue = adaptive(
+            light: Color(hex: 0x2F7DFF).opacity(0.20),
+            dark: Color(hex: 0x448AFF).opacity(0.30)
+        )
+        static let glowRed = adaptive(
+            light: Color(hex: 0xFF4A4A).opacity(0.20),
+            dark: Color(hex: 0xFF5252).opacity(0.30)
+        )
 
         // Provider brand colors
         static func providerColor(_ provider: AIProviderType) -> Color {
