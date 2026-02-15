@@ -7,112 +7,53 @@ struct SuggestionChipsView: View {
 
     @State private var appeared = false
 
-    private let chipColors: [Color] = [
-        CarChatTheme.Colors.accentGradientStart,
-        CarChatTheme.Colors.listening,
-        CarChatTheme.Colors.speaking,
-        CarChatTheme.Colors.processing
-    ]
     private let gridColumns = [
-        GridItem(.flexible(), spacing: CarChatTheme.Spacing.md),
-        GridItem(.flexible(), spacing: CarChatTheme.Spacing.md)
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
     ]
 
     var body: some View {
-        VStack(spacing: CarChatTheme.Spacing.lg) {
+        VStack(spacing: CarChatTheme.Spacing.md) {
             HStack(spacing: CarChatTheme.Spacing.xs) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
 
-                Text("Pick a quick prompt")
+                Text("Ask me anything")
                     .font(CarChatTheme.Typography.callout)
                     .foregroundStyle(CarChatTheme.Colors.textSecondary)
             }
             .opacity(appeared ? 1 : 0)
 
-            VStack(spacing: CarChatTheme.Spacing.md) {
-                LazyVGrid(columns: gridColumns, alignment: .leading, spacing: CarChatTheme.Spacing.md) {
-                    ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                        let tint = chipColors[index % chipColors.count]
-
-                        Button {
-                            Haptics.tap()
-                            onTap(suggestion)
-                        } label: {
-                            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxs) {
-                                HStack(spacing: CarChatTheme.Spacing.xxs) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
-                                            .fill(tint.opacity(0.16))
-                                            .frame(width: 34, height: 34)
-
-                                        Image(systemName: suggestion.icon)
-                                            .font(.system(size: 15, weight: .semibold))
-                                            .foregroundStyle(tint)
-                                    }
-
-                                    Text(suggestion.topic)
-                                        .font(.system(.subheadline, design: .rounded).weight(.bold))
-                                        .foregroundStyle(tint)
-                                        .textCase(.uppercase)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
-
-                                    Spacer(minLength: 0)
-                                }
-
-                                Text(suggestion.text)
-                                    .font(CarChatTheme.Typography.caption.weight(.medium))
-                                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
-                                    .lineLimit(2)
-                                    .fixedSize(horizontal: false, vertical: true)
-
-                                Spacer(minLength: CarChatTheme.Spacing.xxxs)
-
-                                Text("Tap to ask")
-                                    .font(CarChatTheme.Typography.micro)
-                                    .foregroundStyle(tint.opacity(0.9))
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                            .padding(.horizontal, CarChatTheme.Spacing.md)
-                            .padding(.vertical, CarChatTheme.Spacing.sm)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 124, alignment: .topLeading)
-                            .contentShape(
-                                RoundedRectangle(
-                                    cornerRadius: CarChatTheme.Radius.lg,
-                                    style: .continuous
-                                )
-                            )
-                        }
-                        .buttonStyle(SuggestionChipButtonStyle(tint: tint))
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared ? 0 : 12)
-                        .animation(
-                            .spring(response: 0.5, dampingFraction: 0.8)
-                                .delay(Double(index) * 0.07),
-                            value: appeared
-                        )
-                        .accessibilityLabel(suggestion.text)
-                        .accessibilityHint("Sends this as a conversation starter")
-                    }
-                }
-
-                if let onRefresh {
-                    Button {
+            LazyVGrid(columns: gridColumns, spacing: 10) {
+                ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                    PromptCard(suggestion: suggestion) {
                         Haptics.tap()
-                        onRefresh()
-                    } label: {
-                        Label("More ideas", systemImage: "arrow.clockwise")
-                            .font(CarChatTheme.Typography.caption.weight(.semibold))
-                            .foregroundStyle(CarChatTheme.Colors.textSecondary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
+                        onTap(suggestion)
                     }
-                    .buttonStyle(.carChatActionPill(tone: .accent))
-                    .padding(.top, CarChatTheme.Spacing.xs)
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 16)
+                    .animation(
+                        .spring(response: 0.45, dampingFraction: 0.82)
+                            .delay(Double(index) * 0.05),
+                        value: appeared
+                    )
                 }
+            }
+
+            if let onRefresh {
+                Button {
+                    Haptics.tap()
+                    onRefresh()
+                } label: {
+                    Label("More ideas", systemImage: "arrow.clockwise")
+                        .font(CarChatTheme.Typography.caption.weight(.semibold))
+                        .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
+                }
+                .buttonStyle(.carChatActionPill(tone: .accent))
+                .padding(.top, CarChatTheme.Spacing.xxs)
             }
         }
         .onAppear {
@@ -123,68 +64,134 @@ struct SuggestionChipsView: View {
     }
 }
 
-private struct SuggestionChipButtonStyle: ButtonStyle {
+// MARK: - Individual Prompt Card
+
+private struct PromptCard: View {
+    let suggestion: PromptSuggestions.Suggestion
+    let action: () -> Void
+
+    private var tint: Color {
+        TopicColor.color(for: suggestion.topic)
+    }
+
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .topLeading) {
+                // Large watermark icon in background
+                Image(systemName: suggestion.icon)
+                    .font(.system(size: 44, weight: .bold))
+                    .foregroundStyle(tint.opacity(0.08))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 6)
+
+                // Content
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(suggestion.topic.uppercased())
+                        .font(.system(size: 18, design: .rounded).weight(.heavy))
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+
+                    Text(suggestion.text)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
+                .padding(.bottom, 10)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 96)
+            .contentShape(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+        }
+        .buttonStyle(PromptCardButtonStyle(tint: tint))
+        .accessibilityLabel(suggestion.text)
+        .accessibilityHint("Sends this as a conversation starter")
+    }
+}
+
+// MARK: - Button Style
+
+private struct PromptCardButtonStyle: ButtonStyle {
     let tint: Color
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        let isDark = colorScheme == .dark
+
         configuration.label
             .background(
-                RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                CarChatTheme.Colors.surfacePrimary.opacity(configuration.isPressed ? 0.93 : 0.88),
-                                CarChatTheme.Colors.surfaceGlass.opacity(configuration.isPressed ? 0.82 : 0.76)
+                                tint.opacity(isDark ? 0.10 : 0.07),
+                                tint.opacity(isDark ? 0.04 : 0.02)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(isDark
+                                ? Color.white.opacity(pressed ? 0.06 : 0.04)
+                                : Color.black.opacity(pressed ? 0.04 : 0.02)
+                            )
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                tint.opacity(configuration.isPressed ? 0.46 : 0.32),
-                                CarChatTheme.Colors.borderSubtle.opacity(configuration.isPressed ? 0.75 : 0.55)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: configuration.isPressed ? 1.1 : 0.8
+                        tint.opacity(pressed ? 0.35 : 0.18),
+                        lineWidth: pressed ? 1.2 : 0.7
                     )
             )
-            .shadow(
-                color: tint.opacity(configuration.isPressed ? 0.10 : 0.14),
-                radius: configuration.isPressed ? 4 : 8,
-                x: 0,
-                y: configuration.isPressed ? 2 : 4
-            )
-            .overlay(alignment: .bottom) {
-                Capsule(style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                tint.opacity(configuration.isPressed ? 0.85 : 0.72),
-                                tint.opacity(configuration.isPressed ? 0.30 : 0.18)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(height: 3)
-                    .padding(.horizontal, CarChatTheme.Spacing.sm)
-                    .padding(.bottom, CarChatTheme.Spacing.xs)
-            }
-            .scaleEffect(configuration.isPressed ? 0.976 : 1.0)
-            .brightness(configuration.isPressed ? -0.015 : 0)
+            .scaleEffect(pressed ? 0.97 : 1.0)
             .animation(
-                reduceMotion
-                    ? nil
-                    : .interactiveSpring(response: 0.24, dampingFraction: 0.72, blendDuration: 0.12),
-                value: configuration.isPressed
+                reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 0.75),
+                value: pressed
             )
+    }
+}
+
+// MARK: - Topic → Color Mapping
+
+private enum TopicColor {
+    static func color(for topic: String) -> Color {
+        switch topic {
+        case "News":          return Color(red: 0.30, green: 0.56, blue: 1.00)  // blue
+        case "Weather":       return Color(red: 0.20, green: 0.75, blue: 0.85)  // sky
+        case "Motivation":    return Color(red: 1.00, green: 0.60, blue: 0.20)  // orange
+        case "Learn", "Learning":
+                              return Color(red: 0.55, green: 0.40, blue: 0.95)  // purple
+        case "Fun":           return Color(red: 1.00, green: 0.45, blue: 0.55)  // pink
+        case "Trivia":        return Color(red: 0.40, green: 0.80, blue: 0.45)  // green
+        case "Food":          return Color(red: 0.95, green: 0.50, blue: 0.30)  // coral
+        case "Stories":       return Color(red: 0.65, green: 0.45, blue: 0.80)  // lavender
+        case "Calm":          return Color(red: 0.35, green: 0.78, blue: 0.65)  // mint
+        case "Entertainment": return Color(red: 0.85, green: 0.35, blue: 0.55)  // magenta
+        case "Games":         return Color(red: 0.25, green: 0.70, blue: 0.95)  // cerulean
+        case "Deep Talk":     return Color(red: 0.50, green: 0.35, blue: 0.75)  // indigo
+        case "Outings":       return Color(red: 0.45, green: 0.80, blue: 0.35)  // lime
+        case "Travel":        return Color(red: 0.20, green: 0.65, blue: 0.90)  // azure
+        case "Podcasts":      return Color(red: 0.70, green: 0.30, blue: 0.90)  // violet
+        case "Jokes":         return Color(red: 1.00, green: 0.72, blue: 0.20)  // gold
+        case "Debate":        return Color(red: 0.90, green: 0.40, blue: 0.30)  // red-orange
+        case "Ideas":         return Color(red: 0.00, green: 0.80, blue: 0.75)  // teal
+        case "Life Hacks":    return Color(red: 0.80, green: 0.65, blue: 0.20)  // amber
+        case "History":       return Color(red: 0.60, green: 0.50, blue: 0.40)  // bronze
+        case "Roast":         return Color(red: 1.00, green: 0.35, blue: 0.20)  // fire
+        default:              return CarChatTheme.Colors.accentGradientStart
+        }
     }
 }
