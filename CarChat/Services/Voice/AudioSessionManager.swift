@@ -29,29 +29,17 @@ final class AudioSessionManager {
         routeEnforcementTask?.cancel()
         routeEnforcementTask = nil
 
-        let outputMode = preferredOutputMode
-        switch outputMode {
-        case .automatic:
-            try audioSession.setCategory(
-                .playback,
-                mode: .spokenAudio,
-                options: speakingCategoryOptions(for: outputMode)
-            )
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        case .speakerphone:
-            // Force loudspeaker route for spoken response.
-            try audioSession.setCategory(
-                .playAndRecord,
-                mode: .default,
-                options: [
-                    .defaultToSpeaker,
-                    .duckOthers
-                ]
-            )
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            try audioSession.setPreferredInput(nil)
-            try audioSession.overrideOutputAudioPort(.speaker)
-        }
+        // Use .playback for TTS — no mic needed during speech output.
+        // .playback always routes to the speaker (never earpiece).
+        // This fixes the persistent earpiece bug: .playAndRecord defaults
+        // to earpiece, and overrideOutputAudioPort(.speaker) gets reset
+        // on every category change.
+        try audioSession.setCategory(
+            .playback,
+            mode: .spokenAudio,
+            options: [.duckOthers]
+        )
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     }
 
     // Backward-compatible alias for existing call sites.
@@ -128,10 +116,9 @@ final class AudioSessionManager {
                 .duckOthers
             ]
         case .speakerphone:
+            // No Bluetooth options — speakerphone means built-in speaker.
             return [
                 .defaultToSpeaker,
-                .allowBluetoothHFP,
-                .allowBluetoothA2DP,
                 .duckOthers
             ]
         }
@@ -143,19 +130,6 @@ final class AudioSessionManager {
             return .voiceChat
         case .speakerphone:
             return .default
-        }
-    }
-
-    private func speakingCategoryOptions(for mode: AudioOutputMode) -> AVAudioSession.CategoryOptions {
-        switch mode {
-        case .automatic:
-            return [
-                .duckOthers
-            ]
-        case .speakerphone:
-            return [
-                .duckOthers
-            ]
         }
     }
 

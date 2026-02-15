@@ -21,7 +21,9 @@ final class SystemTTS: NSObject, TTSEngineProtocol {
         guard !text.isEmpty else { return }
 
         stop()
-        try? AudioSessionManager.shared.configureForSpeaking()
+        // Audio session is already configured by PipelineVoiceSession
+        // before entering speaking state. Don't reconfigure here —
+        // redundant setCategory calls thrash the audio route.
 
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
