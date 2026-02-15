@@ -111,15 +111,25 @@ struct ConversationView: View {
                     statusIndicator(vm)
                         .padding(.bottom, CarChatTheme.Spacing.md)
 
-                    // Waveform visualization
-                    VoiceWaveformView(level: vm.audioLevel, state: vm.voiceState)
-                        .frame(height: 160)
+                    if vm.voiceState == .speaking {
+                        speakingCaptionArea(vm)
+                            .padding(.horizontal, CarChatTheme.Spacing.xl)
+                            .padding(.top, CarChatTheme.Spacing.xs)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.95).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    } else {
+                        // Waveform visualization
+                        VoiceWaveformView(level: vm.audioLevel, state: vm.voiceState)
+                            .frame(height: 160)
 
-                    // Transcript area
-                    transcriptArea(vm)
-                        .padding(.horizontal, CarChatTheme.Spacing.xxl)
-                        .frame(minHeight: 80)
-                        .padding(.top, CarChatTheme.Spacing.md)
+                        // Transcript area
+                        transcriptArea(vm)
+                            .padding(.horizontal, CarChatTheme.Spacing.xxl)
+                            .frame(minHeight: 80)
+                            .padding(.top, CarChatTheme.Spacing.md)
+                    }
                 }
 
                 // Error banner
@@ -137,9 +147,10 @@ struct ConversationView: View {
                     vm.toggleListening()
                 }
                 .padding(.bottom, CarChatTheme.Spacing.huge)
+                .zIndex(5)
             }
         }
-        .animation(.easeInOut(duration: 0.4), value: vm.voiceState)
+        .animation(CarChatTheme.Animation.fast, value: vm.voiceState)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showSettings) {
             NavigationStack {
@@ -311,6 +322,62 @@ struct ConversationView: View {
         .multilineTextAlignment(.leading)
     }
 
+    // MARK: - Speaking Caption Area
+
+    @ViewBuilder
+    private func speakingCaptionArea(_ vm: ConversationViewModel) -> some View {
+        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.md) {
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Image(systemName: "speaker.wave.3.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(CarChatTheme.Colors.speaking)
+                        .symbolEffect(.variableColor.iterative, options: .repeating)
+
+                    Text("NOW TALKING")
+                        .font(CarChatTheme.Typography.micro.weight(.bold))
+                        .tracking(0.8)
+                        .foregroundStyle(CarChatTheme.Colors.speaking)
+
+                    Spacer()
+
+                    SpeakingCueView()
+                }
+
+                Text(
+                    vm.assistantTranscript.isEmpty
+                        ? "Generating spoken response…"
+                        : vm.assistantTranscript
+                )
+                .font(CarChatTheme.Typography.body.weight(.semibold))
+                .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                .lineSpacing(3)
+                .lineLimit(8)
+                .multilineTextAlignment(.leading)
+
+                Text("Captions stay in sync while speech is playing")
+                    .font(CarChatTheme.Typography.caption)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: CarChatTheme.Radius.md, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            CarChatTheme.Colors.speaking.opacity(0.45),
+                            Color.white.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Now talking. \(vm.assistantTranscript)")
+    }
+
     // MARK: - Error Banner
 
     private var isAPIKeyError: Bool {
@@ -457,5 +524,27 @@ private struct VoiceStateBadge: View {
             isActive: state.isActive
         )
         .glassBackground(cornerRadius: CarChatTheme.Radius.pill)
+    }
+}
+
+private struct SpeakingCueView: View {
+    @State private var animate = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<3, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                    .fill(CarChatTheme.Colors.speaking.opacity(0.9))
+                    .frame(width: 4, height: 8 + CGFloat(index * 4))
+                    .scaleEffect(y: animate ? 1.0 : 0.55, anchor: .bottom)
+                    .animation(
+                        .easeInOut(duration: 0.42)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.12),
+                        value: animate
+                    )
+            }
+        }
+        .onAppear { animate = true }
     }
 }

@@ -7,6 +7,7 @@ import SwiftData
 final class ConversationViewModel {
     private let appServices: AppServices
     private var voiceSession: PipelineVoiceSession?
+    private var startTask: Task<Void, Never>?
     private var stateTask: Task<Void, Never>?
     private var transcriptTask: Task<Void, Never>?
     private var audioLevelTask: Task<Void, Never>?
@@ -38,10 +39,20 @@ final class ConversationViewModel {
     }
 
     func startListening() {
+        guard startTask == nil else { return }
         errorMessage = nil
 
-        Task {
+        startTask = Task { [weak self] in
+            guard let self else { return }
+            defer { startTask = nil }
+
             do {
+                if voiceSession != nil {
+                    await voiceSession?.stop()
+                    tearDownObservers()
+                    voiceSession = nil
+                }
+
                 let session = try await buildVoiceSession()
                 voiceSession = session
 
@@ -59,8 +70,11 @@ final class ConversationViewModel {
                 let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                 try await session.start(systemPrompt: systemPrompt)
             } catch {
+                if Task.isCancelled { return }
                 voiceState = .idle
                 errorMessage = error.localizedDescription
+                tearDownObservers()
+                voiceSession = nil
             }
         }
     }
@@ -95,6 +109,8 @@ final class ConversationViewModel {
 
     func stopListening() {
         Task {
+            startTask?.cancel()
+            startTask = nil
             await voiceSession?.stop()
             tearDownObservers()
             voiceSession = nil
@@ -177,6 +193,8 @@ final class ConversationViewModel {
     // MARK: - Stream Observers
 
     private func observeStreams(_ session: PipelineVoiceSession) {
+        tearDownObservers()
+
         stateTask = Task { [weak self] in
             for await state in session.stateStream {
                 guard let self, !Task.isCancelled else { break }
