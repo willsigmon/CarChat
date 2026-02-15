@@ -7,52 +7,13 @@ enum Microcopy {
     // MARK: - Voice State Labels
 
     enum Status {
-        private static let idlePhrases = [
-            "Ready when you are",
-            "What's on your mind?",
-            "Tap to talk",
-            "Let's chat",
-            "Say something",
-            "Go ahead, I'm here",
-        ]
-
-        private static let listeningPhrases = [
-            "I'm all ears",
-            "Listening...",
-            "Go ahead...",
-            "I hear you",
-            "Keep going...",
-        ]
-
-        private static let processingPhrases = [
-            "Hmm, let me think...",
-            "One sec...",
-            "Working on it...",
-            "Thinking...",
-            "Mulling it over...",
-            "On it...",
-        ]
-
-        private static let speakingPhrases = [
-            "Here's what I've got",
-            "Speaking...",
-            "Check this out",
-            "So here's the thing...",
-        ]
-
-        private static let errorPhrases = [
-            "Oops, hit a bump",
-            "Something went wrong",
-            "Let's try that again",
-        ]
-
         static func label(for state: VoiceSessionState) -> String {
             switch state {
-            case .idle: idlePhrases.randomElement()!
-            case .listening: listeningPhrases.randomElement()!
-            case .processing: processingPhrases.randomElement()!
-            case .speaking: speakingPhrases.randomElement()!
-            case .error: errorPhrases.randomElement()!
+            case .idle: "Ready"
+            case .listening: "Listening…"
+            case .processing: "Thinking…"
+            case .speaking: "Speaking…"
+            case .error: "Try again"
             }
         }
     }

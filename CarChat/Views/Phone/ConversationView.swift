@@ -87,10 +87,9 @@ struct ConversationView: View {
                         ))
                     }
                 } else {
-                    Spacer()
-
                     // Status indicator
                     statusIndicator(vm)
+                        .padding(.top, CarChatTheme.Spacing.xl)
                         .padding(.bottom, CarChatTheme.Spacing.md)
 
                     if vm.voiceState == .speaking {
@@ -339,10 +338,6 @@ struct ConversationView: View {
                 .lineSpacing(3)
                 .lineLimit(8)
                 .multilineTextAlignment(.leading)
-
-                Text("Captions stay in sync while speech is playing")
-                    .font(CarChatTheme.Typography.caption)
-                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
             }
         }
         .overlay(

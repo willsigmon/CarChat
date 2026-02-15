@@ -44,7 +44,7 @@ struct SuggestionChipsView: View {
                                 HStack(spacing: CarChatTheme.Spacing.xxs) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: CarChatTheme.Radius.sm, style: .continuous)
-                                            .fill(tint.opacity(0.20))
+                                            .fill(tint.opacity(0.16))
                                             .frame(width: 34, height: 34)
 
                                         Image(systemName: suggestion.icon)
@@ -52,18 +52,11 @@ struct SuggestionChipsView: View {
                                             .foregroundStyle(tint)
                                     }
 
-                                    Spacer(minLength: 0)
+                                    Text(suggestion.topic)
+                                        .font(CarChatTheme.Typography.caption.weight(.semibold))
+                                        .foregroundStyle(tint.opacity(0.88))
 
-                                    Text(suggestion.topic.uppercased())
-                                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                                        .tracking(0.7)
-                                        .foregroundStyle(tint.opacity(0.95))
-                                        .padding(.horizontal, 7)
-                                        .padding(.vertical, 4)
-                                        .background(
-                                            Capsule(style: .continuous)
-                                                .fill(tint.opacity(0.15))
-                                        )
+                                    Spacer(minLength: 0)
                                 }
 
                                 Text(suggestion.text)
@@ -78,7 +71,7 @@ struct SuggestionChipsView: View {
                             .padding(.horizontal, CarChatTheme.Spacing.md)
                             .padding(.vertical, CarChatTheme.Spacing.sm)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 118, alignment: .topLeading)
+                            .frame(height: 108, alignment: .topLeading)
                             .contentShape(
                                 RoundedRectangle(
                                     cornerRadius: CarChatTheme.Radius.lg,
