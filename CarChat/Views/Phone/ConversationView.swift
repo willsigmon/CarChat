@@ -93,13 +93,13 @@ struct ConversationView: View {
                         LinearGradient(
                             colors: [
                                 .clear,
-                                CarChatTheme.Colors.background.opacity(0.72),
-                                CarChatTheme.Colors.background
+                                CarChatTheme.Colors.background.opacity(0.24),
+                                CarChatTheme.Colors.background.opacity(0.48)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
-                        .frame(height: 40)
+                        .frame(height: 34)
                         .allowsHitTesting(false)
                     }
 

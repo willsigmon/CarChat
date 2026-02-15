@@ -54,7 +54,7 @@ struct SuggestionChipsView: View {
 
                                     Spacer(minLength: 0)
 
-                                    Text("PROMPT")
+                                    Text(suggestion.topic.uppercased())
                                         .font(.system(size: 9, weight: .bold, design: .rounded))
                                         .tracking(0.7)
                                         .foregroundStyle(tint.opacity(0.95))

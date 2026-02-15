@@ -124,3 +124,56 @@ enum PromptSuggestions {
         }
     }
 }
+
+extension PromptSuggestions.Suggestion {
+    var topic: String {
+        switch icon {
+        case "newspaper", "globe", "chart.line.uptrend.xyaxis":
+            return "News"
+        case "cloud.sun":
+            return "Weather"
+        case "bolt.fill":
+            return "Motivation"
+        case "lightbulb":
+            return "Learn"
+        case "sparkles", "star":
+            return "Fun"
+        case "questionmark.circle", "questionmark.diamond":
+            return "Trivia"
+        case "fork.knife", "frying.pan":
+            return "Food"
+        case "book", "moon.stars", "theatermasks":
+            return "Stories"
+        case "leaf":
+            return "Calm"
+        case "tv":
+            return "Entertainment"
+        case "textformat.abc":
+            return "Games"
+        case "brain.head.profile":
+            return "Deep Talk"
+        case "figure.walk":
+            return "Outings"
+        case "car.side":
+            return "Travel"
+        case "headphones":
+            return "Podcasts"
+        case "graduationcap":
+            return "Learning"
+        case "face.smiling":
+            return "Jokes"
+        case "bubble.left.and.bubble.right", "scale.3d":
+            return "Debate"
+        case "arrow.triangle.branch":
+            return "Ideas"
+        case "wrench.and.screwdriver":
+            return "Life Hacks"
+        case "clock.arrow.circlepath":
+            return "History"
+        case "flame":
+            return "Roast"
+        default:
+            return "Chat"
+        }
+    }
+}
