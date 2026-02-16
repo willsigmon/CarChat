@@ -1,6 +1,3 @@
-[project]
-id = "jzkqowkvvvhiyktkaisb"
-
 [api]
 enabled = true
 port = 54321
@@ -14,6 +11,8 @@ site_url = "com.willsigmon.carchat://"
 
 [auth.external.apple]
 enabled = true
+client_id = "com.willsigmon.carchat"
+secret = ""
 
 [auth.email]
 enable_signup = false
