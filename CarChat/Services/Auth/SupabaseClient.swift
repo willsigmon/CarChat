@@ -26,5 +26,11 @@ enum SupabaseConfig {
 @MainActor
 let supabase = SupabaseClient(
     supabaseURL: SupabaseConfig.url,
-    supabaseKey: SupabaseConfig.anonKey
+    supabaseKey: SupabaseConfig.anonKey,
+    options: .init(
+        auth: .init(
+            redirectToURL: URL(string: "com.willsigmon.carchat://auth-callback"),
+            emitLocalSessionAsInitialSession: true
+        )
+    )
 )

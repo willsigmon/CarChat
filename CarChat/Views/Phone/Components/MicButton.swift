@@ -125,9 +125,10 @@ struct MicButton: View {
             }
         }
         .buttonStyle(.plain)
-        .scaleEffect(isDragging ? 1.12 : (isActive && breathe && !reduceMotion ? 1.04 : 1.0))
-        .opacity(isDragging ? 0.85 : 1.0)
-        .shadow(color: stateColor.opacity(isDragging ? 0.6 : 0), radius: isDragging ? 24 : 0)
+        .scaleEffect(isDragging ? 1.15 : (isActive && breathe && !reduceMotion ? 1.04 : 1.0))
+        .opacity(1.0)
+        .shadow(color: stateColor.opacity(isDragging ? 0.7 : 0), radius: isDragging ? 30 : 0)
+        .shadow(color: .black.opacity(isDragging ? 0.4 : 0), radius: isDragging ? 12 : 0, y: isDragging ? 8 : 0)
         .sensoryFeedback(.impact(weight: .medium), trigger: state)
         .animation(.spring(response: 0.28, dampingFraction: 0.65), value: isDragging)
         .animation(reduceMotion ? nil : CarChatTheme.Animation.breathe, value: breathe)

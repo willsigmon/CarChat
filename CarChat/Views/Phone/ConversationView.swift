@@ -145,13 +145,17 @@ struct ConversationView: View {
                         micOffset = value.translation
                     }
                     .onEnded { value in
-                        Haptics.tap()
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            micRestPosition.width += value.translation.width
-                            micRestPosition.height += value.translation.height
+                        let newRest = CGSize(
+                            width: micRestPosition.width + value.translation.width,
+                            height: micRestPosition.height + value.translation.height
+                        )
+                        // Snap animation with bounce
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.6, blendDuration: 0.1)) {
+                            micRestPosition = newRest
                             micOffset = .zero
                             isDraggingMic = false
                         }
+                        Haptics.tap()
                     }
             )
             .padding(.bottom, micBottomPadding)
