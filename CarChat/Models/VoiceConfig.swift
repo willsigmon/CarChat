@@ -16,14 +16,18 @@ struct VoiceConfig: Codable, Sendable {
 
 enum TTSEngineType: String, Codable, Sendable, CaseIterable, Identifiable {
     case system
+    case openAI
     case elevenLabs
+    case humeAI
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
         case .system: "System (AVSpeechSynthesizer)"
+        case .openAI: "OpenAI"
         case .elevenLabs: "ElevenLabs"
+        case .humeAI: "Hume AI (Expressive)"
         }
     }
 }

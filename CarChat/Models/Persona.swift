@@ -14,6 +14,8 @@ final class Persona {
     var geminiVoice: String
     var elevenLabsVoiceID: String?
     var systemTTSVoice: String?
+    var openAITTSVoice: String?
+    var humeAIVoiceID: String?
 
     init(
         id: UUID = UUID(),
@@ -24,7 +26,9 @@ final class Persona {
         openAIRealtimeVoice: String = "alloy",
         geminiVoice: String = "Kore",
         elevenLabsVoiceID: String? = nil,
-        systemTTSVoice: String? = nil
+        systemTTSVoice: String? = nil,
+        openAITTSVoice: String? = "nova",
+        humeAIVoiceID: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -36,5 +40,7 @@ final class Persona {
         self.geminiVoice = geminiVoice
         self.elevenLabsVoiceID = elevenLabsVoiceID
         self.systemTTSVoice = systemTTSVoice
+        self.openAITTSVoice = openAITTSVoice
+        self.humeAIVoiceID = humeAIVoiceID
     }
 }

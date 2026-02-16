@@ -43,6 +43,7 @@
 		764AA2728477CD8608E2A250 /* VoiceSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 901FD01251EBDEA3D9552E76 /* VoiceSession.swift */; };
 		7E0FD551B876A1090591C723 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D705CC232E6988F388068901 /* OnboardingViewModel.swift */; };
 		82EE3472E8D3B8E29211E130 /* PersonaSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B163FA8E707BE9A82441F47E /* PersonaSettingsView.swift */; };
+		874F1A32131A2274F2841471 /* OpenAITTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C87AAD4A4E074223DA63FFD /* OpenAITTS.swift */; };
 		89CE46A08E2B8B4E6465823A /* AnthropicProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF89FD6E5CB32AB01CA5D16 /* AnthropicProvider.swift */; };
 		8B28B011385C228C826A26AE /* TTSEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55348EDA515FC01CFF75D7FB /* TTSEngine.swift */; };
 		920778165BB0FDFE5AABD5BC /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CAB4A0A31D7A3729F9B5958 /* KeychainManager.swift */; };
@@ -59,12 +60,16 @@
 		AE9076CADCEECCDDE6A0F0F9 /* CarChatWatchExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1F14367C43507AAEC48801DA /* CarChatWatchExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B154B07DB931B7AC7875E41B /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 541C52FD8103A54605DE5929 /* DesignTokens.swift */; };
 		B184ED1710CDF96E29EB745D /* VoiceEndpointDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9720EEB7372911D67CBDD67F /* VoiceEndpointDetectorTests.swift */; };
+		B71454FEF09FEB99213F93A2 /* HumeAITTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6100C168BEBBF8C465785FE /* HumeAITTS.swift */; };
 		B8125DC5A69AAD7A854202F0 /* WelcomeStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE1BF7A0362BEAD5598E08 /* WelcomeStepView.swift */; };
+		B89B0DFFE8660C2D2FB97955 /* OpenAITTSModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F789A64039B9037DDABF0336 /* OpenAITTSModels.swift */; };
+		BFD058A896C1C604974D48FF /* PromptSuggestionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CF067028E9CFCBF884A5D5 /* PromptSuggestionsTests.swift */; };
 		C02E84320807429AF6247CF4 /* WatchAsyncBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECD46645733FE1C52741C16 /* WatchAsyncBridge.swift */; };
 		C1D636BDF108DF90035BAAA2 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE3159EECD5E804E5482CD3 /* OnboardingContainerView.swift */; };
 		C3243E104E4BDD5354D68BF2 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF52E64026E19179D086D8F /* SettingsViewModel.swift */; };
 		C5B050193FDFFE5DD513ED3D /* Microcopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863E9A3321C881C405C56510 /* Microcopy.swift */; };
 		C7D3AF31D923A33C5AC6A4CF /* STTEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC538F07B00886001C7D4F91 /* STTEngine.swift */; };
+		CADD8BC08DB779BCFC0B543A /* HumeAIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B702F6581E563008A2AB82 /* HumeAIModels.swift */; };
 		CFAC008AD29903DCC3B7AAB6 /* ElevenLabsTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AC1A8D6A157118EFB816CF /* ElevenLabsTTS.swift */; };
 		D01AE3A328C0993832727C30 /* SpeechEndpointingConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137058D1892B110F424E050F /* SpeechEndpointingConfig.swift */; };
 		D1FC1FC0896B7EFFD289366F /* SwiftOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = F5E986B53B20293112078B44 /* SwiftOpenAI */; };
@@ -165,6 +170,7 @@
 		5DE3159EECD5E804E5482CD3 /* OnboardingContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingContainerView.swift; sourceTree = "<group>"; };
 		629B9145F7A1A5B3A146F271 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		68DEC9B95C78305ECC218499 /* BrandLogos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandLogos.swift; sourceTree = "<group>"; };
+		6C87AAD4A4E074223DA63FFD /* OpenAITTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTS.swift; sourceTree = "<group>"; };
 		74AC1A8D6A157118EFB816CF /* ElevenLabsTTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsTTS.swift; sourceTree = "<group>"; };
 		758736DC35F5387EC57FE213 /* WatchPhoneBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPhoneBridge.swift; sourceTree = "<group>"; };
 		784B098CB52AFCD8B676C2D3 /* WatchDictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDictation.swift; sourceTree = "<group>"; };
@@ -174,6 +180,8 @@
 		8642F60C5D25290FF1D42983 /* PermissionsStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsStepView.swift; sourceTree = "<group>"; };
 		8E238B17188B86A81A0AD8EB /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
 		901FD01251EBDEA3D9552E76 /* VoiceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSession.swift; sourceTree = "<group>"; };
+		94B702F6581E563008A2AB82 /* HumeAIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HumeAIModels.swift; sourceTree = "<group>"; };
+		94CF067028E9CFCBF884A5D5 /* PromptSuggestionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptSuggestionsTests.swift; sourceTree = "<group>"; };
 		9720EEB7372911D67CBDD67F /* VoiceEndpointDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEndpointDetectorTests.swift; sourceTree = "<group>"; };
 		9B5405E229A26696711BD3E4 /* VoiceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettingsView.swift; sourceTree = "<group>"; };
 		A0EA940A5CC9B5C897E21637 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -209,7 +217,9 @@
 		F3F2B2A9787F34FDD96BE13D /* CarChat.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CarChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4CE1BF7A0362BEAD5598E08 /* WelcomeStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeStepView.swift; sourceTree = "<group>"; };
 		F5C3426E592CD3C957713943 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		F6100C168BEBBF8C465785FE /* HumeAITTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HumeAITTS.swift; sourceTree = "<group>"; };
 		F773814AB8F53A17FCD47833 /* CarChatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarChatTests.swift; sourceTree = "<group>"; };
+		F789A64039B9037DDABF0336 /* OpenAITTSModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSModels.swift; sourceTree = "<group>"; };
 		F7BBCCC0C002B0D1C136F9F0 /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		F8B2B13711DFFC4351388CA8 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
 		F948F6D59C547BDC323B5289 /* APIKeySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeySettingsView.swift; sourceTree = "<group>"; };
@@ -294,6 +304,7 @@
 			isa = PBXGroup;
 			children = (
 				F773814AB8F53A17FCD47833 /* CarChatTests.swift */,
+				94CF067028E9CFCBF884A5D5 /* PromptSuggestionsTests.swift */,
 				9720EEB7372911D67CBDD67F /* VoiceEndpointDetectorTests.swift */,
 			);
 			path = CarChatTests;
@@ -337,6 +348,10 @@
 			children = (
 				74AC1A8D6A157118EFB816CF /* ElevenLabsTTS.swift */,
 				2A45E63CC6342A6DF97051AE /* ElevenLabsVoiceManager.swift */,
+				94B702F6581E563008A2AB82 /* HumeAIModels.swift */,
+				F6100C168BEBBF8C465785FE /* HumeAITTS.swift */,
+				6C87AAD4A4E074223DA63FFD /* OpenAITTS.swift */,
+				F789A64039B9037DDABF0336 /* OpenAITTSModels.swift */,
 				A7D0C702B5B9F693CD6AF7B6 /* SystemTTS.swift */,
 				55348EDA515FC01CFF75D7FB /* TTSEngine.swift */,
 			);
@@ -704,6 +719,8 @@
 				FBBFAF0733ACC4D63645A699 /* GlassCard.swift in Sources */,
 				0C9F1086ABF215A994A2BE28 /* GrokProvider.swift in Sources */,
 				9B2922479317A91601DED7EA /* HapticEngine.swift in Sources */,
+				CADD8BC08DB779BCFC0B543A /* HumeAIModels.swift in Sources */,
+				B71454FEF09FEB99213F93A2 /* HumeAITTS.swift in Sources */,
 				920778165BB0FDFE5AABD5BC /* KeychainManager.swift in Sources */,
 				1B1FFD0D092DDCBAC8C25985 /* MainTabView.swift in Sources */,
 				E20450E9E542539B9A007C50 /* Message.swift in Sources */,
@@ -713,6 +730,8 @@
 				C1D636BDF108DF90035BAAA2 /* OnboardingContainerView.swift in Sources */,
 				7E0FD551B876A1090591C723 /* OnboardingViewModel.swift in Sources */,
 				743BFCC2D80D71E692D8C383 /* OpenAIProvider.swift in Sources */,
+				874F1A32131A2274F2841471 /* OpenAITTS.swift in Sources */,
+				B89B0DFFE8660C2D2FB97955 /* OpenAITTSModels.swift in Sources */,
 				66C7CAEF8C941577DBD03546 /* PermissionsStepView.swift in Sources */,
 				E94954AB97C81B95C17C6E1E /* Persona.swift in Sources */,
 				82EE3472E8D3B8E29211E130 /* PersonaSettingsView.swift in Sources */,
@@ -744,6 +763,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EEF8A8009FA801A4C15644A7 /* CarChatTests.swift in Sources */,
+				BFD058A896C1C604974D48FF /* PromptSuggestionsTests.swift in Sources */,
 				B184ED1710CDF96E29EB745D /* VoiceEndpointDetectorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

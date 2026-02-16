@@ -62,4 +62,27 @@ actor KeychainManager {
         }
         return !key.isEmpty
     }
+
+    // MARK: - Hume AI TTS Key
+
+    private static let humeAIKey = "carchat.apikey.humeai"
+
+    func saveHumeAIKey(_ key: String) throws {
+        try save(key: Self.humeAIKey, value: key)
+    }
+
+    func getHumeAIKey() throws -> String? {
+        try get(key: Self.humeAIKey)
+    }
+
+    func deleteHumeAIKey() throws {
+        try delete(key: Self.humeAIKey)
+    }
+
+    func hasHumeAIKey() throws -> Bool {
+        guard let key = try get(key: Self.humeAIKey) else {
+            return false
+        }
+        return !key.isEmpty
+    }
 }

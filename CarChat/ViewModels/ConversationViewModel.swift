@@ -182,10 +182,25 @@ final class ConversationViewModel {
             }
             return tts
 
+        case .openAI:
+            guard let key = try? await appServices.keychainManager.getAPIKey(for: .openAI),
+                  !key.isEmpty else {
+                return SystemTTS()
+            }
+
+            let modelRaw = UserDefaults.standard.string(forKey: "openAITTSModel") ?? OpenAITTSModel.tts1.rawValue
+            let model = OpenAITTSModel(rawValue: modelRaw) ?? .tts1
+
+            let tts = OpenAITTS(apiKey: key, model: model)
+            if let persona = fetchActivePersona(),
+               let voice = persona.openAITTSVoice {
+                tts.setVoice(voice)
+            }
+            return tts
+
         case .elevenLabs:
             guard let key = try? await appServices.keychainManager.getElevenLabsKey(),
                   !key.isEmpty else {
-                // Fallback to system if no ElevenLabs key
                 let tts = SystemTTS()
                 if let persona = fetchActivePersona(),
                    let voiceId = persona.systemTTSVoice {
@@ -202,12 +217,23 @@ final class ConversationViewModel {
                 model: model
             )
 
-            // Apply persona's ElevenLabs voice if set
             if let persona = fetchActivePersona(),
                let voiceId = persona.elevenLabsVoiceID {
                 tts.setVoice(id: voiceId)
             }
+            return tts
 
+        case .humeAI:
+            guard let key = try? await appServices.keychainManager.getHumeAIKey(),
+                  !key.isEmpty else {
+                return SystemTTS()
+            }
+
+            let tts = HumeAITTS(apiKey: key)
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.humeAIVoiceID {
+                tts.setVoice(id: voiceId)
+            }
             return tts
         }
     }

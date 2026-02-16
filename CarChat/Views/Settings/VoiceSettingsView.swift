@@ -6,10 +6,12 @@ struct VoiceSettingsView: View {
     @Environment(AppServices.self) private var appServices
     @AppStorage("ttsEngine") private var ttsEngine = TTSEngineType.system.rawValue
     @AppStorage("elevenLabsModel") private var elevenLabsModel = ElevenLabsModel.flash.rawValue
+    @AppStorage("openAITTSModel") private var openAITTSModel = OpenAITTSModel.tts1.rawValue
     @AppStorage("audioOutputMode") private var audioOutputMode = AudioOutputMode.defaultMode.rawValue
     @AppStorage("systemTTSSpeechRate") private var speechRate: Double = 0.5
     @AppStorage("systemTTSPitch") private var pitchMultiplier: Double = 1.0
 
+    // ElevenLabs state
     @State private var elevenLabsKey = ""
     @State private var hasElevenLabsKey = false
     @State private var isEditingKey = false
@@ -17,14 +19,29 @@ struct VoiceSettingsView: View {
     @State private var selectedVoiceID: String?
     @State private var isLoadingVoices = false
     @State private var voiceError: String?
+
+    // OpenAI TTS state
+    @State private var hasOpenAIKey = false
+    @State private var selectedOpenAIVoice: String?
+
+    // Hume AI state
+    @State private var humeAIKey = ""
+    @State private var hasHumeAIKey = false
+    @State private var isEditingHumeKey = false
+    @State private var humeVoices: [HumeAIVoice] = []
+    @State private var selectedHumeVoiceID: String?
+    @State private var isLoadingHumeVoices = false
+    @State private var humeVoiceError: String?
+
+    // Shared state
     @State private var isTesting = false
     @State private var testDiagnostic = ""
     @State private var testSynthesizer: AVSpeechSynthesizer?
     @State private var availableVoices: [AVSpeechSynthesisVoice] = []
     @State private var selectedSystemVoiceID: String?
 
-    private var isElevenLabsSelected: Bool {
-        ttsEngine == TTSEngineType.elevenLabs.rawValue
+    private var selectedEngine: TTSEngineType {
+        TTSEngineType(rawValue: ttsEngine) ?? .system
     }
 
     var body: some View {
@@ -36,10 +53,15 @@ struct VoiceSettingsView: View {
                     testVoiceSection
                     ttsEngineSection
 
-                    if isElevenLabsSelected {
-                        elevenLabsSection
-                    } else {
+                    switch selectedEngine {
+                    case .system:
                         systemVoiceSection
+                    case .openAI:
+                        openAISection
+                    case .elevenLabs:
+                        elevenLabsSection
+                    case .humeAI:
+                        humeAISection
                     }
 
                     audioOutputSection
@@ -421,6 +443,370 @@ struct VoiceSettingsView: View {
         }
     }
 
+    // MARK: - OpenAI TTS Configuration
+
+    @ViewBuilder
+    private var openAISection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.lg) {
+            // Connection status
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("OPENAI TTS")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                    if hasOpenAIKey {
+                        StatusBadge(
+                            text: "Connected",
+                            color: CarChatTheme.Colors.success
+                        )
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.md) {
+                    HStack(spacing: CarChatTheme.Spacing.sm) {
+                        LayeredFeatureIcon(
+                            systemName: "brain.head.profile.fill",
+                            color: CarChatTheme.Colors.accentGradientStart,
+                            accentShape: .none
+                        )
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("API Key")
+                                .font(CarChatTheme.Typography.headline)
+                                .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                            Text(hasOpenAIKey
+                                 ? "Uses your existing OpenAI key from AI provider setup"
+                                 : "Add an OpenAI key in AI Provider settings first")
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                        }
+
+                        Spacer()
+                    }
+                }
+            }
+
+            if hasOpenAIKey {
+                // Model picker
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    Text("MODEL")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                        .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    ForEach(OpenAITTSModel.allCases) { model in
+                        openAIModelRow(model)
+                    }
+                }
+
+                // Voice picker
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    Text("VOICE")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                        .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    ForEach(OpenAITTSVoice.allCases) { voice in
+                        openAIVoiceRow(voice)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func openAIModelRow(_ model: OpenAITTSModel) -> some View {
+        let isSelected = model.rawValue == openAITTSModel
+        Button {
+            withAnimation(CarChatTheme.Animation.fast) {
+                openAITTSModel = model.rawValue
+            }
+        } label: {
+            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.sm) {
+                    LayeredFeatureIcon(
+                        systemName: model == .tts1 ? "bolt.fill" : "sparkles",
+                        color: isSelected
+                            ? CarChatTheme.Colors.accentGradientStart
+                            : CarChatTheme.Colors.textTertiary,
+                        accentShape: .none
+                    )
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.displayName)
+                            .font(CarChatTheme.Typography.headline)
+                            .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        Text(model.subtitle)
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    }
+
+                    Spacer()
+
+                    if isSelected {
+                        StatusBadge(
+                            text: "Active",
+                            color: CarChatTheme.Colors.success
+                        )
+                    }
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            isSelected
+                                ? CarChatTheme.Colors.accentGradientStart
+                                : CarChatTheme.Colors.textTertiary
+                        )
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: isSelected)
+    }
+
+    @ViewBuilder
+    private func openAIVoiceRow(_ voice: OpenAITTSVoice) -> some View {
+        let isSelected = voice.rawValue == selectedOpenAIVoice
+        Button {
+            withAnimation(CarChatTheme.Animation.fast) {
+                selectedOpenAIVoice = voice.rawValue
+                saveOpenAIVoice(voice.rawValue)
+            }
+        } label: {
+            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(CarChatTheme.Colors.speaking.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Text(String(voice.displayName.prefix(1)))
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(CarChatTheme.Colors.speaking)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(voice.displayName)
+                            .font(CarChatTheme.Typography.headline)
+                            .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        Text(voice.description)
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            isSelected
+                                ? CarChatTheme.Colors.accentGradientStart
+                                : CarChatTheme.Colors.textTertiary
+                        )
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: isSelected)
+    }
+
+    // MARK: - Hume AI Configuration
+
+    @ViewBuilder
+    private var humeAISection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.lg) {
+            // API Key
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("HUME AI SETUP")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                    if hasHumeAIKey {
+                        StatusBadge(
+                            text: "Connected",
+                            color: CarChatTheme.Colors.success
+                        )
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.md) {
+                    VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
+                        HStack(spacing: CarChatTheme.Spacing.sm) {
+                            LayeredFeatureIcon(
+                                systemName: "key.fill",
+                                color: CarChatTheme.Colors.accentGradientStart,
+                                accentShape: .none
+                            )
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("API Key")
+                                    .font(CarChatTheme.Typography.headline)
+                                    .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                                Text(hasHumeAIKey
+                                     ? "Your key is securely stored in Keychain"
+                                     : "Get one at platform.hume.ai")
+                                    .font(CarChatTheme.Typography.caption)
+                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            }
+
+                            Spacer()
+                        }
+
+                        if isEditingHumeKey {
+                            HStack(spacing: CarChatTheme.Spacing.xs) {
+                                HStack(spacing: CarChatTheme.Spacing.xs) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                                    SecureField("hume-...", text: $humeAIKey)
+                                        .font(CarChatTheme.Typography.body)
+                                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                        .autocorrectionDisabled()
+                                        .textInputAutocapitalization(.never)
+                                        .tint(CarChatTheme.Colors.accentGradientStart)
+                                }
+                                .padding(CarChatTheme.Spacing.xs)
+                                .glassBackground(cornerRadius: CarChatTheme.Radius.sm)
+
+                                Button("Save") {
+                                    saveHumeAIKey()
+                                }
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, CarChatTheme.Spacing.sm)
+                                .padding(.vertical, CarChatTheme.Spacing.xs)
+                                .background(Capsule().fill(CarChatTheme.Gradients.accent))
+                            }
+                        } else {
+                            Button(hasHumeAIKey ? "Update Key" : "Add Key") {
+                                isEditingHumeKey = true
+                            }
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                        }
+                    }
+                }
+            }
+
+            // Voice picker (only when key is set)
+            if hasHumeAIKey {
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    HStack {
+                        Text("VOICE")
+                            .font(CarChatTheme.Typography.micro)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                        Spacer()
+
+                        if isLoadingHumeVoices {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(CarChatTheme.Colors.accentGradientStart)
+                        } else if !humeVoices.isEmpty {
+                            Button {
+                                Task { await fetchHumeVoices() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    if let humeVoiceError {
+                        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                            HStack(spacing: CarChatTheme.Spacing.xs) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(CarChatTheme.Colors.error)
+                                Text(humeVoiceError)
+                                    .font(CarChatTheme.Typography.caption)
+                                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                            }
+                        }
+                    } else if humeVoices.isEmpty && !isLoadingHumeVoices {
+                        Button {
+                            Task { await fetchHumeVoices() }
+                        } label: {
+                            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                                HStack(spacing: CarChatTheme.Spacing.sm) {
+                                    Image(systemName: "arrow.down.circle")
+                                        .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                                    Text("Load Available Voices")
+                                        .font(CarChatTheme.Typography.headline)
+                                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                    Spacer()
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        ForEach(humeVoices) { voice in
+                            humeVoiceRow(voice)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func humeVoiceRow(_ voice: HumeAIVoice) -> some View {
+        let isSelected = voice.name == selectedHumeVoiceID
+        Button {
+            withAnimation(CarChatTheme.Animation.fast) {
+                selectedHumeVoiceID = voice.name
+                saveHumeVoice(voice.name)
+            }
+        } label: {
+            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(CarChatTheme.Colors.speaking.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Text(String(voice.name.prefix(1)).uppercased())
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(CarChatTheme.Colors.speaking)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(voice.name)
+                            .font(CarChatTheme.Typography.headline)
+                            .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        if !voice.description.isEmpty {
+                            Text(voice.description)
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            isSelected
+                                ? CarChatTheme.Colors.accentGradientStart
+                                : CarChatTheme.Colors.textTertiary
+                        )
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: isSelected)
+    }
+
     // MARK: - Audio Output
 
     @ViewBuilder
@@ -712,35 +1098,69 @@ struct VoiceSettingsView: View {
         testDiagnostic = ""
         Haptics.tap()
 
-        // Bare-bones test: raw AVSpeechSynthesizer, NO custom audio session.
-        // Stored in @State to guarantee retention during speech.
-        let synth = AVSpeechSynthesizer()
-        testSynthesizer = synth
+        let testText = "Hello! This is a voice test. How does this sound?"
 
-        let utterance = AVSpeechUtterance(string: "Test. One. Two. Three.")
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        utterance.volume = 1.0
-
-        let voiceName = utterance.voice?.name ?? "nil"
-        let voiceLang = utterance.voice?.language ?? "nil"
-        testDiagnostic = "Voice: \(voiceName) (\(voiceLang))"
-
-        synth.speak(utterance)
-
-        // Poll for completion since we're not using delegate
         Task {
-            try? await Task.sleep(for: .seconds(1))
-            let started = synth.isSpeaking
-            testDiagnostic = started
-                ? "Synth IS speaking — audio routing issue"
-                : "Synth NOT speaking — synthesizer issue"
+            let engine: TTSEngineProtocol
 
-            // Wait for it to finish
-            while synth.isSpeaking {
-                try? await Task.sleep(for: .milliseconds(200))
+            switch selectedEngine {
+            case .system:
+                testDiagnostic = "Testing System voice..."
+                let tts = SystemTTS()
+                if let voiceId = selectedSystemVoiceID {
+                    tts.setVoice(identifier: voiceId)
+                }
+                engine = tts
+
+            case .openAI:
+                testDiagnostic = "Testing OpenAI voice..."
+                if let key = try? await appServices.keychainManager.getAPIKey(for: .openAI),
+                   !key.isEmpty {
+                    let modelRaw = openAITTSModel
+                    let model = OpenAITTSModel(rawValue: modelRaw) ?? .tts1
+                    let tts = OpenAITTS(apiKey: key, model: model)
+                    if let voice = selectedOpenAIVoice {
+                        tts.setVoice(voice)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No OpenAI key — falling back to System"
+                    engine = SystemTTS()
+                }
+
+            case .elevenLabs:
+                testDiagnostic = "Testing ElevenLabs voice..."
+                if let key = try? await appServices.keychainManager.getElevenLabsKey(),
+                   !key.isEmpty {
+                    let modelRaw = elevenLabsModel
+                    let model = ElevenLabsModel(rawValue: modelRaw) ?? .flash
+                    let tts = ElevenLabsTTS(apiKey: key, model: model)
+                    if let voiceId = selectedVoiceID {
+                        tts.setVoice(id: voiceId)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No ElevenLabs key — falling back to System"
+                    engine = SystemTTS()
+                }
+
+            case .humeAI:
+                testDiagnostic = "Testing Hume AI voice..."
+                if let key = try? await appServices.keychainManager.getHumeAIKey(),
+                   !key.isEmpty {
+                    let tts = HumeAITTS(apiKey: key)
+                    if let voiceId = selectedHumeVoiceID {
+                        tts.setVoice(id: voiceId)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No Hume AI key — falling back to System"
+                    engine = SystemTTS()
+                }
             }
-            try? await Task.sleep(for: .seconds(1))
-            testSynthesizer = nil
+
+            await engine.speak(testText)
+            testDiagnostic = ""
             isTesting = false
         }
     }
@@ -761,6 +1181,8 @@ struct VoiceSettingsView: View {
         if let persona = fetchActivePersona() {
             selectedSystemVoiceID = persona.systemTTSVoice
             selectedVoiceID = persona.elevenLabsVoiceID
+            selectedOpenAIVoice = persona.openAITTSVoice ?? OpenAITTSVoice.nova.rawValue
+            selectedHumeVoiceID = persona.humeAIVoiceID
         }
 
         // Load ElevenLabs state
@@ -769,6 +1191,22 @@ struct VoiceSettingsView: View {
             hasElevenLabsKey = key != nil && !(key?.isEmpty ?? true)
         } catch {
             hasElevenLabsKey = false
+        }
+
+        // Load OpenAI key state
+        do {
+            let key = try await appServices.keychainManager.getAPIKey(for: .openAI)
+            hasOpenAIKey = key != nil && !(key?.isEmpty ?? true)
+        } catch {
+            hasOpenAIKey = false
+        }
+
+        // Load Hume AI state
+        do {
+            let key = try await appServices.keychainManager.getHumeAIKey()
+            hasHumeAIKey = key != nil && !(key?.isEmpty ?? true)
+        } catch {
+            hasHumeAIKey = false
         }
     }
 
@@ -825,6 +1263,66 @@ struct VoiceSettingsView: View {
         persona.systemTTSVoice = identifier
         try? appServices.modelContainer.mainContext.save()
     }
+
+    // MARK: - OpenAI TTS Actions
+
+    private func saveOpenAIVoice(_ voiceName: String) {
+        guard let persona = fetchActivePersona() else { return }
+        persona.openAITTSVoice = voiceName
+        try? appServices.modelContainer.mainContext.save()
+    }
+
+    // MARK: - Hume AI Actions
+
+    private func saveHumeAIKey() {
+        Task {
+            do {
+                if humeAIKey.isEmpty {
+                    try await appServices.keychainManager.deleteHumeAIKey()
+                    hasHumeAIKey = false
+                } else {
+                    try await appServices.keychainManager.saveHumeAIKey(humeAIKey)
+                    hasHumeAIKey = true
+                }
+                isEditingHumeKey = false
+                humeAIKey = ""
+                humeVoices = []
+            } catch {
+                humeVoiceError = error.localizedDescription
+            }
+        }
+    }
+
+    private func fetchHumeVoices() async {
+        isLoadingHumeVoices = true
+        humeVoiceError = nil
+
+        do {
+            guard let key = try await appServices.keychainManager.getHumeAIKey(),
+                  !key.isEmpty else {
+                humeVoiceError = "API key not configured"
+                isLoadingHumeVoices = false
+                return
+            }
+
+            let manager = HumeAIVoiceManager()
+            humeVoices = try await manager.voices(apiKey: key)
+        } catch let error as HumeAIError {
+            humeVoiceError = error.errorDescription
+        } catch {
+            humeVoiceError = error.localizedDescription
+        }
+
+        isLoadingHumeVoices = false
+    }
+
+    private func saveHumeVoice(_ voiceName: String) {
+        guard let persona = fetchActivePersona() else { return }
+        persona.humeAIVoiceID = voiceName
+        try? appServices.modelContainer.mainContext.save()
+    }
+
+    // MARK: - Persona Lookup
 
     private func fetchActivePersona() -> Persona? {
         let context = appServices.modelContainer.mainContext
@@ -893,14 +1391,18 @@ private struct TTSEngineCard: View {
     private var engineIcon: String {
         switch engine {
         case .system: "speaker.wave.2.fill"
+        case .openAI: "brain.head.profile.fill"
         case .elevenLabs: "waveform.circle.fill"
+        case .humeAI: "heart.text.clipboard.fill"
         }
     }
 
     private var engineSubtitle: String {
         switch engine {
         case .system: "Built-in iOS voice synthesis — free, no setup"
+        case .openAI: "Natural AI voices — uses your OpenAI key"
         case .elevenLabs: "Ultra-realistic AI voices — requires API key"
+        case .humeAI: "Emotionally expressive voices — requires API key"
         }
     }
 
