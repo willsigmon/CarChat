@@ -37,6 +37,10 @@
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>CarChat uses speech recognition to transcribe your voice for AI conversations.</string>
 
+	<!-- Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<!-- CarPlay Scene Configuration -->
 	<key>UIApplicationSceneManifest</key>
 	<dict>
