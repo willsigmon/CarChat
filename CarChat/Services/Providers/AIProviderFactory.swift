@@ -57,8 +57,10 @@ enum AIProviderFactory {
             )
 
         case .openclaw:
-            let baseURL = UserDefaults.standard.string(forKey: "openclawBaseURL")
-                ?? "http://sigserve.tail1234.ts.net:8101"
+            guard let baseURL = UserDefaults.standard.string(forKey: "openclawBaseURL"),
+                  !baseURL.isEmpty else {
+                throw AIProviderError.configurationMissing("OpenClaw base URL not configured")
+            }
             return OpenClawProvider(
                 apiKey: apiKey ?? "",
                 baseURL: baseURL,

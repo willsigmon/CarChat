@@ -17,6 +17,7 @@ protocol AIProvider: Sendable {
 
 enum AIProviderError: LocalizedError {
     case invalidAPIKey
+    case configurationMissing(String)
     case networkError(String)
     case rateLimited
     case modelUnavailable(String)
@@ -25,6 +26,7 @@ enum AIProviderError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidAPIKey: "Invalid API key — check your key in Settings"
+        case .configurationMissing(let msg): "\(msg) — configure in Settings"
         case .networkError(let msg): "Network error: \(msg)"
         case .rateLimited: "Rate limited — please wait a moment"
         case .modelUnavailable(let model): "Model unavailable: \(model)"

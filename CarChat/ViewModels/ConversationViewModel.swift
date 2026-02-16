@@ -401,6 +401,13 @@ final class ConversationViewModel {
             role: role,
             content: content
         )
+
+        // Auto-title from first user message
+        if role == .user, conversation.title == "New Conversation" {
+            let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+            let title = String(trimmed.prefix(60))
+            appServices.conversationStore.updateTitle(conversation, title: title)
+        }
     }
 
     // MARK: - Helpers

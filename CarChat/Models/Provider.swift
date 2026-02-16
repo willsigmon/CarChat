@@ -91,7 +91,6 @@ enum AIProviderType: String, CaseIterable, Codable, Sendable, Identifiable {
         case .ollama: "http://localhost:11434/v1"
         case .openclaw:
             UserDefaults.standard.string(forKey: "openclawBaseURL")
-                ?? "http://sigserve.tail1234.ts.net:8101"
         default: nil
         }
     }

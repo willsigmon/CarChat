@@ -400,8 +400,7 @@ private struct SelfHostedProviderCard: View {
 
                 if !isEditing {
                     Button {
-                        baseURL = UserDefaults.standard.string(forKey: "openclawBaseURL")
-                            ?? "http://sigserve.tail1234.ts.net:8101"
+                        baseURL = UserDefaults.standard.string(forKey: "openclawBaseURL") ?? ""
                         withAnimation(CarChatTheme.Animation.fast) {
                             isEditing = true
                         }
