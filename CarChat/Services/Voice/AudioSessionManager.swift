@@ -34,14 +34,26 @@ final class AudioSessionManager {
         routeEnforcementTask?.cancel()
         routeEnforcementTask = nil
 
-        // Matches Leavn's proven working audio session config.
-        // .playback + .spokenAudio routes to speaker, no mic needed.
-        // .mixWithOthers + .allowBluetoothHFP needed for AVSpeechSynthesizer.
-        try audioSession.setCategory(
-            .playback,
-            mode: .spokenAudio,
-            options: [.duckOthers]
-        )
+        switch requirement {
+        case .speechSynthesizer:
+            // AVSpeechSynthesizer requires .playAndRecord to produce audio on
+            // most iOS versions. .defaultToSpeaker routes to the loudspeaker,
+            // .mixWithOthers prevents session conflicts.
+            try audioSession.setCategory(
+                .playAndRecord,
+                mode: .spokenAudio,
+                options: [.defaultToSpeaker, .duckOthers, .mixWithOthers]
+            )
+
+        case .audioPlayer:
+            // AVAudioPlayer (ElevenLabs) works with plain .playback.
+            try audioSession.setCategory(
+                .playback,
+                mode: .spokenAudio,
+                options: [.duckOthers]
+            )
+        }
+
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
     }
 
