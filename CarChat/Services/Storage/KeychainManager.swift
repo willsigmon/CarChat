@@ -85,4 +85,96 @@ actor KeychainManager {
         }
         return !key.isEmpty
     }
+
+    // MARK: - Google Cloud TTS Key
+
+    private static let googleCloudKey = "carchat.apikey.googlecloud"
+
+    func saveGoogleCloudKey(_ key: String) throws {
+        try save(key: Self.googleCloudKey, value: key)
+    }
+
+    func getGoogleCloudKey() throws -> String? {
+        try get(key: Self.googleCloudKey)
+    }
+
+    func deleteGoogleCloudKey() throws {
+        try delete(key: Self.googleCloudKey)
+    }
+
+    func hasGoogleCloudKey() throws -> Bool {
+        guard let key = try get(key: Self.googleCloudKey) else { return false }
+        return !key.isEmpty
+    }
+
+    // MARK: - Cartesia TTS Key
+
+    private static let cartesiaKey = "carchat.apikey.cartesia"
+
+    func saveCartesiaKey(_ key: String) throws {
+        try save(key: Self.cartesiaKey, value: key)
+    }
+
+    func getCartesiaKey() throws -> String? {
+        try get(key: Self.cartesiaKey)
+    }
+
+    func deleteCartesiaKey() throws {
+        try delete(key: Self.cartesiaKey)
+    }
+
+    func hasCartesiaKey() throws -> Bool {
+        guard let key = try get(key: Self.cartesiaKey) else { return false }
+        return !key.isEmpty
+    }
+
+    // MARK: - Amazon Polly Keys (access key + secret key)
+
+    private static let amazonPollyAccessKey = "carchat.apikey.polly.access"
+    private static let amazonPollySecretKey = "carchat.apikey.polly.secret"
+
+    func saveAmazonPollyKeys(accessKey: String, secretKey: String) throws {
+        try save(key: Self.amazonPollyAccessKey, value: accessKey)
+        try save(key: Self.amazonPollySecretKey, value: secretKey)
+    }
+
+    func getAmazonPollyAccessKey() throws -> String? {
+        try get(key: Self.amazonPollyAccessKey)
+    }
+
+    func getAmazonPollySecretKey() throws -> String? {
+        try get(key: Self.amazonPollySecretKey)
+    }
+
+    func deleteAmazonPollyKeys() throws {
+        try delete(key: Self.amazonPollyAccessKey)
+        try delete(key: Self.amazonPollySecretKey)
+    }
+
+    func hasAmazonPollyKeys() throws -> Bool {
+        guard let access = try get(key: Self.amazonPollyAccessKey),
+              let secret = try get(key: Self.amazonPollySecretKey) else { return false }
+        return !access.isEmpty && !secret.isEmpty
+    }
+
+    // MARK: - Deepgram TTS Key
+
+    private static let deepgramKey = "carchat.apikey.deepgram"
+
+    func saveDeepgramKey(_ key: String) throws {
+        try save(key: Self.deepgramKey, value: key)
+    }
+
+    func getDeepgramKey() throws -> String? {
+        try get(key: Self.deepgramKey)
+    }
+
+    func deleteDeepgramKey() throws {
+        try delete(key: Self.deepgramKey)
+    }
+
+    func hasDeepgramKey() throws -> Bool {
+        guard let key = try get(key: Self.deepgramKey) else { return false }
+        return !key.isEmpty
+    }
 }

@@ -55,6 +55,15 @@ enum AIProviderFactory {
                 baseURL: "http://localhost:11434",
                 model: model ?? "apple-foundation"
             )
+
+        case .openclaw:
+            let baseURL = UserDefaults.standard.string(forKey: "openclawBaseURL")
+                ?? "http://sigserve.tail1234.ts.net:8101"
+            return OpenClawProvider(
+                apiKey: apiKey ?? "",
+                baseURL: baseURL,
+                model: model ?? type.defaultModel
+            )
         }
     }
 }

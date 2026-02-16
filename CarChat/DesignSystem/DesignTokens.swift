@@ -119,6 +119,7 @@ enum CarChatTheme {
             case .grok: Color(hex: 0xFFFFFF)
             case .apple: Color(hex: 0xA8A8A8)
             case .ollama: Color(hex: 0x888888)
+            case .openclaw: Color(hex: 0x6C5CE7)
             }
         }
     }

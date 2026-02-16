@@ -20,6 +20,25 @@ struct BrandLogo: View {
     var body: some View {
         Group {
             switch provider {
+            case .openclaw:
+                // OpenClaw uses SF Symbol — self-hosted agent
+                if let tint {
+                    Image(systemName: "pawprint.fill")
+                        .font(.system(size: size * 0.5, weight: .medium))
+                        .foregroundStyle(tint)
+                        .frame(width: size, height: size)
+                } else {
+                    Image(systemName: "pawprint.fill")
+                        .font(.system(size: size * 0.5, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color(hex: 0x6C5CE7), Color(hex: 0xA29BFE)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: size, height: size)
+                }
             case .apple:
                 // Apple's own SF Symbol — no need for a bundled asset
                 if let tint {
@@ -76,6 +95,7 @@ struct BrandLogo: View {
         case .grok: "xai"
         case .ollama: "ollama"
         case .apple: "apple" // unused — handled by SF Symbol above
+        case .openclaw: "openclaw" // unused — handled by SF Symbol above
         }
     }
 }
@@ -125,6 +145,8 @@ struct BrandLogoCard: View {
             [Color(hex: 0x2A2A2A), Color(hex: 0x3A3A3A)]
         case .apple:
             [Color(hex: 0x1C1C1E), Color(hex: 0x2C2C2E)]
+        case .openclaw:
+            [Color(hex: 0x3D2B7A), Color(hex: 0x6C5CE7)]
         }
     }
 

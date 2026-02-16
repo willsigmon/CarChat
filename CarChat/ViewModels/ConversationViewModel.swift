@@ -235,6 +235,59 @@ final class ConversationViewModel {
                 tts.setVoice(id: voiceId)
             }
             return tts
+
+        case .googleCloud:
+            guard let key = try? await appServices.keychainManager.getGoogleCloudKey(),
+                  !key.isEmpty else {
+                return SystemTTS()
+            }
+
+            let tts = GoogleCloudTTS(apiKey: key)
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.googleCloudVoiceID {
+                tts.setVoice(id: voiceId)
+            }
+            return tts
+
+        case .cartesia:
+            guard let key = try? await appServices.keychainManager.getCartesiaKey(),
+                  !key.isEmpty else {
+                return SystemTTS()
+            }
+
+            let tts = CartesiaTTS(apiKey: key)
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.cartesiaVoiceID {
+                tts.setVoice(id: voiceId)
+            }
+            return tts
+
+        case .amazonPolly:
+            guard let accessKey = try? await appServices.keychainManager.getAmazonPollyAccessKey(),
+                  let secretKey = try? await appServices.keychainManager.getAmazonPollySecretKey(),
+                  !accessKey.isEmpty, !secretKey.isEmpty else {
+                return SystemTTS()
+            }
+
+            let tts = AmazonPollyTTS(accessKey: accessKey, secretKey: secretKey)
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.amazonPollyVoiceID {
+                tts.setVoice(id: voiceId)
+            }
+            return tts
+
+        case .deepgram:
+            guard let key = try? await appServices.keychainManager.getDeepgramKey(),
+                  !key.isEmpty else {
+                return SystemTTS()
+            }
+
+            let tts = DeepgramTTS(apiKey: key)
+            if let persona = fetchActivePersona(),
+               let voiceId = persona.deepgramVoiceID {
+                tts.setVoice(id: voiceId)
+            }
+            return tts
         }
     }
 

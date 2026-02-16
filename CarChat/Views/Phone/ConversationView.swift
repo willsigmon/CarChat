@@ -4,6 +4,7 @@ import UIKit
 #endif
 
 struct ConversationView: View {
+    @Binding var initialPrompt: String?
     @Environment(AppServices.self) private var appServices
     @AppStorage("audioOutputMode") private var audioOutputMode = AudioOutputMode.defaultMode.rawValue
     @State private var viewModel: ConversationViewModel?
@@ -200,6 +201,12 @@ struct ConversationView: View {
                 withAnimation(CarChatTheme.Animation.smooth) {
                     showSuggestions = true
                 }
+            }
+        }
+        .onChange(of: initialPrompt) { _, newPrompt in
+            if let prompt = newPrompt, !prompt.isEmpty {
+                initialPrompt = nil
+                vm.sendPrompt(prompt)
             }
         }
     }

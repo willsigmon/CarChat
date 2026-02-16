@@ -19,6 +19,10 @@ enum TTSEngineType: String, Codable, Sendable, CaseIterable, Identifiable {
     case openAI
     case elevenLabs
     case humeAI
+    case googleCloud
+    case cartesia
+    case amazonPolly
+    case deepgram
 
     var id: String { rawValue }
 
@@ -28,6 +32,10 @@ enum TTSEngineType: String, Codable, Sendable, CaseIterable, Identifiable {
         case .openAI: "OpenAI"
         case .elevenLabs: "ElevenLabs"
         case .humeAI: "Hume AI (Expressive)"
+        case .googleCloud: "Google Cloud TTS"
+        case .cartesia: "Cartesia (Ultra-Fast)"
+        case .amazonPolly: "Amazon Polly"
+        case .deepgram: "Deepgram Aura"
         }
     }
 }

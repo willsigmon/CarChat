@@ -33,6 +33,37 @@ struct VoiceSettingsView: View {
     @State private var isLoadingHumeVoices = false
     @State private var humeVoiceError: String?
 
+    // Google Cloud TTS state
+    @State private var googleCloudKey = ""
+    @State private var hasGoogleCloudKey = false
+    @State private var isEditingGoogleCloudKey = false
+    @State private var googleCloudVoices: [GoogleCloudVoice] = []
+    @State private var selectedGoogleCloudVoiceID: String?
+    @State private var isLoadingGoogleCloudVoices = false
+    @State private var googleCloudVoiceError: String?
+
+    // Cartesia state
+    @State private var cartesiaKey = ""
+    @State private var hasCartesiaKey = false
+    @State private var isEditingCartesiaKey = false
+    @State private var cartesiaVoices: [CartesiaVoice] = []
+    @State private var selectedCartesiaVoiceID: String?
+    @State private var isLoadingCartesiaVoices = false
+    @State private var cartesiaVoiceError: String?
+
+    // Amazon Polly state
+    @State private var amazonPollyAccessKey = ""
+    @State private var amazonPollySecretKey = ""
+    @State private var hasAmazonPollyKey = false
+    @State private var isEditingAmazonPollyKey = false
+    @State private var selectedAmazonPollyVoiceID: String?
+
+    // Deepgram state
+    @State private var deepgramKey = ""
+    @State private var hasDeepgramKey = false
+    @State private var isEditingDeepgramKey = false
+    @State private var selectedDeepgramVoiceID: String?
+
     // Shared state
     @State private var isTesting = false
     @State private var testDiagnostic = ""
@@ -62,6 +93,14 @@ struct VoiceSettingsView: View {
                         elevenLabsSection
                     case .humeAI:
                         humeAISection
+                    case .googleCloud:
+                        googleCloudSection
+                    case .cartesia:
+                        cartesiaSection
+                    case .amazonPolly:
+                        amazonPollySection
+                    case .deepgram:
+                        deepgramSection
                     }
 
                     audioOutputSection
@@ -807,6 +846,470 @@ struct VoiceSettingsView: View {
         .sensoryFeedback(.selection, trigger: isSelected)
     }
 
+    // MARK: - Google Cloud TTS Configuration
+
+    @ViewBuilder
+    private var googleCloudSection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("GOOGLE CLOUD TTS")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                    if hasGoogleCloudKey {
+                        StatusBadge(text: "Connected", color: CarChatTheme.Colors.success)
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                byokKeyCard(
+                    hasKey: hasGoogleCloudKey,
+                    isEditing: $isEditingGoogleCloudKey,
+                    keyText: $googleCloudKey,
+                    placeholder: "AIza...",
+                    providerURL: "console.cloud.google.com",
+                    onSave: saveGoogleCloudKey
+                )
+            }
+
+            if hasGoogleCloudKey {
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    HStack {
+                        Text("VOICE")
+                            .font(CarChatTheme.Typography.micro)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                        Spacer()
+
+                        if isLoadingGoogleCloudVoices {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(CarChatTheme.Colors.accentGradientStart)
+                        } else if !googleCloudVoices.isEmpty {
+                            Button {
+                                Task { await fetchGoogleCloudVoices() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    if let googleCloudVoiceError {
+                        voiceErrorCard(googleCloudVoiceError)
+                    } else if googleCloudVoices.isEmpty && !isLoadingGoogleCloudVoices {
+                        loadVoicesButton { Task { await fetchGoogleCloudVoices() } }
+                    } else {
+                        ForEach(googleCloudVoices) { voice in
+                            simpleVoiceRow(
+                                name: voice.name,
+                                detail: voice.languageCodes.first ?? "",
+                                isSelected: voice.name == selectedGoogleCloudVoiceID
+                            ) {
+                                selectedGoogleCloudVoiceID = voice.name
+                                saveGoogleCloudVoice(voice.name)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Cartesia Configuration
+
+    @ViewBuilder
+    private var cartesiaSection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("CARTESIA SETUP")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                    if hasCartesiaKey {
+                        StatusBadge(text: "Connected", color: CarChatTheme.Colors.success)
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                byokKeyCard(
+                    hasKey: hasCartesiaKey,
+                    isEditing: $isEditingCartesiaKey,
+                    keyText: $cartesiaKey,
+                    placeholder: "sk-...",
+                    providerURL: "play.cartesia.ai",
+                    onSave: saveCartesiaKey
+                )
+            }
+
+            if hasCartesiaKey {
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    HStack {
+                        Text("VOICE")
+                            .font(CarChatTheme.Typography.micro)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                        Spacer()
+
+                        if isLoadingCartesiaVoices {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(CarChatTheme.Colors.accentGradientStart)
+                        } else if !cartesiaVoices.isEmpty {
+                            Button {
+                                Task { await fetchCartesiaVoices() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    if let cartesiaVoiceError {
+                        voiceErrorCard(cartesiaVoiceError)
+                    } else if cartesiaVoices.isEmpty && !isLoadingCartesiaVoices {
+                        loadVoicesButton { Task { await fetchCartesiaVoices() } }
+                    } else {
+                        ForEach(cartesiaVoices) { voice in
+                            simpleVoiceRow(
+                                name: voice.name,
+                                detail: voice.description,
+                                isSelected: voice.id == selectedCartesiaVoiceID
+                            ) {
+                                selectedCartesiaVoiceID = voice.id
+                                saveCartesiaVoice(voice.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Amazon Polly Configuration
+
+    @ViewBuilder
+    private var amazonPollySection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("AMAZON POLLY SETUP")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                    if hasAmazonPollyKey {
+                        StatusBadge(text: "Connected", color: CarChatTheme.Colors.success)
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.md) {
+                    VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
+                        HStack(spacing: CarChatTheme.Spacing.sm) {
+                            LayeredFeatureIcon(
+                                systemName: "key.fill",
+                                color: CarChatTheme.Colors.accentGradientStart,
+                                accentShape: .none
+                            )
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("AWS Credentials")
+                                    .font(CarChatTheme.Typography.headline)
+                                    .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                                Text(hasAmazonPollyKey
+                                     ? "Your keys are securely stored in Keychain"
+                                     : "Requires AWS access key + secret key")
+                                    .font(CarChatTheme.Typography.caption)
+                                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                            }
+
+                            Spacer()
+                        }
+
+                        if isEditingAmazonPollyKey {
+                            VStack(spacing: CarChatTheme.Spacing.xs) {
+                                HStack(spacing: CarChatTheme.Spacing.xs) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                                    SecureField("Access Key ID", text: $amazonPollyAccessKey)
+                                        .font(CarChatTheme.Typography.body)
+                                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                        .autocorrectionDisabled()
+                                        .textInputAutocapitalization(.never)
+                                        .tint(CarChatTheme.Colors.accentGradientStart)
+                                }
+                                .padding(CarChatTheme.Spacing.xs)
+                                .glassBackground(cornerRadius: CarChatTheme.Radius.sm)
+
+                                HStack(spacing: CarChatTheme.Spacing.xs) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                                    SecureField("Secret Access Key", text: $amazonPollySecretKey)
+                                        .font(CarChatTheme.Typography.body)
+                                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                        .autocorrectionDisabled()
+                                        .textInputAutocapitalization(.never)
+                                        .tint(CarChatTheme.Colors.accentGradientStart)
+                                }
+                                .padding(CarChatTheme.Spacing.xs)
+                                .glassBackground(cornerRadius: CarChatTheme.Radius.sm)
+
+                                Button("Save") {
+                                    saveAmazonPollyKeys()
+                                }
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, CarChatTheme.Spacing.sm)
+                                .padding(.vertical, CarChatTheme.Spacing.xs)
+                                .background(Capsule().fill(CarChatTheme.Gradients.accent))
+                            }
+                        } else {
+                            Button(hasAmazonPollyKey ? "Update Keys" : "Add Keys") {
+                                isEditingAmazonPollyKey = true
+                            }
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                        }
+                    }
+                }
+            }
+
+            if hasAmazonPollyKey {
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    Text("VOICE")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                        .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    ForEach(AmazonPollyVoiceCatalog.englishVoices) { voice in
+                        simpleVoiceRow(
+                            name: voice.name,
+                            detail: "\(voice.gender) • \(voice.engine)",
+                            isSelected: voice.id == selectedAmazonPollyVoiceID
+                        ) {
+                            selectedAmazonPollyVoiceID = voice.id
+                            saveAmazonPollyVoice(voice.id)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Deepgram Configuration
+
+    @ViewBuilder
+    private var deepgramSection: some View {
+        VStack(alignment: .leading, spacing: CarChatTheme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text("DEEPGRAM SETUP")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                    if hasDeepgramKey {
+                        StatusBadge(text: "Connected", color: CarChatTheme.Colors.success)
+                    }
+                }
+                .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                byokKeyCard(
+                    hasKey: hasDeepgramKey,
+                    isEditing: $isEditingDeepgramKey,
+                    keyText: $deepgramKey,
+                    placeholder: "dg-...",
+                    providerURL: "console.deepgram.com",
+                    onSave: saveDeepgramKey
+                )
+            }
+
+            if hasDeepgramKey {
+                VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xs) {
+                    Text("VOICE")
+                        .font(CarChatTheme.Typography.micro)
+                        .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                        .padding(.horizontal, CarChatTheme.Spacing.xs)
+
+                    ForEach(DeepgramVoiceCatalog.aura2Voices) { voice in
+                        simpleVoiceRow(
+                            name: voice.name,
+                            detail: voice.description,
+                            isSelected: voice.id == selectedDeepgramVoiceID
+                        ) {
+                            selectedDeepgramVoiceID = voice.id
+                            saveDeepgramVoice(voice.id)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Shared Builders
+
+    @ViewBuilder
+    private func byokKeyCard(
+        hasKey: Bool,
+        isEditing: Binding<Bool>,
+        keyText: Binding<String>,
+        placeholder: String,
+        providerURL: String,
+        onSave: @escaping () -> Void
+    ) -> some View {
+        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.md) {
+            VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.sm) {
+                    LayeredFeatureIcon(
+                        systemName: "key.fill",
+                        color: CarChatTheme.Colors.accentGradientStart,
+                        accentShape: .none
+                    )
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("API Key")
+                            .font(CarChatTheme.Typography.headline)
+                            .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        Text(hasKey
+                             ? "Your key is securely stored in Keychain"
+                             : "Get one at \(providerURL)")
+                            .font(CarChatTheme.Typography.caption)
+                            .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    }
+
+                    Spacer()
+                }
+
+                if isEditing.wrappedValue {
+                    HStack(spacing: CarChatTheme.Spacing.xs) {
+                        HStack(spacing: CarChatTheme.Spacing.xs) {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+
+                            SecureField(placeholder, text: keyText)
+                                .font(CarChatTheme.Typography.body)
+                                .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .tint(CarChatTheme.Colors.accentGradientStart)
+                        }
+                        .padding(CarChatTheme.Spacing.xs)
+                        .glassBackground(cornerRadius: CarChatTheme.Radius.sm)
+
+                        Button("Save") {
+                            onSave()
+                        }
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, CarChatTheme.Spacing.sm)
+                        .padding(.vertical, CarChatTheme.Spacing.xs)
+                        .background(Capsule().fill(CarChatTheme.Gradients.accent))
+                    }
+                } else {
+                    Button(hasKey ? "Update Key" : "Add Key") {
+                        isEditing.wrappedValue = true
+                    }
+                    .font(CarChatTheme.Typography.caption)
+                    .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func voiceErrorCard(_ error: String) -> some View {
+        GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+            HStack(spacing: CarChatTheme.Spacing.xs) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(CarChatTheme.Colors.error)
+                Text(error)
+                    .font(CarChatTheme.Typography.caption)
+                    .foregroundStyle(CarChatTheme.Colors.textSecondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func loadVoicesButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.sm) {
+                    Image(systemName: "arrow.down.circle")
+                        .foregroundStyle(CarChatTheme.Colors.accentGradientStart)
+                    Text("Load Available Voices")
+                        .font(CarChatTheme.Typography.headline)
+                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                    Spacer()
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func simpleVoiceRow(
+        name: String,
+        detail: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            withAnimation(CarChatTheme.Animation.fast) {
+                action()
+            }
+        } label: {
+            GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                HStack(spacing: CarChatTheme.Spacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(CarChatTheme.Colors.speaking.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Text(String(name.prefix(1)).uppercased())
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(CarChatTheme.Colors.speaking)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(name)
+                            .font(CarChatTheme.Typography.headline)
+                            .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        if !detail.isEmpty {
+                            Text(detail)
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            isSelected
+                                ? CarChatTheme.Colors.accentGradientStart
+                                : CarChatTheme.Colors.textTertiary
+                        )
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: isSelected)
+    }
+
     // MARK: - Audio Output
 
     @ViewBuilder
@@ -1157,6 +1660,63 @@ struct VoiceSettingsView: View {
                     testDiagnostic = "No Hume AI key — falling back to System"
                     engine = SystemTTS()
                 }
+
+            case .googleCloud:
+                testDiagnostic = "Testing Google Cloud voice..."
+                if let key = try? await appServices.keychainManager.getGoogleCloudKey(),
+                   !key.isEmpty {
+                    let tts = GoogleCloudTTS(apiKey: key)
+                    if let voiceId = selectedGoogleCloudVoiceID {
+                        tts.setVoice(id: voiceId)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No Google Cloud key — falling back to System"
+                    engine = SystemTTS()
+                }
+
+            case .cartesia:
+                testDiagnostic = "Testing Cartesia voice..."
+                if let key = try? await appServices.keychainManager.getCartesiaKey(),
+                   !key.isEmpty {
+                    let tts = CartesiaTTS(apiKey: key)
+                    if let voiceId = selectedCartesiaVoiceID {
+                        tts.setVoice(id: voiceId)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No Cartesia key — falling back to System"
+                    engine = SystemTTS()
+                }
+
+            case .amazonPolly:
+                testDiagnostic = "Testing Amazon Polly voice..."
+                if let accessKey = try? await appServices.keychainManager.getAmazonPollyAccessKey(),
+                   let secretKey = try? await appServices.keychainManager.getAmazonPollySecretKey(),
+                   !accessKey.isEmpty, !secretKey.isEmpty {
+                    let tts = AmazonPollyTTS(accessKey: accessKey, secretKey: secretKey)
+                    if let voiceId = selectedAmazonPollyVoiceID {
+                        tts.setVoice(id: voiceId)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No Amazon Polly keys — falling back to System"
+                    engine = SystemTTS()
+                }
+
+            case .deepgram:
+                testDiagnostic = "Testing Deepgram voice..."
+                if let key = try? await appServices.keychainManager.getDeepgramKey(),
+                   !key.isEmpty {
+                    let tts = DeepgramTTS(apiKey: key)
+                    if let voiceId = selectedDeepgramVoiceID {
+                        tts.setVoice(id: voiceId)
+                    }
+                    engine = tts
+                } else {
+                    testDiagnostic = "No Deepgram key — falling back to System"
+                    engine = SystemTTS()
+                }
             }
 
             await engine.speak(testText)
@@ -1207,6 +1767,46 @@ struct VoiceSettingsView: View {
             hasHumeAIKey = key != nil && !(key?.isEmpty ?? true)
         } catch {
             hasHumeAIKey = false
+        }
+
+        // Load Google Cloud state
+        do {
+            let key = try await appServices.keychainManager.getGoogleCloudKey()
+            hasGoogleCloudKey = key != nil && !(key?.isEmpty ?? true)
+        } catch {
+            hasGoogleCloudKey = false
+        }
+
+        // Load Cartesia state
+        do {
+            let key = try await appServices.keychainManager.getCartesiaKey()
+            hasCartesiaKey = key != nil && !(key?.isEmpty ?? true)
+        } catch {
+            hasCartesiaKey = false
+        }
+
+        // Load Amazon Polly state
+        do {
+            let accessKey = try await appServices.keychainManager.getAmazonPollyAccessKey()
+            hasAmazonPollyKey = accessKey != nil && !(accessKey?.isEmpty ?? true)
+        } catch {
+            hasAmazonPollyKey = false
+        }
+
+        // Load Deepgram state
+        do {
+            let key = try await appServices.keychainManager.getDeepgramKey()
+            hasDeepgramKey = key != nil && !(key?.isEmpty ?? true)
+        } catch {
+            hasDeepgramKey = false
+        }
+
+        // Load new engine persona selections
+        if let persona = fetchActivePersona() {
+            selectedGoogleCloudVoiceID = persona.googleCloudVoiceID
+            selectedCartesiaVoiceID = persona.cartesiaVoiceID
+            selectedAmazonPollyVoiceID = persona.amazonPollyVoiceID
+            selectedDeepgramVoiceID = persona.deepgramVoiceID
         }
     }
 
@@ -1322,6 +1922,162 @@ struct VoiceSettingsView: View {
         try? appServices.modelContainer.mainContext.save()
     }
 
+    // MARK: - Google Cloud Actions
+
+    private func saveGoogleCloudKey() {
+        Task {
+            do {
+                if googleCloudKey.isEmpty {
+                    try await appServices.keychainManager.deleteGoogleCloudKey()
+                    hasGoogleCloudKey = false
+                } else {
+                    try await appServices.keychainManager.saveGoogleCloudKey(googleCloudKey)
+                    hasGoogleCloudKey = true
+                }
+                isEditingGoogleCloudKey = false
+                googleCloudKey = ""
+                googleCloudVoices = []
+            } catch {
+                googleCloudVoiceError = error.localizedDescription
+            }
+        }
+    }
+
+    private func fetchGoogleCloudVoices() async {
+        isLoadingGoogleCloudVoices = true
+        googleCloudVoiceError = nil
+
+        do {
+            guard let key = try await appServices.keychainManager.getGoogleCloudKey(),
+                  !key.isEmpty else {
+                googleCloudVoiceError = "API key not configured"
+                isLoadingGoogleCloudVoices = false
+                return
+            }
+
+            let manager = GoogleCloudVoiceManager()
+            googleCloudVoices = try await manager.voices(apiKey: key)
+        } catch let error as GoogleCloudTTSError {
+            googleCloudVoiceError = error.errorDescription
+        } catch {
+            googleCloudVoiceError = error.localizedDescription
+        }
+
+        isLoadingGoogleCloudVoices = false
+    }
+
+    private func saveGoogleCloudVoice(_ voiceID: String) {
+        guard let persona = fetchActivePersona() else { return }
+        persona.googleCloudVoiceID = voiceID
+        try? appServices.modelContainer.mainContext.save()
+    }
+
+    // MARK: - Cartesia Actions
+
+    private func saveCartesiaKey() {
+        Task {
+            do {
+                if cartesiaKey.isEmpty {
+                    try await appServices.keychainManager.deleteCartesiaKey()
+                    hasCartesiaKey = false
+                } else {
+                    try await appServices.keychainManager.saveCartesiaKey(cartesiaKey)
+                    hasCartesiaKey = true
+                }
+                isEditingCartesiaKey = false
+                cartesiaKey = ""
+                cartesiaVoices = []
+            } catch {
+                cartesiaVoiceError = error.localizedDescription
+            }
+        }
+    }
+
+    private func fetchCartesiaVoices() async {
+        isLoadingCartesiaVoices = true
+        cartesiaVoiceError = nil
+
+        do {
+            guard let key = try await appServices.keychainManager.getCartesiaKey(),
+                  !key.isEmpty else {
+                cartesiaVoiceError = "API key not configured"
+                isLoadingCartesiaVoices = false
+                return
+            }
+
+            let manager = CartesiaVoiceManager()
+            cartesiaVoices = try await manager.voices(apiKey: key)
+        } catch let error as CartesiaTTSError {
+            cartesiaVoiceError = error.errorDescription
+        } catch {
+            cartesiaVoiceError = error.localizedDescription
+        }
+
+        isLoadingCartesiaVoices = false
+    }
+
+    private func saveCartesiaVoice(_ voiceID: String) {
+        guard let persona = fetchActivePersona() else { return }
+        persona.cartesiaVoiceID = voiceID
+        try? appServices.modelContainer.mainContext.save()
+    }
+
+    // MARK: - Amazon Polly Actions
+
+    private func saveAmazonPollyKeys() {
+        Task {
+            do {
+                if amazonPollyAccessKey.isEmpty || amazonPollySecretKey.isEmpty {
+                    try await appServices.keychainManager.deleteAmazonPollyKeys()
+                    hasAmazonPollyKey = false
+                } else {
+                    try await appServices.keychainManager.saveAmazonPollyKeys(
+                        accessKey: amazonPollyAccessKey,
+                        secretKey: amazonPollySecretKey
+                    )
+                    hasAmazonPollyKey = true
+                }
+                isEditingAmazonPollyKey = false
+                amazonPollyAccessKey = ""
+                amazonPollySecretKey = ""
+            } catch {
+                // silently fail
+            }
+        }
+    }
+
+    private func saveAmazonPollyVoice(_ voiceID: String) {
+        guard let persona = fetchActivePersona() else { return }
+        persona.amazonPollyVoiceID = voiceID
+        try? appServices.modelContainer.mainContext.save()
+    }
+
+    // MARK: - Deepgram Actions
+
+    private func saveDeepgramKey() {
+        Task {
+            do {
+                if deepgramKey.isEmpty {
+                    try await appServices.keychainManager.deleteDeepgramKey()
+                    hasDeepgramKey = false
+                } else {
+                    try await appServices.keychainManager.saveDeepgramKey(deepgramKey)
+                    hasDeepgramKey = true
+                }
+                isEditingDeepgramKey = false
+                deepgramKey = ""
+            } catch {
+                // silently fail
+            }
+        }
+    }
+
+    private func saveDeepgramVoice(_ voiceID: String) {
+        guard let persona = fetchActivePersona() else { return }
+        persona.deepgramVoiceID = voiceID
+        try? appServices.modelContainer.mainContext.save()
+    }
+
     // MARK: - Persona Lookup
 
     private func fetchActivePersona() -> Persona? {
@@ -1394,6 +2150,10 @@ private struct TTSEngineCard: View {
         case .openAI: "brain.head.profile.fill"
         case .elevenLabs: "waveform.circle.fill"
         case .humeAI: "heart.text.clipboard.fill"
+        case .googleCloud: "cloud.fill"
+        case .cartesia: "bolt.circle.fill"
+        case .amazonPolly: "waveform.path"
+        case .deepgram: "mic.badge.waveform"
         }
     }
 
@@ -1403,6 +2163,10 @@ private struct TTSEngineCard: View {
         case .openAI: "Natural AI voices — uses your OpenAI key"
         case .elevenLabs: "Ultra-realistic AI voices — requires API key"
         case .humeAI: "Emotionally expressive voices — requires API key"
+        case .googleCloud: "300+ voices across multiple tiers — BYOK"
+        case .cartesia: "Ultra-low latency AI voices — BYOK"
+        case .amazonPolly: "AWS neural voices — requires access + secret key"
+        case .deepgram: "Aura-2 fast voices — BYOK"
         }
     }
 

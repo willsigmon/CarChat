@@ -2,20 +2,32 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab: Tab = .talk
+    @State private var pendingPrompt: String?
 
     enum Tab: String {
-        case talk, history, settings
+        case talk, topics, history, settings
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            ConversationView()
+            ConversationView(initialPrompt: $pendingPrompt)
                 .tabItem {
                     Label("Talk", systemImage: "mic.fill")
                 }
                 .tag(Tab.talk)
                 .accessibilityLabel("Talk")
                 .accessibilityHint("Start a voice conversation")
+
+            TopicsView { prompt in
+                pendingPrompt = prompt
+                selectedTab = .talk
+            }
+                .tabItem {
+                    Label("Topics", systemImage: "sparkles.rectangle.stack")
+                }
+                .tag(Tab.topics)
+                .accessibilityLabel("Topics")
+                .accessibilityHint("Browse conversation starters")
 
             ConversationListView()
                 .tabItem {

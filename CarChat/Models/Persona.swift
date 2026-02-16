@@ -16,6 +16,10 @@ final class Persona {
     var systemTTSVoice: String?
     var openAITTSVoice: String?
     var humeAIVoiceID: String?
+    var googleCloudVoiceID: String?
+    var cartesiaVoiceID: String?
+    var amazonPollyVoiceID: String?
+    var deepgramVoiceID: String?
 
     init(
         id: UUID = UUID(),
@@ -28,7 +32,11 @@ final class Persona {
         elevenLabsVoiceID: String? = nil,
         systemTTSVoice: String? = nil,
         openAITTSVoice: String? = "nova",
-        humeAIVoiceID: String? = nil
+        humeAIVoiceID: String? = nil,
+        googleCloudVoiceID: String? = nil,
+        cartesiaVoiceID: String? = nil,
+        amazonPollyVoiceID: String? = nil,
+        deepgramVoiceID: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -42,5 +50,9 @@ final class Persona {
         self.systemTTSVoice = systemTTSVoice
         self.openAITTSVoice = openAITTSVoice
         self.humeAIVoiceID = humeAIVoiceID
+        self.googleCloudVoiceID = googleCloudVoiceID
+        self.cartesiaVoiceID = cartesiaVoiceID
+        self.amazonPollyVoiceID = amazonPollyVoiceID
+        self.deepgramVoiceID = deepgramVoiceID
     }
 }
