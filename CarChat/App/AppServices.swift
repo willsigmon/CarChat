@@ -8,8 +8,19 @@ final class AppServices {
     let keychainManager: KeychainManager
     let conversationStore: ConversationStore
     let watchConnectivityManager: WatchConnectivityManager
+    let authManager: AuthManager
+    let storeManager: StoreManager
+    let usageTracker: UsageTracker
 
     private(set) var isOnboardingComplete: Bool
+
+    /// The effective subscription tier considering auth state and StoreKit
+    var effectiveTier: SubscriptionTier {
+        if authManager.authState.isBYOK {
+            return .byok
+        }
+        return storeManager.currentTier
+    }
 
     init() {
         let schema = Schema([
@@ -53,6 +64,9 @@ final class AppServices {
         self.watchConnectivityManager = WatchConnectivityManager(
             keychainManager: self.keychainManager
         )
+        self.authManager = AuthManager()
+        self.storeManager = StoreManager()
+        self.usageTracker = UsageTracker()
         self.isOnboardingComplete = UserDefaults.standard.bool(
             forKey: "onboardingComplete"
         )
@@ -61,6 +75,13 @@ final class AppServices {
     func completeOnboarding() {
         isOnboardingComplete = true
         UserDefaults.standard.set(true, forKey: "onboardingComplete")
+    }
+
+    /// Called on app launch to restore auth session and load products
+    func bootstrap() async {
+        await authManager.restoreSession()
+        await storeManager.loadProducts()
+        await usageTracker.refreshQuota(tier: effectiveTier)
     }
 
     func seedDefaultPersonaIfNeeded() {

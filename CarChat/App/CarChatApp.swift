@@ -13,6 +13,9 @@ struct CarChatApp: App {
                 .onAppear {
                     appServices.seedDefaultPersonaIfNeeded()
                 }
+                .task {
+                    await appServices.bootstrap()
+                }
         }
     }
 }

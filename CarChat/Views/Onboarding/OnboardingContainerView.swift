@@ -32,6 +32,24 @@ struct OnboardingContainerView: View {
                                 insertion: .move(edge: .trailing).combined(with: .opacity),
                                 removal: .move(edge: .leading).combined(with: .opacity)
                             ))
+                    case .tryItFree:
+                        TryItFreeStepView(viewModel: viewModel)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .move(edge: .leading).combined(with: .opacity)
+                            ))
+                    case .voicePreview:
+                        VoicePreviewStepView(viewModel: viewModel)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .move(edge: .leading).combined(with: .opacity)
+                            ))
+                    case .signIn:
+                        SignInStepView(viewModel: viewModel)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .move(edge: .leading).combined(with: .opacity)
+                            ))
                     case .apiKey:
                         APIKeyStepView(viewModel: viewModel)
                             .transition(.asymmetric(
@@ -49,7 +67,6 @@ struct OnboardingContainerView: View {
 
                 // Step indicator + back button
                 HStack {
-                    // Back button (hidden on welcome)
                     if viewModel.currentStep != .welcome {
                         Button {
                             Haptics.tap()
@@ -69,7 +86,6 @@ struct OnboardingContainerView: View {
 
                     Spacer()
 
-                    // Step dots
                     StepIndicator(
                         steps: OnboardingStep.allCases.count,
                         current: OnboardingStep.allCases.firstIndex(of: viewModel.currentStep) ?? 0
@@ -77,7 +93,6 @@ struct OnboardingContainerView: View {
 
                     Spacer()
 
-                    // Spacer to balance
                     Color.clear.frame(width: 36, height: 36)
                 }
                 .padding(.horizontal, CarChatTheme.Spacing.xl)
@@ -151,7 +166,7 @@ private enum ReadyPhase: CaseIterable {
     }
 }
 
-private struct ReadyStepView: View {
+struct ReadyStepView: View {
     let viewModel: OnboardingViewModel
 
     @State private var showContent = false
@@ -161,7 +176,6 @@ private struct ReadyStepView: View {
         ZStack {
             CarChatTheme.Colors.background.ignoresSafeArea()
 
-            // Celebration particles
             FloatingParticles(
                 count: 25,
                 isActive: true,
@@ -171,9 +185,7 @@ private struct ReadyStepView: View {
             VStack(spacing: CarChatTheme.Spacing.xxl) {
                 Spacer()
 
-                // Animated success icon with phase animator
                 ZStack {
-                    // Glow ring
                     Circle()
                         .fill(CarChatTheme.Colors.glowGreen)
                         .frame(width: 120, height: 120)

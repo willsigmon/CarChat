@@ -18,6 +18,9 @@ packages:
   KeychainAccess:
     url: https://github.com/kishikawakatsumi/KeychainAccess
     from: "4.2.2"
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.41.0"
 
 settings:
   base:
@@ -58,8 +61,11 @@ targets:
       - package: SwiftOpenAI
       - package: SwiftAnthropic
       - package: KeychainAccess
+      - package: Supabase
       - target: CarChatWatch
         embed: true
+      - framework: AuthenticationServices.framework
+      - framework: StoreKit.framework
     preBuildScripts: []
     scheme:
       testTargets:

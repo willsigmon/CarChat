@@ -6,7 +6,8 @@ import SwiftData
 @MainActor
 final class ConversationViewModel {
     private let appServices: AppServices
-    private var voiceSession: PipelineVoiceSession?
+    private var voiceSession: (any VoiceSessionProtocol)?
+    private var pipelineSession: PipelineVoiceSession? // For sendText/seedHistory
     private var startTask: Task<Void, Never>?
     private var sendTask: Task<Void, Never>?
     private var stateTask: Task<Void, Never>?
@@ -23,11 +24,23 @@ final class ConversationViewModel {
     private(set) var errorMessage: String?
     private(set) var activeProvider: AIProviderType
     private(set) var bubbles: [ConversationBubble] = []
+    private(set) var isRealtimeSession = false
+
+    var showUpgradePrompt = false
+    var showPaywall = false
 
     var isListening: Bool { voiceState == .listening }
     var isProcessing: Bool { voiceState == .processing }
     var isSpeaking: Bool { voiceState == .speaking }
     var isActive: Bool { voiceState.isActive }
+
+    var remainingMinutes: Int {
+        appServices.usageTracker.remainingMinutes
+    }
+
+    var currentTier: SubscriptionTier {
+        appServices.effectiveTier
+    }
 
     init(appServices: AppServices) {
         self.appServices = appServices
@@ -49,12 +62,19 @@ final class ConversationViewModel {
         guard startTask == nil, sendTask == nil, voiceSession == nil else { return }
         errorMessage = nil
 
+        // Quota check
+        let tier = appServices.effectiveTier
+        if !appServices.usageTracker.canStartSession(tier: tier) {
+            showUpgradePrompt = true
+            return
+        }
+
         startTask = Task { [weak self] in
             guard let self else { return }
             defer { startTask = nil }
 
             do {
-                let session = try await buildVoiceSession()
+                let session = try await buildSession()
                 voiceSession = session
 
                 if conversation == nil {
@@ -69,8 +89,10 @@ final class ConversationViewModel {
 
                 observeStreams(session)
 
-                // Seed conversation history when resuming an existing conversation
-                if let conversation, !conversation.messages.isEmpty {
+                // Seed conversation history for pipeline sessions
+                if let pipeline = pipelineSession,
+                   let conversation, !conversation.messages.isEmpty
+                {
                     let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                     var history: [(role: MessageRole, content: String)] = []
                     if !systemPrompt.isEmpty {
@@ -80,8 +102,11 @@ final class ConversationViewModel {
                     for msg in sorted {
                         history.append((msg.messageRole, msg.content))
                     }
-                    session.seedHistory(history)
+                    pipeline.seedHistory(history)
                 }
+
+                // Start usage tracking
+                appServices.usageTracker.startSession()
 
                 let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                 try await session.start(systemPrompt: systemPrompt)
@@ -91,6 +116,7 @@ final class ConversationViewModel {
                 errorMessage = error.localizedDescription
                 tearDownObservers()
                 voiceSession = nil
+                pipelineSession = nil
             }
         }
     }
@@ -98,6 +124,13 @@ final class ConversationViewModel {
     func sendPrompt(_ text: String) {
         guard sendTask == nil else { return }
         errorMessage = nil
+
+        // Quota check
+        let tier = appServices.effectiveTier
+        if !appServices.usageTracker.canStartSession(tier: tier) {
+            showUpgradePrompt = true
+            return
+        }
 
         sendTask = Task { [weak self] in
             guard let self else { return }
@@ -108,12 +141,10 @@ final class ConversationViewModel {
                 startTask = nil
 
                 if voiceSession != nil {
-                    await voiceSession?.stop()
-                    tearDownObservers()
-                    voiceSession = nil
+                    await endCurrentSession()
                 }
 
-                let session = try await buildVoiceSession()
+                let session = try await buildSession()
                 voiceSession = session
 
                 if conversation == nil {
@@ -128,8 +159,10 @@ final class ConversationViewModel {
 
                 observeStreams(session)
 
-                // Seed conversation history when resuming an existing conversation
-                if let conversation, !conversation.messages.isEmpty {
+                // Seed history for pipeline sessions
+                if let pipeline = pipelineSession,
+                   let conversation, !conversation.messages.isEmpty
+                {
                     let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                     var history: [(role: MessageRole, content: String)] = []
                     if !systemPrompt.isEmpty {
@@ -139,17 +172,27 @@ final class ConversationViewModel {
                     for msg in sorted {
                         history.append((msg.messageRole, msg.content))
                     }
-                    session.seedHistory(history)
+                    pipeline.seedHistory(history)
                 }
 
-                let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
-                await session.sendText(text, systemPrompt: systemPrompt)
+                appServices.usageTracker.startSession()
+
+                // sendText only works for pipeline sessions
+                if let pipeline = pipelineSession {
+                    let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
+                    await pipeline.sendText(text, systemPrompt: systemPrompt)
+                } else {
+                    // For realtime sessions, start the session and the user will speak
+                    let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
+                    try await session.start(systemPrompt: systemPrompt)
+                }
             } catch {
                 if Task.isCancelled { return }
                 voiceState = .idle
                 errorMessage = error.localizedDescription
                 tearDownObservers()
                 voiceSession = nil
+                pipelineSession = nil
             }
         }
     }
@@ -160,9 +203,7 @@ final class ConversationViewModel {
             startTask = nil
             sendTask?.cancel()
             sendTask = nil
-            await voiceSession?.stop()
-            tearDownObservers()
-            voiceSession = nil
+            await endCurrentSession()
             voiceState = .idle
             audioLevel = 0
         }
@@ -177,13 +218,11 @@ final class ConversationViewModel {
     // MARK: - Conversation Resume
 
     func loadConversation(_ conversation: Conversation) {
-        // Stop any active session
         stopListening()
 
         self.conversation = conversation
         activeProvider = conversation.provider
 
-        // Rebuild bubbles from persisted messages
         let sorted = conversation.messages.sorted { $0.createdAt < $1.createdAt }
         bubbles = sorted.map { msg in
             ConversationBubble(
@@ -198,10 +237,48 @@ final class ConversationViewModel {
 
     // MARK: - Session Builder
 
-    private func buildVoiceSession() async throws -> PipelineVoiceSession {
+    private func buildSession() async throws -> any VoiceSessionProtocol {
         let providerType = await resolveProviderType()
         activeProvider = providerType
-        let apiKey: String? = try? await appServices.keychainManager.getAPIKey(for: providerType)
+
+        let tier = appServices.effectiveTier
+
+        // Use realtime session for premium tier with realtime-capable providers
+        if tier.supportsRealtime,
+           providerType.supportsRealtimeVoice,
+           !tier.rawValue.isEmpty, // not BYOK using pipeline
+           appServices.authManager.currentUserID != nil
+        {
+            isRealtimeSession = true
+            pipelineSession = nil
+
+            let authToken: String
+            do {
+                authToken = try await supabase.auth.session.accessToken
+            } catch {
+                throw AIProviderError.configurationMissing("Not authenticated for realtime")
+            }
+
+            return RealtimeVoiceSession(
+                provider: providerType,
+                proxyBaseURL: URL(string: "\(SupabaseConfig.url)/functions/v1/realtime-proxy")!,
+                authToken: authToken,
+                deviceID: appServices.authManager.effectiveDeviceID,
+                voice: fetchActivePersona()?.openAIRealtimeVoice ?? "alloy"
+            )
+        }
+
+        // Fall back to pipeline session (BYOK or standard tier)
+        isRealtimeSession = false
+
+        // For BYOK, use user's own API keys
+        let apiKey: String?
+        if tier == .byok {
+            apiKey = try? await appServices.keychainManager.getAPIKey(for: providerType)
+        } else {
+            // For managed tiers, use proxy or built-in free model
+            apiKey = try? await appServices.keychainManager.getAPIKey(for: providerType)
+        }
 
         let aiProvider = try AIProviderFactory.create(
             type: providerType,
@@ -211,11 +288,13 @@ final class ConversationViewModel {
         let stt = SFSpeechSTT(paceProfile: .fast)
         let tts = try await buildTTSEngine()
 
-        return PipelineVoiceSession(
+        let pipeline = PipelineVoiceSession(
             sttEngine: stt,
             ttsEngine: tts,
             aiProvider: aiProvider
         )
+        pipelineSession = pipeline
+        return pipeline
     }
 
     private func buildTTSEngine() async throws -> TTSEngineProtocol {
@@ -343,7 +422,7 @@ final class ConversationViewModel {
 
     // MARK: - Stream Observers
 
-    private func observeStreams(_ session: PipelineVoiceSession) {
+    private func observeStreams(_ session: any VoiceSessionProtocol) {
         tearDownObservers()
 
         stateTask = Task { [weak self] in
@@ -392,6 +471,24 @@ final class ConversationViewModel {
         audioLevelTask = nil
     }
 
+    // MARK: - Session Lifecycle
+
+    private func endCurrentSession() async {
+        await voiceSession?.stop()
+        tearDownObservers()
+
+        // Track usage
+        await appServices.usageTracker.endSession(
+            provider: activeProvider.rawValue,
+            tier: appServices.effectiveTier,
+            deviceID: appServices.authManager.effectiveDeviceID,
+            userID: appServices.authManager.currentUserID
+        )
+
+        voiceSession = nil
+        pipelineSession = nil
+    }
+
     // MARK: - Persistence
 
     private func persistMessage(role: MessageRole, content: String) {
@@ -402,7 +499,6 @@ final class ConversationViewModel {
             content: content
         )
 
-        // Auto-title from first user message
         if role == .user, conversation.title == "New Conversation" {
             let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
             let title = String(trimmed.prefix(60))
@@ -421,16 +517,13 @@ final class ConversationViewModel {
     }
 
     private func resolveProviderType() async -> AIProviderType {
-        // Use the conversation's provider if resuming
         if let conversation {
             return conversation.provider
         }
-        // Use the provider the user chose during onboarding / settings
         if let saved = UserDefaults.standard.string(forKey: "selectedProvider"),
            let provider = AIProviderType(rawValue: saved) {
             return provider
         }
-        // Fallback: find the first cloud provider that actually has a key saved
         for provider in AIProviderType.cloudProviders {
             if let hasKey = try? await appServices.keychainManager.hasAPIKey(for: provider),
                hasKey {
