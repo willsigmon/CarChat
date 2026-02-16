@@ -3,6 +3,7 @@ import CarPlay
 @MainActor
 final class CarPlayTemplateManager {
     private let interfaceController: CPInterfaceController
+    private var voiceController: CarPlayVoiceController?
 
     init(interfaceController: CPInterfaceController) {
         self.interfaceController = interfaceController
@@ -57,10 +58,44 @@ final class CarPlayTemplateManager {
     }
 
     private func startNewConversation() {
-        // Will be implemented in Phase 5
+        // Check quota before starting
+        guard checkQuota() else { return }
+        voiceController = CarPlayVoiceController(
+            interfaceController: interfaceController
+        )
     }
 
     private func continueLastConversation() {
-        // Will be implemented in Phase 5
+        guard checkQuota() else { return }
+        voiceController = CarPlayVoiceController(
+            interfaceController: interfaceController
+        )
+    }
+
+    /// Returns true if user has remaining quota; shows alert if exhausted
+    private func checkQuota() -> Bool {
+        let tier = UserDefaults.standard.string(forKey: "effectiveTier")
+            .flatMap { SubscriptionTier(rawValue: $0) } ?? .free
+
+        if tier == .byok { return true }
+
+        let remaining = UserDefaults.standard.integer(forKey: "remainingMinutes")
+        if remaining <= 0 {
+            showQuotaExhaustedAlert()
+            return false
+        }
+        return true
+    }
+
+    private func showQuotaExhaustedAlert() {
+        let alert = CPAlertTemplate(
+            titleVariants: ["Minutes Exhausted"],
+            actions: [
+                CPAlertAction(title: "OK", style: .cancel) { _ in
+                    self.interfaceController.dismissTemplate(animated: true) { _, _ in }
+                }
+            ]
+        )
+        interfaceController.presentTemplate(alert, animated: true) { _, _ in }
     }
 }

@@ -10,6 +10,7 @@ final class UsageTracker {
     private(set) var currentSessionStart: Date?
 
     private var sessionTimer: Task<Void, Never>?
+    var notificationManager: NotificationManager?
 
     // MARK: - Quota Check
 
@@ -41,6 +42,13 @@ final class UsageTracker {
                 self.usedMinutesThisMonth += 1
                 if self.remainingMinutes > 0 {
                     self.remainingMinutes -= 1
+                }
+                // Fire quota alerts at key thresholds
+                if self.remainingMinutes == 5 || self.remainingMinutes == 1 || self.remainingMinutes == 0 {
+                    self.notificationManager?.scheduleQuotaAlert(
+                        minutesRemaining: self.remainingMinutes,
+                        tier: .free
+                    )
                 }
             }
         }

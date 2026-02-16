@@ -64,8 +64,9 @@ targets:
       - package: Supabase
       - target: CarChatWatch
         embed: true
-      - framework: AuthenticationServices.framework
-      - framework: StoreKit.framework
+      - sdk: AuthenticationServices.framework
+      - sdk: StoreKit.framework
+      - sdk: UserNotifications.framework
     preBuildScripts: []
     scheme:
       testTargets:

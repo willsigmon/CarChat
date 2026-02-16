@@ -11,6 +11,7 @@ final class AppServices {
     let authManager: AuthManager
     let storeManager: StoreManager
     let usageTracker: UsageTracker
+    let notificationManager: NotificationManager
 
     private(set) var isOnboardingComplete: Bool
 
@@ -67,6 +68,8 @@ final class AppServices {
         self.authManager = AuthManager()
         self.storeManager = StoreManager()
         self.usageTracker = UsageTracker()
+        self.notificationManager = NotificationManager()
+        self.usageTracker.notificationManager = self.notificationManager
         self.isOnboardingComplete = UserDefaults.standard.bool(
             forKey: "onboardingComplete"
         )
@@ -82,6 +85,21 @@ final class AppServices {
         await authManager.restoreSession()
         await storeManager.loadProducts()
         await usageTracker.refreshQuota(tier: effectiveTier)
+        await notificationManager.checkAuthorizationStatus()
+        notificationManager.registerCategories()
+        syncTierToWatch()
+    }
+
+    /// Sync subscription tier to Watch and UserDefaults (for CarPlay scene)
+    func syncTierToWatch() {
+        let tier = effectiveTier
+        watchConnectivityManager.sendTierUpdate(
+            tier: tier,
+            remainingMinutes: usageTracker.remainingMinutes
+        )
+        // CarPlay scene delegate reads from UserDefaults since it lacks AppServices access
+        UserDefaults.standard.set(tier.rawValue, forKey: "effectiveTier")
+        UserDefaults.standard.set(usageTracker.remainingMinutes, forKey: "remainingMinutes")
     }
 
     func seedDefaultPersonaIfNeeded() {

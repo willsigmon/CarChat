@@ -1,4 +1,4 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 
 /// Shared audio capture/playback for all realtime voice providers.
 /// Captures PCM16 at 24kHz from mic, plays received audio chunks.

@@ -8,6 +8,8 @@ private enum WatchMessageKey {
     static let response = "response"
     static let error = "error"
     static let chatAction = "chat"
+    static let tier = "tier"
+    static let remainingMinutes = "remainingMinutes"
 }
 
 private struct WatchChatRequest: Sendable {
@@ -44,6 +46,20 @@ final class WatchConnectivityManager: NSObject {
         guard let session else { return }
         session.delegate = self
         session.activate()
+    }
+
+    // MARK: - Tier Sync
+
+    func sendTierUpdate(tier: SubscriptionTier, remainingMinutes: Int = 0) {
+        guard let session, session.activationState == .activated else { return }
+        do {
+            try session.updateApplicationContext([
+                WatchMessageKey.tier: tier.rawValue,
+                WatchMessageKey.remainingMinutes: remainingMinutes,
+            ])
+        } catch {
+            // Best effort — Watch will get context on next activation
+        }
     }
 
     private static func decodeRequest(

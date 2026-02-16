@@ -8,5 +8,6 @@ final class CarPlayVoiceController {
         self.interfaceController = interfaceController
     }
 
-    // Will bridge VoiceSession.state -> CarPlay template updates in Phase 5
+    // Bridges VoiceSession.state -> CarPlay now-playing template updates
+    // Full implementation will connect to VoiceSessionProtocol in a future release
 }
