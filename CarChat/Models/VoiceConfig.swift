@@ -26,6 +26,28 @@ enum TTSEngineType: String, Codable, Sendable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Keychain storage key for this TTS engine's API credentials
+    var keychainKey: String {
+        switch self {
+        case .system: "carchat.tts.system"
+        case .openAI: "carchat.apikey.openai"
+        case .elevenLabs: "carchat.apikey.elevenlabs"
+        case .humeAI: "carchat.apikey.humeai"
+        case .googleCloud: "carchat.apikey.googlecloud"
+        case .cartesia: "carchat.apikey.cartesia"
+        case .amazonPolly: "carchat.apikey.polly.access"
+        case .deepgram: "carchat.apikey.deepgram"
+        }
+    }
+
+    /// Amazon Polly uses a second key (secret key) alongside the access key
+    var secondaryKeychainKey: String? {
+        switch self {
+        case .amazonPolly: "carchat.apikey.polly.secret"
+        default: nil
+        }
+    }
+
     var displayName: String {
         switch self {
         case .system: "System (AVSpeechSynthesizer)"

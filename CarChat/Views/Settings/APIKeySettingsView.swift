@@ -324,20 +324,34 @@ private struct LocalProviderCard: View {
 
             Spacer()
 
-            // "Free" pill
-            Text("Free")
-                .font(CarChatTheme.Typography.micro)
-                .foregroundStyle(CarChatTheme.Colors.success)
-                .padding(.horizontal, CarChatTheme.Spacing.sm)
-                .padding(.vertical, CarChatTheme.Spacing.xxs)
-                .background(
-                    Capsule().fill(CarChatTheme.Colors.success.opacity(0.12))
-                )
-                .overlay(
-                    Capsule().strokeBorder(CarChatTheme.Colors.success.opacity(0.2), lineWidth: 0.5)
-                )
+            if provider.isAvailable {
+                Text("Free")
+                    .font(CarChatTheme.Typography.micro)
+                    .foregroundStyle(CarChatTheme.Colors.success)
+                    .padding(.horizontal, CarChatTheme.Spacing.sm)
+                    .padding(.vertical, CarChatTheme.Spacing.xxs)
+                    .background(
+                        Capsule().fill(CarChatTheme.Colors.success.opacity(0.12))
+                    )
+                    .overlay(
+                        Capsule().strokeBorder(CarChatTheme.Colors.success.opacity(0.2), lineWidth: 0.5)
+                    )
+            } else {
+                Text("Coming Soon")
+                    .font(CarChatTheme.Typography.micro)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    .padding(.horizontal, CarChatTheme.Spacing.sm)
+                    .padding(.vertical, CarChatTheme.Spacing.xxs)
+                    .background(
+                        Capsule().fill(CarChatTheme.Colors.surfaceGlass)
+                    )
+                    .overlay(
+                        Capsule().strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+                    )
+            }
         }
         .padding(CarChatTheme.Spacing.md)
+        .opacity(provider.isAvailable ? 1.0 : 0.6)
         .background(
             RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg)
                 .fill(.ultraThinMaterial.opacity(0.7))
@@ -353,7 +367,7 @@ private struct LocalProviderCard: View {
                     lineWidth: 0.5
                 )
         )
-        .accessibilityLabel("\(provider.displayName), free, no API key needed")
+        .accessibilityLabel("\(provider.displayName), \(provider.isAvailable ? "free, no API key needed" : "coming soon")")
     }
 }
 

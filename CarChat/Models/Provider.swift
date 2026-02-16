@@ -62,6 +62,14 @@ enum AIProviderType: String, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
 
+    /// Whether this provider is fully implemented and available for use
+    var isAvailable: Bool {
+        switch self {
+        case .apple: false
+        default: true
+        }
+    }
+
     var supportsRealtimeVoice: Bool {
         switch self {
         case .openAI, .gemini: true

@@ -249,7 +249,7 @@ final class ConversationViewModel {
             return tts
 
         case .elevenLabs:
-            guard let key = try? await appServices.keychainManager.getElevenLabsKey(),
+            guard let key = try? await appServices.keychainManager.getTTSKey(for: .elevenLabs),
                   !key.isEmpty else {
                 let tts = SystemTTS()
                 if let persona = fetchActivePersona(),
@@ -274,7 +274,7 @@ final class ConversationViewModel {
             return tts
 
         case .humeAI:
-            guard let key = try? await appServices.keychainManager.getHumeAIKey(),
+            guard let key = try? await appServices.keychainManager.getTTSKey(for: .humeAI),
                   !key.isEmpty else {
                 return SystemTTS()
             }
@@ -287,7 +287,7 @@ final class ConversationViewModel {
             return tts
 
         case .googleCloud:
-            guard let key = try? await appServices.keychainManager.getGoogleCloudKey(),
+            guard let key = try? await appServices.keychainManager.getTTSKey(for: .googleCloud),
                   !key.isEmpty else {
                 return SystemTTS()
             }
@@ -300,7 +300,7 @@ final class ConversationViewModel {
             return tts
 
         case .cartesia:
-            guard let key = try? await appServices.keychainManager.getCartesiaKey(),
+            guard let key = try? await appServices.keychainManager.getTTSKey(for: .cartesia),
                   !key.isEmpty else {
                 return SystemTTS()
             }
@@ -313,8 +313,8 @@ final class ConversationViewModel {
             return tts
 
         case .amazonPolly:
-            guard let accessKey = try? await appServices.keychainManager.getAmazonPollyAccessKey(),
-                  let secretKey = try? await appServices.keychainManager.getAmazonPollySecretKey(),
+            guard let accessKey = try? await appServices.keychainManager.getTTSKey(for: .amazonPolly),
+                  let secretKey = try? await appServices.keychainManager.getTTSSecondaryKey(for: .amazonPolly),
                   !accessKey.isEmpty, !secretKey.isEmpty else {
                 return SystemTTS()
             }
@@ -327,7 +327,7 @@ final class ConversationViewModel {
             return tts
 
         case .deepgram:
-            guard let key = try? await appServices.keychainManager.getDeepgramKey(),
+            guard let key = try? await appServices.keychainManager.getTTSKey(for: .deepgram),
                   !key.isEmpty else {
                 return SystemTTS()
             }

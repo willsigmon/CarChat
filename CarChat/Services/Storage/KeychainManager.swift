@@ -9,6 +9,8 @@ actor KeychainManager {
             .accessibility(.afterFirstUnlock)
     }
 
+    // MARK: - Core Operations
+
     func save(key: String, value: String) throws {
         try keychain.set(value, key: key)
     }
@@ -20,6 +22,8 @@ actor KeychainManager {
     func delete(key: String) throws {
         try keychain.remove(key)
     }
+
+    // MARK: - AI Provider Keys
 
     func saveAPIKey(for provider: AIProviderType, key: String) throws {
         try save(key: provider.keychainKey, value: key)
@@ -34,147 +38,81 @@ actor KeychainManager {
     }
 
     func hasAPIKey(for provider: AIProviderType) throws -> Bool {
-        guard let key = try get(key: provider.keychainKey) else {
-            return false
+        guard let key = try get(key: provider.keychainKey) else { return false }
+        return !key.isEmpty
+    }
+
+    // MARK: - Generic TTS Engine Keys
+
+    func saveTTSKey(for engine: TTSEngineType, key: String) throws {
+        try save(key: engine.keychainKey, value: key)
+    }
+
+    func getTTSKey(for engine: TTSEngineType) throws -> String? {
+        try get(key: engine.keychainKey)
+    }
+
+    func deleteTTSKey(for engine: TTSEngineType) throws {
+        try delete(key: engine.keychainKey)
+        if let secondary = engine.secondaryKeychainKey {
+            try delete(key: secondary)
         }
-        return !key.isEmpty
     }
 
-    // MARK: - ElevenLabs TTS Key
-
-    private static let elevenLabsKey = "carchat.apikey.elevenlabs"
-
-    func saveElevenLabsKey(_ key: String) throws {
-        try save(key: Self.elevenLabsKey, value: key)
-    }
-
-    func getElevenLabsKey() throws -> String? {
-        try get(key: Self.elevenLabsKey)
-    }
-
-    func deleteElevenLabsKey() throws {
-        try delete(key: Self.elevenLabsKey)
-    }
-
-    func hasElevenLabsKey() throws -> Bool {
-        guard let key = try get(key: Self.elevenLabsKey) else {
-            return false
+    func hasTTSKey(for engine: TTSEngineType) throws -> Bool {
+        guard let key = try get(key: engine.keychainKey) else { return false }
+        if key.isEmpty { return false }
+        if let secondary = engine.secondaryKeychainKey {
+            guard let secret = try get(key: secondary) else { return false }
+            return !secret.isEmpty
         }
-        return !key.isEmpty
+        return true
     }
 
-    // MARK: - Hume AI TTS Key
-
-    private static let humeAIKey = "carchat.apikey.humeai"
-
-    func saveHumeAIKey(_ key: String) throws {
-        try save(key: Self.humeAIKey, value: key)
+    /// Save the secondary key for engines that need two keys (e.g. Amazon Polly secret key)
+    func saveTTSSecondaryKey(for engine: TTSEngineType, key: String) throws {
+        guard let secondary = engine.secondaryKeychainKey else { return }
+        try save(key: secondary, value: key)
     }
 
-    func getHumeAIKey() throws -> String? {
-        try get(key: Self.humeAIKey)
+    func getTTSSecondaryKey(for engine: TTSEngineType) throws -> String? {
+        guard let secondary = engine.secondaryKeychainKey else { return nil }
+        return try get(key: secondary)
     }
 
-    func deleteHumeAIKey() throws {
-        try delete(key: Self.humeAIKey)
-    }
+    // MARK: - Legacy Per-Engine Methods (forwards to generic)
 
-    func hasHumeAIKey() throws -> Bool {
-        guard let key = try get(key: Self.humeAIKey) else {
-            return false
-        }
-        return !key.isEmpty
-    }
+    func saveElevenLabsKey(_ key: String) throws { try saveTTSKey(for: .elevenLabs, key: key) }
+    func getElevenLabsKey() throws -> String? { try getTTSKey(for: .elevenLabs) }
+    func deleteElevenLabsKey() throws { try deleteTTSKey(for: .elevenLabs) }
+    func hasElevenLabsKey() throws -> Bool { try hasTTSKey(for: .elevenLabs) }
 
-    // MARK: - Google Cloud TTS Key
+    func saveHumeAIKey(_ key: String) throws { try saveTTSKey(for: .humeAI, key: key) }
+    func getHumeAIKey() throws -> String? { try getTTSKey(for: .humeAI) }
+    func deleteHumeAIKey() throws { try deleteTTSKey(for: .humeAI) }
+    func hasHumeAIKey() throws -> Bool { try hasTTSKey(for: .humeAI) }
 
-    private static let googleCloudKey = "carchat.apikey.googlecloud"
+    func saveGoogleCloudKey(_ key: String) throws { try saveTTSKey(for: .googleCloud, key: key) }
+    func getGoogleCloudKey() throws -> String? { try getTTSKey(for: .googleCloud) }
+    func deleteGoogleCloudKey() throws { try deleteTTSKey(for: .googleCloud) }
+    func hasGoogleCloudKey() throws -> Bool { try hasTTSKey(for: .googleCloud) }
 
-    func saveGoogleCloudKey(_ key: String) throws {
-        try save(key: Self.googleCloudKey, value: key)
-    }
-
-    func getGoogleCloudKey() throws -> String? {
-        try get(key: Self.googleCloudKey)
-    }
-
-    func deleteGoogleCloudKey() throws {
-        try delete(key: Self.googleCloudKey)
-    }
-
-    func hasGoogleCloudKey() throws -> Bool {
-        guard let key = try get(key: Self.googleCloudKey) else { return false }
-        return !key.isEmpty
-    }
-
-    // MARK: - Cartesia TTS Key
-
-    private static let cartesiaKey = "carchat.apikey.cartesia"
-
-    func saveCartesiaKey(_ key: String) throws {
-        try save(key: Self.cartesiaKey, value: key)
-    }
-
-    func getCartesiaKey() throws -> String? {
-        try get(key: Self.cartesiaKey)
-    }
-
-    func deleteCartesiaKey() throws {
-        try delete(key: Self.cartesiaKey)
-    }
-
-    func hasCartesiaKey() throws -> Bool {
-        guard let key = try get(key: Self.cartesiaKey) else { return false }
-        return !key.isEmpty
-    }
-
-    // MARK: - Amazon Polly Keys (access key + secret key)
-
-    private static let amazonPollyAccessKey = "carchat.apikey.polly.access"
-    private static let amazonPollySecretKey = "carchat.apikey.polly.secret"
+    func saveCartesiaKey(_ key: String) throws { try saveTTSKey(for: .cartesia, key: key) }
+    func getCartesiaKey() throws -> String? { try getTTSKey(for: .cartesia) }
+    func deleteCartesiaKey() throws { try deleteTTSKey(for: .cartesia) }
+    func hasCartesiaKey() throws -> Bool { try hasTTSKey(for: .cartesia) }
 
     func saveAmazonPollyKeys(accessKey: String, secretKey: String) throws {
-        try save(key: Self.amazonPollyAccessKey, value: accessKey)
-        try save(key: Self.amazonPollySecretKey, value: secretKey)
+        try saveTTSKey(for: .amazonPolly, key: accessKey)
+        try saveTTSSecondaryKey(for: .amazonPolly, key: secretKey)
     }
+    func getAmazonPollyAccessKey() throws -> String? { try getTTSKey(for: .amazonPolly) }
+    func getAmazonPollySecretKey() throws -> String? { try getTTSSecondaryKey(for: .amazonPolly) }
+    func deleteAmazonPollyKeys() throws { try deleteTTSKey(for: .amazonPolly) }
+    func hasAmazonPollyKeys() throws -> Bool { try hasTTSKey(for: .amazonPolly) }
 
-    func getAmazonPollyAccessKey() throws -> String? {
-        try get(key: Self.amazonPollyAccessKey)
-    }
-
-    func getAmazonPollySecretKey() throws -> String? {
-        try get(key: Self.amazonPollySecretKey)
-    }
-
-    func deleteAmazonPollyKeys() throws {
-        try delete(key: Self.amazonPollyAccessKey)
-        try delete(key: Self.amazonPollySecretKey)
-    }
-
-    func hasAmazonPollyKeys() throws -> Bool {
-        guard let access = try get(key: Self.amazonPollyAccessKey),
-              let secret = try get(key: Self.amazonPollySecretKey) else { return false }
-        return !access.isEmpty && !secret.isEmpty
-    }
-
-    // MARK: - Deepgram TTS Key
-
-    private static let deepgramKey = "carchat.apikey.deepgram"
-
-    func saveDeepgramKey(_ key: String) throws {
-        try save(key: Self.deepgramKey, value: key)
-    }
-
-    func getDeepgramKey() throws -> String? {
-        try get(key: Self.deepgramKey)
-    }
-
-    func deleteDeepgramKey() throws {
-        try delete(key: Self.deepgramKey)
-    }
-
-    func hasDeepgramKey() throws -> Bool {
-        guard let key = try get(key: Self.deepgramKey) else { return false }
-        return !key.isEmpty
-    }
+    func saveDeepgramKey(_ key: String) throws { try saveTTSKey(for: .deepgram, key: key) }
+    func getDeepgramKey() throws -> String? { try getTTSKey(for: .deepgram) }
+    func deleteDeepgramKey() throws { try deleteTTSKey(for: .deepgram) }
+    func hasDeepgramKey() throws -> Bool { try hasTTSKey(for: .deepgram) }
 }
