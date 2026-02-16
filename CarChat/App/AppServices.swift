@@ -31,14 +31,18 @@ final class AppServices {
             )
         } catch {
             // Fallback to in-memory if persistent store fails (corrupted DB, etc.)
-            let fallbackConfig = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: true
-            )
-            container = try! ModelContainer(
-                for: schema,
-                configurations: [fallbackConfig]
-            )
+            do {
+                let fallbackConfig = ModelConfiguration(
+                    schema: schema,
+                    isStoredInMemoryOnly: true
+                )
+                container = try ModelContainer(
+                    for: schema,
+                    configurations: [fallbackConfig]
+                )
+            } catch {
+                fatalError("CarChat: Failed to create even in-memory ModelContainer: \(error)")
+            }
         }
 
         self.modelContainer = container

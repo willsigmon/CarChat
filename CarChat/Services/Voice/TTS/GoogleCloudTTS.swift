@@ -68,7 +68,7 @@ final class GoogleCloudTTS: NSObject, TTSEngineProtocol {
     // MARK: - Synthesis
 
     private func synthesize(text: String) async throws -> Data {
-        guard let url = URL(string: "https://texttospeech.googleapis.com/v1/text:synthesize?key=\(apiKey)") else {
+        guard let url = URL(string: "https://texttospeech.googleapis.com/v1/text:synthesize") else {
             throw GoogleCloudTTSError.synthesizeFailed
         }
 
@@ -76,6 +76,7 @@ final class GoogleCloudTTS: NSObject, TTSEngineProtocol {
         request.httpMethod = "POST"
         request.timeoutInterval = 20
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "X-Goog-Api-Key")
 
         let body: [String: Any] = [
             "input": ["text": text],

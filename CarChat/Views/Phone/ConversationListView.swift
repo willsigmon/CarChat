@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct ConversationListView: View {
+    let onResumeConversation: (Conversation) -> Void
     @Environment(AppServices.self) private var appServices
     @Query(sort: \Conversation.updatedAt, order: .reverse)
     private var conversations: [Conversation]
@@ -102,6 +103,10 @@ struct ConversationListView: View {
             LazyVStack(spacing: CarChatTheme.Spacing.sm) {
                 ForEach(Array(conversations.enumerated()), id: \.element.id) { index, conversation in
                     ConversationRow(conversation: conversation)
+                        .onTapGesture {
+                            Haptics.tap()
+                            onResumeConversation(conversation)
+                        }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 conversationToDelete = conversation

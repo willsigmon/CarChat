@@ -5,6 +5,7 @@ import UIKit
 
 struct ConversationView: View {
     @Binding var initialPrompt: String?
+    @Binding var resumeConversation: Conversation?
     @Environment(AppServices.self) private var appServices
     @AppStorage("audioOutputMode") private var audioOutputMode = AudioOutputMode.defaultMode.rawValue
     @State private var viewModel: ConversationViewModel?
@@ -207,6 +208,12 @@ struct ConversationView: View {
             if let prompt = newPrompt, !prompt.isEmpty {
                 initialPrompt = nil
                 vm.sendPrompt(prompt)
+            }
+        }
+        .onChange(of: resumeConversation?.id) { _, newID in
+            if let conversation = resumeConversation {
+                resumeConversation = nil
+                vm.loadConversation(conversation)
             }
         }
     }

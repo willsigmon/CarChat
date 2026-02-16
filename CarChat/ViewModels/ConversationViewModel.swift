@@ -69,6 +69,20 @@ final class ConversationViewModel {
 
                 observeStreams(session)
 
+                // Seed conversation history when resuming an existing conversation
+                if let conversation, !conversation.messages.isEmpty {
+                    let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
+                    var history: [(role: MessageRole, content: String)] = []
+                    if !systemPrompt.isEmpty {
+                        history.append((.system, systemPrompt))
+                    }
+                    let sorted = conversation.messages.sorted { $0.createdAt < $1.createdAt }
+                    for msg in sorted {
+                        history.append((msg.messageRole, msg.content))
+                    }
+                    session.seedHistory(history)
+                }
+
                 let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                 try await session.start(systemPrompt: systemPrompt)
             } catch {
@@ -114,6 +128,20 @@ final class ConversationViewModel {
 
                 observeStreams(session)
 
+                // Seed conversation history when resuming an existing conversation
+                if let conversation, !conversation.messages.isEmpty {
+                    let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
+                    var history: [(role: MessageRole, content: String)] = []
+                    if !systemPrompt.isEmpty {
+                        history.append((.system, systemPrompt))
+                    }
+                    let sorted = conversation.messages.sorted { $0.createdAt < $1.createdAt }
+                    for msg in sorted {
+                        history.append((msg.messageRole, msg.content))
+                    }
+                    session.seedHistory(history)
+                }
+
                 let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                 await session.sendText(text, systemPrompt: systemPrompt)
             } catch {
@@ -144,6 +172,28 @@ final class ConversationViewModel {
         Task {
             await voiceSession?.interrupt()
         }
+    }
+
+    // MARK: - Conversation Resume
+
+    func loadConversation(_ conversation: Conversation) {
+        // Stop any active session
+        stopListening()
+
+        self.conversation = conversation
+        activeProvider = conversation.provider
+
+        // Rebuild bubbles from persisted messages
+        let sorted = conversation.messages.sorted { $0.createdAt < $1.createdAt }
+        bubbles = sorted.map { msg in
+            ConversationBubble(
+                role: msg.messageRole,
+                text: msg.content,
+                isFinal: true,
+                createdAt: msg.createdAt
+            )
+        }
+        resetBubbleDraftState()
     }
 
     // MARK: - Session Builder

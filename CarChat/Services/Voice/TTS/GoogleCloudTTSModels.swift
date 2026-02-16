@@ -50,13 +50,14 @@ actor GoogleCloudVoiceManager {
             return cachedVoices
         }
 
-        guard let url = URL(string: "https://texttospeech.googleapis.com/v1/voices?key=\(apiKey)") else {
+        guard let url = URL(string: "https://texttospeech.googleapis.com/v1/voices") else {
             throw GoogleCloudTTSError.voiceFetchFailed
         }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.timeoutInterval = 15
+        request.setValue(apiKey, forHTTPHeaderField: "X-Goog-Api-Key")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 

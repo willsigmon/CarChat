@@ -13,7 +13,7 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
     private var routeChangeObserver: NSObjectProtocol?
 
     private var listeningTask: Task<Void, Never>?
-    private var conversationHistory: [(role: MessageRole, content: String)] = []
+    private(set) var conversationHistory: [(role: MessageRole, content: String)] = []
 
     private(set) var state: VoiceSessionState = .idle
     private let handoffDelay: Duration = .milliseconds(120)
@@ -51,6 +51,10 @@ final class PipelineVoiceSession: VoiceSessionProtocol {
         transcriptContinuation?.finish()
         audioLevelContinuation?.finish()
         listeningTask?.cancel()
+    }
+
+    func seedHistory(_ messages: [(role: MessageRole, content: String)]) {
+        conversationHistory = messages
     }
 
     func start(systemPrompt: String) async throws {

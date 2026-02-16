@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab: Tab = .talk
     @State private var pendingPrompt: String?
+    @State private var pendingConversation: Conversation?
 
     enum Tab: String {
         case talk, topics, history, settings
@@ -10,7 +11,10 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            ConversationView(initialPrompt: $pendingPrompt)
+            ConversationView(
+                initialPrompt: $pendingPrompt,
+                resumeConversation: $pendingConversation
+            )
                 .tabItem {
                     Label("Talk", systemImage: "mic.fill")
                 }
@@ -29,7 +33,10 @@ struct MainTabView: View {
                 .accessibilityLabel("Topics")
                 .accessibilityHint("Browse conversation starters")
 
-            ConversationListView()
+            ConversationListView { conversation in
+                pendingConversation = conversation
+                selectedTab = .talk
+            }
                 .tabItem {
                     Label("History", systemImage: "clock.fill")
                 }
