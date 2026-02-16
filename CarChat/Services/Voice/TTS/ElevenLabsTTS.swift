@@ -1,9 +1,12 @@
 import Foundation
 import AVFoundation
+import os.log
+
+private let elLog = Logger(subsystem: "com.willsigmon.carchat", category: "ElevenLabsTTS")
 
 /// ElevenLabs TTS engine with streaming audio playback.
 /// Sends text to ElevenLabs API, receives audio chunks, plays them as they arrive
-/// for minimal perceived latency.
+/// for minimal perceived latency. Falls back to system TTS on failure.
 @MainActor
 final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
     private let apiKey: String
@@ -14,6 +17,7 @@ final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
     private var audioPlayer: AVAudioPlayer?
     private var playbackContinuation: CheckedContinuation<Void, Never>?
     private var currentTask: Task<Void, Never>?
+    private lazy var fallbackTTS = SystemTTS()
 
     private(set) var isSpeaking = false
     let audioRequirement: TTSAudioRequirement = .audioPlayer
@@ -59,7 +63,10 @@ final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
             guard isSpeaking else { return }
             try await playAudio(data: audioData)
         } catch {
-            // Synthesis or playback failed — log silently
+            elLog.error("ElevenLabs failed: \(error.localizedDescription, privacy: .public) — falling back to system TTS")
+            // Fall back to system voice so the user always hears something
+            try? AudioSessionManager.shared.configureForSpeaking(.speechSynthesizer)
+            await fallbackTTS.speak(text)
         }
 
         isSpeaking = false
@@ -73,6 +80,7 @@ final class ElevenLabsTTS: NSObject, TTSEngineProtocol {
         audioPlayer = nil
         playbackContinuation?.resume()
         playbackContinuation = nil
+        fallbackTTS.stop()
         isSpeaking = false
     }
 
