@@ -100,6 +100,15 @@ final class AppServices {
         // CarPlay scene delegate reads from UserDefaults since it lacks AppServices access
         UserDefaults.standard.set(tier.rawValue, forKey: "effectiveTier")
         UserDefaults.standard.set(usageTracker.remainingMinutes, forKey: "remainingMinutes")
+
+        // Mirror active persona's system prompt for CarPlay (no SwiftData access in CarPlay scene)
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<Persona>(
+            predicate: #Predicate { $0.isDefault == true }
+        )
+        if let persona = (try? context.fetch(descriptor))?.first {
+            UserDefaults.standard.set(persona.systemPrompt, forKey: "carPlaySystemPrompt")
+        }
     }
 
     func seedDefaultPersonaIfNeeded() {

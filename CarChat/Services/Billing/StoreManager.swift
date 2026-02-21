@@ -10,7 +10,8 @@ final class StoreManager {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    private nonisolated(unsafe) var transactionListener: Task<Void, Never>?
+    @ObservationIgnored
+    private var transactionListener: Task<Void, Never>?
 
     static let subscriptionProductIDs: Set<String> = [
         "carchat.standard.monthly",
@@ -29,6 +30,7 @@ final class StoreManager {
     }
 
     init() {
+        transactionListener = nil
         transactionListener = listenForTransactions()
     }
 
@@ -178,3 +180,4 @@ final class StoreManager {
         }
     }
 }
+

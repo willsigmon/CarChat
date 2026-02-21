@@ -1,5 +1,6 @@
 import CarPlay
 
+@MainActor
 final class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
     private var interfaceController: CPInterfaceController?
     private var templateManager: CarPlayTemplateManager?
@@ -19,7 +20,11 @@ final class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
         _ templateApplicationScene: CPTemplateApplicationScene,
         didDisconnectInterfaceController interfaceController: CPInterfaceController
     ) {
+        let manager = self.templateManager
         self.interfaceController = nil
         self.templateManager = nil
+        Task { @MainActor in
+            await manager?.teardown()
+        }
     }
 }

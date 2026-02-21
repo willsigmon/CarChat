@@ -12,6 +12,7 @@
 		03DC0D7EAE188FCFB75FD879 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE59325CFED058ACAA132E6 /* CarPlaySceneDelegate.swift */; };
 		044A65A6F8F4F64541070A81 /* VoiceEndpointDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5333DA034349230BA83E7D /* VoiceEndpointDetector.swift */; };
 		050A4CA44FEA2BE11AE61930 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470F719AAEE7A311D72EA193 /* WatchConnectivityManager.swift */; };
+		096B61E9A784CD84E0297422 /* CarPlay.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B41317AE85DD67194B96604A /* CarPlay.framework */; };
 		09FC7CA83345D92EC4121F19 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C60A0AFBDDE661970D263181 /* UserNotifications.framework */; };
 		0C9F1086ABF215A994A2BE28 /* GrokProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83725F15F057A9F770150664 /* GrokProvider.swift */; };
 		0DB9B3CC924CCCAA8C8C123B /* UsageDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D80F2A0800214FE35E532BC /* UsageDashboardView.swift */; };
@@ -267,6 +268,7 @@
 		B0DE688951BF27BEB192D7E8 /* voice_sample_standard.m4a */ = {isa = PBXFileReference; path = voice_sample_standard.m4a; sourceTree = "<group>"; };
 		B163FA8E707BE9A82441F47E /* PersonaSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaSettingsView.swift; sourceTree = "<group>"; };
 		B39E01354ABD943CFF298181 /* WatchConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConversationView.swift; sourceTree = "<group>"; };
+		B41317AE85DD67194B96604A /* CarPlay.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CarPlay.framework; path = System/Library/Frameworks/CarPlay.framework; sourceTree = SDKROOT; };
 		B4EAE282C88E72F49E960ADF /* GoogleCloudTTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleCloudTTS.swift; sourceTree = "<group>"; };
 		B910F880C9455E2C5F139C40 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		B94343E5000276C7B65E8B45 /* ExtensionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDelegate.swift; sourceTree = "<group>"; };
@@ -329,6 +331,7 @@
 				FA879975A923EFF405DE10A2 /* AuthenticationServices.framework in Frameworks */,
 				4D580EF51AB4E470D87FF7C3 /* StoreKit.framework in Frameworks */,
 				09FC7CA83345D92EC4121F19 /* UserNotifications.framework in Frameworks */,
+				096B61E9A784CD84E0297422 /* CarPlay.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -670,6 +673,7 @@
 			isa = PBXGroup;
 			children = (
 				7D8F6724857200402E393152 /* AuthenticationServices.framework */,
+				B41317AE85DD67194B96604A /* CarPlay.framework */,
 				1708306A6B7FEEA6B58D77D8 /* StoreKit.framework */,
 				C60A0AFBDDE661970D263181 /* UserNotifications.framework */,
 			);

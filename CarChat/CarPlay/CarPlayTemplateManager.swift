@@ -10,92 +10,54 @@ final class CarPlayTemplateManager {
     }
 
     func setupRootTemplate() {
-        let talkTab = CPListTemplate(
-            title: "Talk",
-            sections: [createTalkSection()]
-        )
-        talkTab.tabImage = UIImage(systemName: "mic.fill")
-
-        let personasTab = CPListTemplate(
-            title: "Personas",
-            sections: [createPersonasSection()]
-        )
-        personasTab.tabImage = UIImage(systemName: "person.2.fill")
-
-        let tabBar = CPTabBarTemplate(templates: [talkTab, personasTab])
-
-        interfaceController.setRootTemplate(tabBar, animated: true) { _, _ in }
-    }
-
-    private func createTalkSection() -> CPListSection {
-        let newConversation = CPListItem(
-            text: "New Conversation",
-            detailText: "Start talking with Sigmon"
-        )
-        newConversation.handler = { [weak self] _, completion in
-            self?.startNewConversation()
-            completion()
+        guard checkQuota() else {
+            showQuotaExhaustedInfo()
+            return
         }
 
-        let continueConversation = CPListItem(
-            text: "Continue Last",
-            detailText: "Pick up where you left off"
-        )
-        continueConversation.handler = { [weak self] _, completion in
-            self?.continueLastConversation()
-            completion()
-        }
-
-        return CPListSection(items: [newConversation, continueConversation])
-    }
-
-    private func createPersonasSection() -> CPListSection {
-        let sigmon = CPListItem(
-            text: "Sigmon",
-            detailText: "Default AI companion"
-        )
-        return CPListSection(items: [sigmon])
-    }
-
-    private func startNewConversation() {
-        // Check quota before starting
-        guard checkQuota() else { return }
         voiceController = CarPlayVoiceController(
             interfaceController: interfaceController
         )
     }
 
-    private func continueLastConversation() {
-        guard checkQuota() else { return }
-        voiceController = CarPlayVoiceController(
-            interfaceController: interfaceController
-        )
+    func teardown() async {
+        await voiceController?.cleanup()
+        voiceController = nil
     }
 
-    /// Returns true if user has remaining quota; shows alert if exhausted
+    // MARK: - Quota
+
     private func checkQuota() -> Bool {
-        let tier = UserDefaults.standard.string(forKey: "effectiveTier")
-            .flatMap { SubscriptionTier(rawValue: $0) } ?? .free
+        // If tier has never been written, bootstrap hasn't run yet - allow access
+        guard let raw = UserDefaults.standard.string(forKey: "effectiveTier"),
+              let tier = SubscriptionTier(rawValue: raw) else {
+            return true
+        }
 
         if tier == .byok { return true }
 
         let remaining = UserDefaults.standard.integer(forKey: "remainingMinutes")
-        if remaining <= 0 {
-            showQuotaExhaustedAlert()
-            return false
-        }
-        return true
+        return remaining > 0
     }
 
-    private func showQuotaExhaustedAlert() {
-        let alert = CPAlertTemplate(
-            titleVariants: ["Minutes Exhausted"],
+    private func showQuotaExhaustedInfo() {
+        let info = CPInformationTemplate(
+            title: "Minutes Exhausted",
+            layout: .leading,
+            items: [
+                CPInformationItem(
+                    title: "Upgrade Required",
+                    detail: "Open CarChat on iPhone to upgrade your plan or add API keys."
+                )
+            ],
             actions: [
-                CPAlertAction(title: "OK", style: .cancel) { _ in
-                    self.interfaceController.dismissTemplate(animated: true) { _, _ in }
+                CPTextButton(title: "OK", textStyle: .confirm) { [weak self] _ in
+                    Task { @MainActor [weak self] in
+                        self?.interfaceController.dismissTemplate(animated: true) { _, _ in }
+                    }
                 }
             ]
         )
-        interfaceController.presentTemplate(alert, animated: true) { _, _ in }
+        interfaceController.setRootTemplate(info, animated: true) { _, _ in }
     }
 }

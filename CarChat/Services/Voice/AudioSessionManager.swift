@@ -11,10 +11,17 @@ final class AudioSessionManager {
     private static let outputModeKey = "audioOutputMode"
     private let audioSession = AVAudioSession.sharedInstance()
     private var routeEnforcementTask: Task<Void, Never>?
+    private(set) var isCarPlayActive = false
 
     private init() {}
 
     func configureForListening() throws {
+        // When CarPlay is active, always use car-speaker routing
+        if isCarPlayActive {
+            try configureForCarPlay()
+            return
+        }
+
         let outputMode = preferredOutputMode
         let options = listeningCategoryOptions(for: outputMode)
         let mode = listeningMode(for: outputMode)
@@ -55,6 +62,24 @@ final class AudioSessionManager {
         }
 
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+    }
+
+    /// Configure for CarPlay: force car-speaker routing regardless of stored preference.
+    /// Sets `isCarPlayActive` so `configureForListening()` and `deactivate()` respect CarPlay mode.
+    func configureForCarPlay() throws {
+        isCarPlayActive = true
+        try audioSession.setCategory(
+            .playAndRecord,
+            mode: .voiceChat,
+            options: [.allowBluetoothHFP, .duckOthers]
+        )
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+    }
+
+    /// Clear CarPlay audio mode.
+    func deactivateCarPlay() throws {
+        isCarPlayActive = false
+        try deactivate()
     }
 
     // Backward-compatible alias for existing call sites.

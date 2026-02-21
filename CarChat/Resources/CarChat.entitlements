@@ -12,5 +12,7 @@
 	</array>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.carplay-voice-based-conversational</key>
+	<true/>
 </dict>
 </plist>

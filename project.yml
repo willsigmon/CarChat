@@ -67,6 +67,7 @@ targets:
       - sdk: AuthenticationServices.framework
       - sdk: StoreKit.framework
       - sdk: UserNotifications.framework
+      - sdk: CarPlay.framework
     preBuildScripts: []
     scheme:
       testTargets:
