@@ -22,6 +22,7 @@ final class ConversationViewModel {
     private(set) var currentTranscript = ""
     private(set) var assistantTranscript = ""
     private(set) var errorMessage: String?
+    private(set) var providerFallbackMessage: String?
     private(set) var activeProvider: AIProviderType
     private(set) var bubbles: [ConversationBubble] = []
     private(set) var isRealtimeSession = false
@@ -61,6 +62,7 @@ final class ConversationViewModel {
     func startListening() {
         guard startTask == nil, sendTask == nil, voiceSession == nil else { return }
         errorMessage = nil
+        providerFallbackMessage = nil
 
         // Quota check
         let tier = appServices.effectiveTier
@@ -110,6 +112,7 @@ final class ConversationViewModel {
 
                 let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                 try await session.start(systemPrompt: systemPrompt)
+                ProviderAccessPolicy.markProviderAsWorking(activeProvider)
             } catch {
                 if Task.isCancelled { return }
                 voiceState = .idle
@@ -124,6 +127,7 @@ final class ConversationViewModel {
     func sendPrompt(_ text: String) {
         guard sendTask == nil else { return }
         errorMessage = nil
+        providerFallbackMessage = nil
 
         // Quota check
         let tier = appServices.effectiveTier
@@ -181,10 +185,12 @@ final class ConversationViewModel {
                 if let pipeline = pipelineSession {
                     let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                     await pipeline.sendText(text, systemPrompt: systemPrompt)
+                    ProviderAccessPolicy.markProviderAsWorking(activeProvider)
                 } else {
                     // For realtime sessions, start the session and the user will speak
                     let systemPrompt = fetchActivePersona()?.systemPrompt ?? ""
                     try await session.start(systemPrompt: systemPrompt)
+                    ProviderAccessPolicy.markProviderAsWorking(activeProvider)
                 }
             } catch {
                 if Task.isCancelled { return }
@@ -222,6 +228,7 @@ final class ConversationViewModel {
 
         self.conversation = conversation
         activeProvider = conversation.provider
+        providerFallbackMessage = nil
 
         let sorted = conversation.messages.sorted { $0.createdAt < $1.createdAt }
         bubbles = sorted.map { msg in
@@ -238,10 +245,24 @@ final class ConversationViewModel {
     // MARK: - Session Builder
 
     private func buildSession() async throws -> any VoiceSessionProtocol {
-        let providerType = await resolveProviderType()
-        activeProvider = providerType
-
+        let requestedProvider = await resolveProviderType()
         let tier = appServices.effectiveTier
+        let resolution = try await ProviderAccessPolicy.resolveProvider(
+            requested: requestedProvider,
+            tier: tier,
+            surface: .iPhone,
+            keychainManager: appServices.keychainManager
+        )
+        let providerType = resolution.effective
+        activeProvider = providerType
+        providerFallbackMessage = resolution.fallbackMessage
+
+        print(
+            "[ProviderAccess][\(ProviderSurface.iPhone.rawValue)] " +
+            "requested=\(requestedProvider.rawValue) " +
+            "effective=\(providerType.rawValue) " +
+            "reason=\(resolution.fallbackReason?.rawValue ?? "none")"
+        )
 
         // Use realtime session for premium tier with realtime-capable providers
         if tier.supportsRealtime,

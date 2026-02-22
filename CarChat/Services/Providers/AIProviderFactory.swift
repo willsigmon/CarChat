@@ -4,7 +4,8 @@ enum AIProviderFactory {
     static func create(
         type: AIProviderType,
         apiKey: String?,
-        model: String? = nil
+        model: String? = nil,
+        runtimeMajorVersion: Int = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
     ) throws -> AIProvider {
         switch type {
         case .openAI:
@@ -49,7 +50,14 @@ enum AIProviderFactory {
             )
 
         case .apple:
-            throw AIProviderError.configurationMissing("Apple Intelligence is coming soon")
+            #if canImport(FoundationModels)
+            guard AIProviderType.apple.isRuntimeAvailable(onMajorVersion: runtimeMajorVersion) else {
+                throw AIProviderError.configurationMissing("Apple Intelligence requires iOS 26 or later")
+            }
+            return AppleFoundationModelsProvider()
+            #else
+            throw AIProviderError.configurationMissing("Apple Intelligence is not available in this build")
+            #endif
 
         case .openclaw:
             guard let baseURL = UserDefaults.standard.string(forKey: "openclawBaseURL"),

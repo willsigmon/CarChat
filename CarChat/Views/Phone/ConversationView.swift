@@ -124,6 +124,16 @@ struct ConversationView: View {
                         .padding(.horizontal, CarChatTheme.Spacing.xl)
                         .padding(.top, CarChatTheme.Spacing.xs)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else if let fallbackMessage = vm.providerFallbackMessage, !fallbackMessage.isEmpty {
+                    Text(fallbackMessage)
+                        .font(CarChatTheme.Typography.caption)
+                        .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                        .padding(.horizontal, CarChatTheme.Spacing.md)
+                        .padding(.vertical, CarChatTheme.Spacing.xs)
+                        .glassBackground(cornerRadius: CarChatTheme.Radius.md)
+                        .padding(.horizontal, CarChatTheme.Spacing.xl)
+                        .padding(.top, CarChatTheme.Spacing.xs)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
                 Spacer(minLength: 0)

@@ -89,8 +89,29 @@ final class CarPlayVoiceController {
 
         guard !Task.isCancelled else { return }
 
-        // Resolve provider type and API key
-        let providerType = resolveProviderType()
+        let requestedProvider = resolveRequestedProviderType()
+        let tier = currentTier()
+
+        let resolution: ProviderResolutionResult
+        do {
+            resolution = try await ProviderAccessPolicy.resolveProvider(
+                requested: requestedProvider,
+                tier: tier,
+                surface: .carPlay,
+                keychainManager: keychainManager
+            )
+        } catch {
+            voiceTemplate.activateVoiceControlState(withIdentifier: StateID.noConfig)
+            return
+        }
+
+        let providerType = resolution.effective
+        print(
+            "[ProviderAccess][\(ProviderSurface.carPlay.rawValue)] " +
+            "requested=\(requestedProvider.rawValue) " +
+            "effective=\(providerType.rawValue) " +
+            "reason=\(resolution.fallbackReason?.rawValue ?? "none")"
+        )
 
         let apiKey: String?
         if providerType.requiresAPIKey {
@@ -144,6 +165,7 @@ final class CarPlayVoiceController {
 
         do {
             try await pipeline.start(systemPrompt: "")
+            ProviderAccessPolicy.markProviderAsWorking(providerType)
         } catch {
             voiceTemplate.activateVoiceControlState(withIdentifier: StateID.error)
         }
@@ -204,13 +226,20 @@ final class CarPlayVoiceController {
 
     // MARK: - Provider Resolution
 
-    private func resolveProviderType() -> AIProviderType {
+    private func resolveRequestedProviderType() -> AIProviderType {
         if let raw = UserDefaults.standard.string(forKey: "selectedProvider"),
-           let type = AIProviderType(rawValue: raw),
-           type.isAvailable {
+           let type = AIProviderType(rawValue: raw) {
             return type
         }
         return .openAI
+    }
+
+    private func currentTier() -> SubscriptionTier {
+        if let raw = UserDefaults.standard.string(forKey: "effectiveTier"),
+           let tier = SubscriptionTier(rawValue: raw) {
+            return tier
+        }
+        return .free
     }
 
     // MARK: - TTS Engine (mirrors ConversationViewModel.buildTTSEngine, standalone keychain)

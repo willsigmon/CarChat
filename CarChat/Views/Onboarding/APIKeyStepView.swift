@@ -11,6 +11,69 @@ struct APIKeyStepView: View {
         case local = "On-Device"
     }
 
+    private var visibleCloudProviders: [AIProviderType] {
+        AIProviderType.cloudProviders.filter { provider in
+            ProviderAccessPolicy.canShowInUI(
+                provider: provider,
+                tier: viewModel.effectiveTier,
+                surface: .iPhone
+            )
+        }
+    }
+
+    private var visibleLocalProviders: [AIProviderType] {
+        AIProviderType.localProviders.filter { provider in
+            ProviderAccessPolicy.canShowInUI(
+                provider: provider,
+                tier: viewModel.effectiveTier,
+                surface: .iPhone
+            )
+        }
+    }
+
+    private func providers(for category: ProviderCategory) -> [AIProviderType] {
+        category == .cloud ? visibleCloudProviders : visibleLocalProviders
+    }
+
+    private func selectFirstAvailableProvider(for category: ProviderCategory) {
+        if let provider = providers(for: category).first {
+            viewModel.selectedProvider = provider
+        }
+    }
+
+    private var appleVisibilityNote: String? {
+        if ProviderAccessPolicy.canShowInUI(
+            provider: .apple,
+            tier: viewModel.effectiveTier,
+            surface: .iPhone
+        ) {
+            return nil
+        }
+
+        if !AIProviderType.apple.isAvailable {
+            return "Apple Intelligence is unavailable in this build."
+        }
+
+        if !AIProviderType.apple.isAllowedForTier(viewModel.effectiveTier) {
+            return "Apple Intelligence unlocks on Premium and BYOK."
+        }
+
+        if !AIProviderType.apple.isRuntimeAvailable {
+            return "Apple Intelligence appears on iOS 26 or later."
+        }
+
+        return "Apple Intelligence is currently unavailable."
+    }
+
+    private var categorySummary: String {
+        switch selectedCategory {
+        case .cloud:
+            return "Cloud models need an API key."
+        case .local:
+            return "On-device models are private and key-free."
+        }
+    }
+
     var body: some View {
         ZStack {
             CarChatTheme.Colors.background.ignoresSafeArea()
@@ -40,7 +103,7 @@ struct APIKeyStepView: View {
                         .font(CarChatTheme.Typography.title)
                         .foregroundStyle(CarChatTheme.Colors.textPrimary)
 
-                    Text("Choose an AI provider to power your conversations.")
+                    Text("Pick where your AI runs.")
                         .font(CarChatTheme.Typography.body)
                         .foregroundStyle(CarChatTheme.Colors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -55,12 +118,8 @@ struct APIKeyStepView: View {
                         Button {
                             withAnimation(CarChatTheme.Animation.fast) {
                                 selectedCategory = category
-                                // Auto-select first provider in this category
-                                if category == .cloud {
-                                    viewModel.selectedProvider = .openAI
-                                } else {
-                                    viewModel.selectedProvider = .apple
-                                }
+                                // Auto-select first provider in this category.
+                                selectFirstAvailableProvider(for: category)
                             }
                         } label: {
                             Text(category.rawValue)
@@ -87,12 +146,16 @@ struct APIKeyStepView: View {
                 )
                 .padding(.horizontal, CarChatTheme.Spacing.xxxl)
                 .opacity(showContent ? 1 : 0)
-                .padding(.bottom, CarChatTheme.Spacing.md)
+                .padding(.bottom, CarChatTheme.Spacing.xs)
+
+                Text(categorySummary)
+                    .font(CarChatTheme.Typography.micro)
+                    .foregroundStyle(CarChatTheme.Colors.textTertiary)
+                    .opacity(showContent ? 1 : 0)
+                    .padding(.bottom, CarChatTheme.Spacing.sm)
 
                 // Provider grid
-                let providers = selectedCategory == .cloud
-                    ? AIProviderType.cloudProviders
-                    : AIProviderType.localProviders
+                let providers = providers(for: selectedCategory)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: CarChatTheme.Spacing.sm) {
@@ -111,6 +174,23 @@ struct APIKeyStepView: View {
                 }
                 .opacity(showContent ? 1 : 0)
                 .padding(.bottom, CarChatTheme.Spacing.lg)
+
+                if let appleVisibilityNote {
+                    GlassCard(cornerRadius: CarChatTheme.Radius.md, padding: CarChatTheme.Spacing.sm) {
+                        HStack(spacing: CarChatTheme.Spacing.sm) {
+                            Image(systemName: "apple.logo")
+                                .font(.system(size: 14))
+                                .foregroundStyle(CarChatTheme.Colors.textSecondary)
+
+                            Text(appleVisibilityNote)
+                                .font(CarChatTheme.Typography.caption)
+                                .foregroundStyle(CarChatTheme.Colors.textSecondary)
+                        }
+                    }
+                    .padding(.horizontal, CarChatTheme.Spacing.xl)
+                    .padding(.bottom, CarChatTheme.Spacing.sm)
+                    .transition(.opacity)
+                }
 
                 // API key field (only for cloud providers)
                 if selectedCategory == .cloud {
@@ -142,7 +222,7 @@ struct APIKeyStepView: View {
                                 .font(.system(size: 14))
                                 .foregroundStyle(CarChatTheme.Colors.success)
 
-                            Text("No API key needed — runs privately on your device.")
+                            Text("No API key needed. Runs privately on your device.")
                                 .font(CarChatTheme.Typography.caption)
                                 .foregroundStyle(CarChatTheme.Colors.textSecondary)
                         }
@@ -174,6 +254,7 @@ struct APIKeyStepView: View {
             }
         }
         .onAppear {
+            selectFirstAvailableProvider(for: selectedCategory)
             withAnimation(.easeOut(duration: 0.5)) {
                 showContent = true
             }
@@ -225,6 +306,8 @@ private struct OnboardingProviderChip: View {
                             : CarChatTheme.Colors.textTertiary
                     )
             }
+            .padding(.vertical, CarChatTheme.Spacing.xxs)
+            .contentShape(Rectangle())
             .scaleEffect(isSelected ? 1.05 : 1.0)
         }
         .buttonStyle(.plain)

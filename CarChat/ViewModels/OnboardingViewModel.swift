@@ -15,6 +15,10 @@ final class OnboardingViewModel {
     var hasSpeechPermission = false
     var showPaywall = false
 
+    var effectiveTier: SubscriptionTier {
+        appServices.effectiveTier
+    }
+
     init(appServices: AppServices) {
         self.appServices = appServices
     }

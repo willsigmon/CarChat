@@ -94,22 +94,20 @@ final class WatchConnectivityManager: NSObject {
         }
     }
 
-    private static func resolveProviderType(
-        keychainManager: KeychainManager
-    ) async -> AIProviderType {
+    private static func resolveRequestedProviderType() -> AIProviderType {
         if let saved = UserDefaults.standard.string(forKey: "selectedProvider"),
            let provider = AIProviderType(rawValue: saved) {
             return provider
         }
-
-        for provider in AIProviderType.cloudProviders {
-            if let hasKey = try? await keychainManager.hasAPIKey(for: provider),
-               hasKey {
-                return provider
-            }
-        }
-
         return .openAI
+    }
+
+    private static func currentTier() -> SubscriptionTier {
+        if let raw = UserDefaults.standard.string(forKey: "effectiveTier"),
+           let tier = SubscriptionTier(rawValue: raw) {
+            return tier
+        }
+        return .free
     }
 
     private static func processChat(
@@ -117,12 +115,28 @@ final class WatchConnectivityManager: NSObject {
         keychainManager: KeychainManager
     ) async -> WatchChatResponse {
         do {
-            let providerType = await resolveProviderType(
+            let requestedProvider = resolveRequestedProviderType()
+            let tier = currentTier()
+            let resolution = try await ProviderAccessPolicy.resolveProvider(
+                requested: requestedProvider,
+                tier: tier,
+                surface: .watch,
                 keychainManager: keychainManager
             )
-            let apiKey: String? = try? await keychainManager.getAPIKey(
-                for: providerType
+            let providerType = resolution.effective
+            print(
+                "[ProviderAccess][\(ProviderSurface.watch.rawValue)] " +
+                "requested=\(requestedProvider.rawValue) " +
+                "effective=\(providerType.rawValue) " +
+                "reason=\(resolution.fallbackReason?.rawValue ?? "none")"
             )
+
+            let apiKey: String?
+            if providerType.requiresAPIKey {
+                apiKey = try? await keychainManager.getAPIKey(for: providerType)
+            } else {
+                apiKey = nil
+            }
             let provider = try AIProviderFactory.create(
                 type: providerType,
                 apiKey: apiKey
@@ -151,6 +165,8 @@ final class WatchConnectivityManager: NSObject {
                     error: "No response from provider."
                 )
             }
+
+            ProviderAccessPolicy.markProviderAsWorking(providerType)
 
             return WatchChatResponse(text: trimmed, error: nil)
         } catch let translated as AIProviderError {

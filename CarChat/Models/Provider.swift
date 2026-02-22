@@ -1,6 +1,6 @@
 import Foundation
 
-enum AIProviderType: String, CaseIterable, Codable, Sendable, Identifiable {
+enum AIProviderType: String, CaseIterable, Codable, Sendable, Identifiable, Hashable {
     case openAI = "openai"
     case anthropic = "anthropic"
     case gemini = "gemini"
@@ -65,8 +65,47 @@ enum AIProviderType: String, CaseIterable, Codable, Sendable, Identifiable {
     /// Whether this provider is fully implemented and available for use
     var isAvailable: Bool {
         switch self {
-        case .apple: false
-        default: true
+        case .apple:
+            #if canImport(FoundationModels)
+            true
+            #else
+            false
+            #endif
+        case .openAI, .anthropic, .gemini, .grok, .ollama, .openclaw:
+            true
+        }
+    }
+
+    /// Minimum OS major version needed for runtime usage.
+    var minimumSupportedOSMajorVersion: Int? {
+        switch self {
+        case .apple:
+            26
+        default:
+            nil
+        }
+    }
+
+    /// Runtime availability on the current operating system.
+    var isRuntimeAvailable: Bool {
+        isRuntimeAvailable(
+            onMajorVersion: ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        )
+    }
+
+    func isRuntimeAvailable(onMajorVersion majorVersion: Int) -> Bool {
+        guard isAvailable else { return false }
+        guard let minimum = minimumSupportedOSMajorVersion else { return true }
+        return majorVersion >= minimum
+    }
+
+    /// Tier gating for providers with explicit plan requirements.
+    func isAllowedForTier(_ tier: SubscriptionTier) -> Bool {
+        switch self {
+        case .apple:
+            return tier == .premium || tier == .byok
+        default:
+            return true
         }
     }
 

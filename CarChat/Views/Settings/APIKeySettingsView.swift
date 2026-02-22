@@ -5,12 +5,85 @@ struct APIKeySettingsView: View {
     @State private var viewModel: SettingsViewModel?
     @State private var appeared = false
 
+    private var effectiveTier: SubscriptionTier {
+        appServices.effectiveTier
+    }
+
+    private var selectedProvider: AIProviderType? {
+        guard let raw = UserDefaults.standard.string(forKey: "selectedProvider") else {
+            return nil
+        }
+        return AIProviderType(rawValue: raw)
+    }
+
+    private var appleVisibilityNote: String? {
+        if ProviderAccessPolicy.canShowInUI(
+            provider: .apple,
+            tier: effectiveTier,
+            surface: .iPhone
+        ) {
+            return nil
+        }
+
+        if !AIProviderType.apple.isAvailable {
+            return "Apple Intelligence is unavailable in this build."
+        }
+
+        if !AIProviderType.apple.isAllowedForTier(effectiveTier) {
+            return "Apple Intelligence unlocks on Premium and BYOK."
+        }
+
+        if !AIProviderType.apple.isRuntimeAvailable {
+            return "Apple Intelligence appears on iOS 26 or later."
+        }
+
+        return "Apple Intelligence is currently unavailable."
+    }
+
+    private var visibleCloudProviders: [AIProviderType] {
+        AIProviderType.cloudProviders.filter { provider in
+            ProviderAccessPolicy.canShowInUI(
+                provider: provider,
+                tier: effectiveTier,
+                surface: .iPhone
+            )
+        }
+    }
+
+    private var visibleSelfHostedProviders: [AIProviderType] {
+        AIProviderType.selfHostedProviders.filter { provider in
+            ProviderAccessPolicy.canShowInUI(
+                provider: provider,
+                tier: effectiveTier,
+                surface: .iPhone
+            )
+        }
+    }
+
+    private var visibleLocalProviders: [AIProviderType] {
+        AIProviderType.localProviders.filter { provider in
+            ProviderAccessPolicy.canShowInUI(
+                provider: provider,
+                tier: effectiveTier,
+                surface: .iPhone
+            )
+        }
+    }
+
     var body: some View {
         ZStack {
             CarChatTheme.Colors.background.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: CarChatTheme.Spacing.xl) {
+                    if let selectedProvider {
+                        CurrentProviderStatus(provider: selectedProvider)
+                    }
+
+                    if let appleVisibilityNote {
+                        AppleVisibilityNote(text: appleVisibilityNote)
+                    }
+
                     // Cloud providers section
                     VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
                         SectionHeader(
@@ -19,11 +92,12 @@ struct APIKeySettingsView: View {
                             subtitle: "Powerful models, needs an API key"
                         )
 
-                        ForEach(Array(AIProviderType.cloudProviders.enumerated()), id: \.element.id) { index, provider in
+                        ForEach(Array(visibleCloudProviders.enumerated()), id: \.element.id) { index, provider in
                             if let viewModel {
                                 ProviderCard(
                                     provider: provider,
-                                    viewModel: viewModel
+                                    viewModel: viewModel,
+                                    isActive: selectedProvider == provider
                                 )
                                 .opacity(appeared ? 1 : 0)
                                 .offset(y: appeared ? 0 : 12)
@@ -37,7 +111,7 @@ struct APIKeySettingsView: View {
                     }
 
                     // Self-hosted providers section
-                    if !AIProviderType.selfHostedProviders.isEmpty {
+                    if !visibleSelfHostedProviders.isEmpty {
                         VStack(alignment: .leading, spacing: CarChatTheme.Spacing.sm) {
                             SectionHeader(
                                 icon: "server.rack",
@@ -45,13 +119,16 @@ struct APIKeySettingsView: View {
                                 subtitle: "Your own servers, your own rules"
                             )
 
-                            ForEach(Array(AIProviderType.selfHostedProviders.enumerated()), id: \.element.id) { index, provider in
-                                SelfHostedProviderCard(provider: provider)
+                            ForEach(Array(visibleSelfHostedProviders.enumerated()), id: \.element.id) { index, provider in
+                                SelfHostedProviderCard(
+                                    provider: provider,
+                                    isActive: selectedProvider == provider
+                                )
                                     .opacity(appeared ? 1 : 0)
                                     .offset(y: appeared ? 0 : 12)
                                     .animation(
                                         .spring(response: 0.5, dampingFraction: 0.8)
-                                            .delay(Double(AIProviderType.cloudProviders.count + index) * 0.08),
+                                            .delay(Double(visibleCloudProviders.count + index) * 0.08),
                                         value: appeared
                                     )
                             }
@@ -66,13 +143,16 @@ struct APIKeySettingsView: View {
                             subtitle: "Private, free, no internet needed"
                         )
 
-                        ForEach(Array(AIProviderType.localProviders.enumerated()), id: \.element.id) { index, provider in
-                            LocalProviderCard(provider: provider)
+                        ForEach(Array(visibleLocalProviders.enumerated()), id: \.element.id) { index, provider in
+                            LocalProviderCard(
+                                provider: provider,
+                                isActive: selectedProvider == provider
+                            )
                                 .opacity(appeared ? 1 : 0)
                                 .offset(y: appeared ? 0 : 12)
                                 .animation(
                                     .spring(response: 0.5, dampingFraction: 0.8)
-                                        .delay(Double(AIProviderType.cloudProviders.count + index) * 0.08),
+                                        .delay(Double(visibleCloudProviders.count + visibleSelfHostedProviders.count + index) * 0.08),
                                     value: appeared
                                 )
                         }
@@ -120,11 +200,50 @@ private struct SectionHeader: View {
     }
 }
 
+private struct CurrentProviderStatus: View {
+    let provider: AIProviderType
+
+    var body: some View {
+        HStack(spacing: CarChatTheme.Spacing.xs) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(CarChatTheme.Colors.success)
+
+            Text("Current provider: \(provider.displayName)")
+                .font(CarChatTheme.Typography.caption)
+                .foregroundStyle(CarChatTheme.Colors.textSecondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, CarChatTheme.Spacing.sm)
+    }
+}
+
+private struct AppleVisibilityNote: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: CarChatTheme.Spacing.xs) {
+            Image(systemName: "apple.logo")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(CarChatTheme.Colors.textSecondary)
+
+            Text(text)
+                .font(CarChatTheme.Typography.caption)
+                .foregroundStyle(CarChatTheme.Colors.textSecondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, CarChatTheme.Spacing.sm)
+    }
+}
+
 // MARK: - Provider Card (Cloud)
 
 private struct ProviderCard: View {
     let provider: AIProviderType
     @Bindable var viewModel: SettingsViewModel
+    let isActive: Bool
     @State private var isEditing = false
     @State private var editedKey = ""
 
@@ -150,6 +269,20 @@ private struct ProviderCard: View {
                         Text(provider.displayName)
                             .font(CarChatTheme.Typography.headline)
                             .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        if isActive {
+                            Text("Active")
+                                .font(CarChatTheme.Typography.micro)
+                                .foregroundStyle(CarChatTheme.Colors.success)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule().fill(CarChatTheme.Colors.success.opacity(0.12))
+                                )
+                                .overlay(
+                                    Capsule().strokeBorder(CarChatTheme.Colors.success.opacity(0.25), lineWidth: 0.5)
+                                )
+                        }
 
                         if hasKey {
                             Image(systemName: "checkmark.seal.fill")
@@ -280,22 +413,24 @@ private struct ProviderCard: View {
                 .fill(.ultraThinMaterial.opacity(0.7))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg)
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            hasKey ? brandColor.opacity(0.25) : Color.white.opacity(0.08),
-                            Color.white.opacity(0.03)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    isActive ? CarChatTheme.Colors.success.opacity(0.35) : (hasKey ? brandColor.opacity(0.25) : Color.white.opacity(0.08)),
+                                    Color.white.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
                     lineWidth: 0.5
                 )
         )
         .clipShape(RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(provider.displayName), \(hasKey ? "configured" : "not configured")")
+        .accessibilityLabel(
+            "\(provider.displayName), \(isActive ? "active, " : "")\(hasKey ? "configured" : "not configured")"
+        )
     }
 }
 
@@ -303,6 +438,7 @@ private struct ProviderCard: View {
 
 private struct LocalProviderCard: View {
     let provider: AIProviderType
+    let isActive: Bool
 
     private var brandColor: Color {
         CarChatTheme.Colors.providerColor(provider)
@@ -313,9 +449,25 @@ private struct LocalProviderCard: View {
             BrandLogoCard(provider, size: 52)
 
             VStack(alignment: .leading, spacing: CarChatTheme.Spacing.xxxs) {
-                Text(provider.displayName)
-                    .font(CarChatTheme.Typography.headline)
-                    .foregroundStyle(CarChatTheme.Colors.textPrimary)
+                HStack(spacing: CarChatTheme.Spacing.xs) {
+                    Text(provider.displayName)
+                        .font(CarChatTheme.Typography.headline)
+                        .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                    if isActive {
+                        Text("Active")
+                            .font(CarChatTheme.Typography.micro)
+                            .foregroundStyle(CarChatTheme.Colors.success)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule().fill(CarChatTheme.Colors.success.opacity(0.12))
+                            )
+                            .overlay(
+                                Capsule().strokeBorder(CarChatTheme.Colors.success.opacity(0.25), lineWidth: 0.5)
+                            )
+                    }
+                }
 
                 Text(provider.tagline)
                     .font(CarChatTheme.Typography.caption)
@@ -360,14 +512,19 @@ private struct LocalProviderCard: View {
             RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg)
                 .strokeBorder(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.08), Color.white.opacity(0.03)],
+                        colors: [
+                            isActive ? CarChatTheme.Colors.success.opacity(0.35) : Color.white.opacity(0.08),
+                            Color.white.opacity(0.03),
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
                     lineWidth: 0.5
                 )
         )
-        .accessibilityLabel("\(provider.displayName), \(provider.isAvailable ? "free, no API key needed" : "coming soon")")
+        .accessibilityLabel(
+            "\(provider.displayName), \(isActive ? "active, " : "")\(provider.isAvailable ? "free, no API key needed" : "coming soon")"
+        )
     }
 }
 
@@ -375,6 +532,7 @@ private struct LocalProviderCard: View {
 
 private struct SelfHostedProviderCard: View {
     let provider: AIProviderType
+    let isActive: Bool
     @State private var baseURL: String = ""
     @State private var isEditing = false
     @State private var isTesting = false
@@ -394,6 +552,20 @@ private struct SelfHostedProviderCard: View {
                         Text(provider.displayName)
                             .font(CarChatTheme.Typography.headline)
                             .foregroundStyle(CarChatTheme.Colors.textPrimary)
+
+                        if isActive {
+                            Text("Active")
+                                .font(CarChatTheme.Typography.micro)
+                                .foregroundStyle(CarChatTheme.Colors.success)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule().fill(CarChatTheme.Colors.success.opacity(0.12))
+                                )
+                                .overlay(
+                                    Capsule().strokeBorder(CarChatTheme.Colors.success.opacity(0.25), lineWidth: 0.5)
+                                )
+                        }
 
                         Text("Self-Hosted")
                             .font(CarChatTheme.Typography.micro)
@@ -552,7 +724,7 @@ private struct SelfHostedProviderCard: View {
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            brandColor.opacity(0.25),
+                            isActive ? CarChatTheme.Colors.success.opacity(0.35) : brandColor.opacity(0.25),
                             Color.white.opacity(0.03)
                         ],
                         startPoint: .topLeading,
@@ -563,7 +735,7 @@ private struct SelfHostedProviderCard: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: CarChatTheme.Radius.lg))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(provider.displayName), self-hosted")
+        .accessibilityLabel("\(provider.displayName), \(isActive ? "active, " : "")self-hosted")
     }
 
     private func testConnection() {
